@@ -13,6 +13,7 @@ inv.weapon = {}
 inv.weapon.priorityName = "weaponSet"
 
 function inv.weapon.use(priorityName, damTypes, endTag)
+  inv.set.ensureLoaded()
   local retval = DRL_RET_SUCCESS
   local weaponPriority = {}
 

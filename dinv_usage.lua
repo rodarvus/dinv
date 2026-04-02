@@ -17,6 +17,7 @@ inv.usage            = {}
 inv.usage.displayPkg = nil
 
 function inv.usage.display(priorityName, query, endTag)
+  inv.set.ensureLoaded()
 
   if (priorityName == nil) or (query == nil) then
     dbot.error("inv.usage.display: input parameters are nil!")

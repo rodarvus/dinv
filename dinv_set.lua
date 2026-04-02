@@ -74,23 +74,27 @@ inv.set.createIntensity  = 16
 
 
 function inv.set.init.atActive()
-  local retval = DRL_RET_SUCCESS
-
-  retval = inv.set.load()
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("inv.set.init.atActive: failed to load set data from storage: " ..
-              dbot.retval.getString(retval))
-  end -- if
-
-  return retval
+  -- Sets are lazy-loaded on first access to avoid loading thousands of rows at startup.
+  -- Mark as not yet loaded; inv.set.ensureLoaded() will load on first use.
+  inv.set.loaded = false
+  inv.set.table = {}
+  return DRL_RET_SUCCESS
 end -- inv.set.init.atActive
+
+
+-- Ensure the set table is loaded from database. Called before any set access.
+function inv.set.ensureLoaded()
+  if inv.set.loaded then return end
+  inv.set.load()
+  inv.set.loaded = true
+end
 
 
 function inv.set.fini(doSaveState)
   local retval = DRL_RET_SUCCESS
 
-  if (doSaveState) then
-    -- Save our current data
+  if (doSaveState) and inv.set.loaded then
+    -- Only save if we actually loaded/modified set data this session
     retval = inv.set.save()
     if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
       dbot.warn("inv.set.fini: Failed to save inv.set module data: " .. dbot.retval.getString(retval))
@@ -183,6 +187,7 @@ end -- inv.set.reset
 --
 -- If level is not provided to us, use the character's current level
 function inv.set.create(priorityName, level, synchronous, intensity)
+  inv.set.ensureLoaded()
   local retval
   local priorityTable
 
@@ -645,6 +650,7 @@ end -- inv.set.createWithHandicap
 
 inv.set.displayPkg = nil
 function inv.set.display(priorityName, level, channel, endTag)
+  inv.set.ensureLoaded()
   local retval
   local priorityTable
 
@@ -789,6 +795,7 @@ end -- inv.set.displaySet
 
 
 function inv.set.createAndWear(priorityName, level, intensity, endTag)
+  inv.set.ensureLoaded()
   local retval = DRL_RET_SUCCESS
   local priorityTable
 
@@ -1112,6 +1119,8 @@ end -- inv.set.diffStats
 
 -- Returns a set table in the form described for the inv.set.getStats input parameter
 function inv.set.get(priorityName, level)
+  inv.set.ensureLoaded()
+
   if (priorityName == nil) or (priorityName == "") then
     dbot.warn("inv.set.get: missing priorityName parameter")
     return nil, DRL_RET_INVALID_PARAM
@@ -1332,6 +1341,7 @@ end -- inv.set.isItemInSet
 
 inv.set.comparePkg = nil
 function inv.set.compare(priorityName, relativeName, levelSkip, endTag)
+  inv.set.ensureLoaded()
   if (priorityName == nil) or (priorityName == "") then
     dbot.warn("inv.set.compare: Missing priorityName parameter")
     return inv.tags.stop(invTagsCompare, endTag, DRL_RET_INVALID_PARAM)
@@ -1524,6 +1534,7 @@ end -- inv.set.compareCR
 
 inv.set.covetPkg = nil
 function inv.set.covet(priorityName, auctionNum, levelSkip, endTag)
+  inv.set.ensureLoaded()
   if (priorityName == nil) or (priorityName == "") then
     dbot.warn("inv.set.covet: Missing priorityName parameter")
     return inv.tags.stop(invTagsCovet, endTag, DRL_RET_INVALID_PARAM)

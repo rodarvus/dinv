@@ -188,6 +188,40 @@ function dinv_db.deserializeSpells(spellsStr)
 end
 
 
+-- Save a single item to the database (INSERT OR REPLACE).
+-- Use this for individual item changes instead of rewriting the entire table.
+function dinv_db.saveItem(objId, entry)
+  local db = dinv_db.handle
+  if not db or not entry then return end
+
+  local query = dinv_db.buildItemInsert("items", objId, entry)
+  db:exec(query)
+  dinv_db.dbcheck(db:errcode(), db:errmsg(), query)
+end
+
+-- Delete a single item from the database.
+function dinv_db.deleteItem(objId)
+  local db = dinv_db.handle
+  if not db then return end
+
+  local query = string.format("DELETE FROM items WHERE obj_id = %s", dinv_db.fixnum(objId))
+  db:exec(query)
+end
+
+
+-- Reverse mapping: SQL column name → Lua stat field name (built once at load time)
+dinv_db.sqlToLuaStat = {}
+for _, colDef in ipairs(dinv_db.itemStatColumns) do
+  dinv_db.sqlToLuaStat[colDef[1]] = colDef[2]
+end
+
+-- Envelope columns that are not stat fields (handled separately in rowToItemEntry)
+dinv_db.envelopeColumns = {
+  obj_id = true, identify_level = true, object_location = true,
+  home_container = true, color_name = true,
+}
+
+
 -- Build an INSERT statement for an item entry into the specified table.
 -- entry is the dinv item structure: { identifyLevel, objectLocation, homeContainer, colorName, stats={...} }
 -- objId is the item's object ID (integer key)
@@ -224,6 +258,7 @@ end
 
 -- Read a row from db:nrows() and reconstruct a dinv item entry.
 -- Returns the entry structure: { identifyLevel, objectLocation, homeContainer, colorName, stats={...} }
+-- Optimized: iterates only the columns present in the row (via pairs) rather than all 78 mappings.
 function dinv_db.rowToItemEntry(row)
   local entry = {
     identifyLevel  = row.identify_level,
@@ -233,15 +268,15 @@ function dinv_db.rowToItemEntry(row)
     stats          = {},
   }
 
-  for _, colDef in ipairs(dinv_db.itemStatColumns) do
-    local sqlCol   = colDef[1]
-    local luaField = colDef[2]
-    if row[sqlCol] ~= nil then
-      if luaField == "spells" then
-        -- Spells is stored as serialized string — deserialize back to table
-        entry.stats[luaField] = dinv_db.deserializeSpells(row[sqlCol])
-      else
-        entry.stats[luaField] = row[sqlCol]
+  for sqlCol, val in pairs(row) do
+    if not dinv_db.envelopeColumns[sqlCol] then
+      local luaField = dinv_db.sqlToLuaStat[sqlCol]
+      if luaField then
+        if luaField == "spells" then
+          entry.stats[luaField] = dinv_db.deserializeSpells(val)
+        else
+          entry.stats[luaField] = val
+        end
       end
     end
   end
@@ -528,10 +563,39 @@ end
 -- Migrations (for future schema changes)
 ----------------------------------------------------------------------------------------------------
 
+-- Check if a specific migration version has been applied.
+local function migration_applied(version)
+   local db = dinv_db.handle
+   if not db then return false end
+
+   for row in db:nrows(string.format(
+      "SELECT COUNT(*) as cnt FROM migrations WHERE version = %d", version)) do
+      return row.cnt > 0
+   end
+   return false
+end
+
+-- Record a migration as applied.
+local function record_migration(version, description)
+   local db = dinv_db.handle
+   if not db then return end
+
+   local query = string.format(
+      "INSERT OR IGNORE INTO migrations (version, applied_at, description) VALUES (%d, %d, %s)",
+      version, os.time(), dinv_db.fixsql(description))
+   db:exec(query)
+end
+
 local function run_migrations()
-   -- Future migrations go here, e.g.:
+   local db = dinv_db.handle
+   if not db then return end
+
+   -- Migration 1: Initial schema creation (recorded in open() for fresh databases)
+
+   -- Future migrations go here following this pattern:
+   --
    -- if not migration_applied(2) then
-   --    db:exec("ALTER TABLE items ADD COLUMN new_stat INTEGER")
+   --    db:exec("ALTER TABLE items ADD COLUMN new_stat INTEGER DEFAULT 0")
    --    record_migration(2, "Add new_stat column to items")
    -- end
 end

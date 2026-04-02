@@ -3086,10 +3086,12 @@ function inv.items.keywordCR()
               numUpdatedKeywords .. " out of " .. numQueryItems .. " items matching query")
   end -- if
 
-  -- Save the inventory table and the custom cache to disk if we just updated keywords for one or more
+  -- Save the updated items and custom cache to disk if we just updated keywords for one or more
   -- items and the keywords are cacheable
   if doCacheItem and (numUpdatedKeywords > 0) then
-    inv.items.save()
+    for _, objId in ipairs(idArray) do
+      dinv_db.saveItem(objId, inv.items.table[objId])
+    end
     inv.cache.saveCustom()
   end -- if
 
@@ -4314,7 +4316,7 @@ function inv.items.organize.addCR()
   end -- if
   organizeField = organizeField .. inv.items.organize.addPkg.query
   inv.items.setStatField(objId, invQueryKeyOrganize, organizeField)
-  inv.items.save()
+  dinv_db.saveItem(objId, inv.items.table[objId])
 
   -- Add the new organization query to the custom cache
   retval = inv.cache.add(inv.cache.custom.table, objId)
@@ -4389,7 +4391,7 @@ function inv.items.organize.clearCR()
 
   -- We have the container.  Whack it!
   inv.items.setStatField(objId, invQueryKeyOrganize, "")
-  inv.items.save()
+  dinv_db.saveItem(objId, inv.items.table[objId])
 
   -- Update the custom cache because organization queries are stored there long term
   retval = inv.cache.add(inv.cache.custom.table, objId)

@@ -2,6 +2,20 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0019] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Performance optimizations for SQLite operations:
+           1) Schema migration framework with version tracking.
+           2) Lazy-load equipment sets (deferred until first access,
+              removing ~6000 row reads from plugin reload).
+           3) Optimized rowToItemEntry to iterate only present columns
+              instead of all 78 column mappings per item.
+           4) Incremental item saves for organize and keyword operations
+              (single-item INSERT OR REPLACE instead of full table rewrite).]]
+  }
+}
+
 dbot.changelog[3.0018] =
 {
   { change = drlDbotChangeLogTypeFix,
