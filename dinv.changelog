@@ -2,6 +2,17 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0031] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Items are now saved incrementally during identification. Each item
+           is written to SQLite immediately after identification and cache
+           merge, so identification progress survives a crash during a long
+           refresh. The final bulk save at the end of refresh remains as a
+           consistency checkpoint.]]
+  }
+}
+
 dbot.changelog[3.0030] =
 {
   { change = drlDbotChangeLogTypeMisc,

@@ -1298,6 +1298,9 @@ function inv.items.identifyCR(maxNumItems, refreshLocations)
       end -- if
     end -- if
 
+    -- Save this item incrementally so identification progress survives a crash
+    dinv_db.saveItem(objId, inv.items.table[objId])
+
   end -- for objId,_ in pairs
 
   -- We are done (at least for now)
