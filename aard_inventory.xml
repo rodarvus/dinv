@@ -14115,8 +14115,8 @@ function inv.score.extended(itemOrSet, priorityName, handicap, level, isOffhand)
     end -- if
   end -- for
 
-  -- Round to nearest hundredth place
-  score = tonumber(string.format("%.2f", score))
+  -- Round to avoid floating-point noise
+  score = tonumber(string.format("%.6f", score))
 
   dbot.debug("Item \"" .. itemOrSet.name .. "\" has a score of " .. string.format("%.3f", score) ..
              " for priority \"" .. priorityName .. "\"")
