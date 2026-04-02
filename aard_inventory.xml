@@ -10519,12 +10519,15 @@ function inv.items.trigger.itemIdEnd()
   end -- if
 
   -- Add one-off item skills that are not officially affectMods but are very similar
+  local weaponType = inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldWeaponType) or ""
   if (itemName == "Aardwolf Bracers of Iron Grip") then
     inv.items.setStatField(inv.items.identifyPkg.objId, invItemEffectsIronGrip, 1)
   elseif (itemName == "Aardwolf Gloves of Dexterity") then
     inv.items.setStatField(inv.items.identifyPkg.objId, invItemEffectsDualWield, 1)
   elseif string.match(itemWearable, "shield") then
     inv.items.setStatField(inv.items.identifyPkg.objId, invItemEffectsShield, 1)
+  elseif (weaponType == "hammer") then
+    inv.items.setStatField(inv.items.identifyPkg.objId, invItemEffectsHammerswing, 1)
   end -- if
 
   -- The identification process is done!
@@ -11459,9 +11462,10 @@ invQueryKeyUnequipped       = "unequipped"
 -- to dual weapons, or get a defensive bonus because it is a shield.
 ----------------------------------------------------------------------------------------------------
 
-invItemEffectsIronGrip  = "irongrip"
-invItemEffectsDualWield = "dualwield"
-invItemEffectsShield    = "shield"
+invItemEffectsIronGrip     = "irongrip"
+invItemEffectsDualWield    = "dualwield"
+invItemEffectsShield       = "shield"
+invItemEffectsHammerswing  = "hammerswing"
 
 
 ----------------------------------------------------------------------------------------------------
@@ -13482,6 +13486,7 @@ function inv.priority.addDefault()
                      dualwield    = 20,
                      irongrip     = 2,
                      shield       = 5,
+                     hammerswing  = 0,
 
                      allmagic     = 0.03,
                      allphys      = 0.03
@@ -13520,6 +13525,7 @@ function inv.priority.addDefault()
                      dualwield    = 0,
                      irongrip     = 3,
                      shield       = 5,
+                     hammerswing  = 0,
 
                      maxstr       = 0,
                      maxint       = 0,
@@ -13565,6 +13571,7 @@ function inv.priority.addDefault()
                      dualwield    = 0,
                      irongrip     = 20,
                      shield       = 10,
+                     hammerswing  = 0,
 
                      allmagic     = 0.05,
                      allphys      = 0.10
@@ -13603,6 +13610,7 @@ function inv.priority.addDefault()
                      dualwield    = 0,
                      irongrip     = 20,
                      shield       = 20,
+                     hammerswing  = 0,
 
                      allmagic     = 0.05,
                      allphys      = 0.10
@@ -13641,6 +13649,7 @@ function inv.priority.addDefault()
                      dualwield    = 0,
                      irongrip     = 25,
                      shield       = 25,
+                     hammerswing  = 0,
 
                      maxint       = 10,
                      maxwis       = 10,
@@ -13683,6 +13692,7 @@ function inv.priority.addDefault()
                      dualwield    = 0,
                      irongrip     = 30,
                      shield       = 30,
+                     hammerswing  = 0,
 
                      maxint       = 40,
                      maxwis       = 40,
@@ -13730,6 +13740,7 @@ function inv.priority.addDefault()
                                dualwield    = 0,
                                irongrip     = 50,
                                shield       = 50,
+                               hammerswing  = 0,
 
                                maxint       = 40,
                                maxwis       = 40,
@@ -13835,6 +13846,7 @@ inv.priority.fieldTable = {
   { "dualwield"   , "Value of an item's dual wield effect" },
   { "irongrip"    , "Value of an item's irongrip effect" },
   { "shield"      , "Value of a shield's damage reduction effect" },
+  { "hammerswing" , "Value of a hammer weapon for the hammerswing skill" },
 
   { "maxstr"      , "Value of hitting a level's strength ceiling" },
   { "maxint"      , "Value of hitting a level's intelligence ceiling" },
@@ -15262,7 +15274,7 @@ function inv.set.getStats(set, level)
 
                      haste = 0, regeneration = 0, sanctuary = 0, invis = 0, flying = 0, 
                      detectgood = 0, detectevil = 0, detecthidden = 0, detectinvis = 0, detectmagic = 0,
-                     dualwield = 0, irongrip = 0, shield = 0 -- these last 3 are not official "affect mods"
+                     dualwield = 0, irongrip = 0, shield = 0, hammerswing = 0 -- these last 4 are not official "affect mods"
                    }
 
   for itemLoc, itemStruct in pairs(set) do
@@ -15354,7 +15366,7 @@ function inv.set.displayStats(setStats, msgString, doPrintHeader, doDisplayIfZer
   end -- for
 
   -- Effects (these are known on aard as affectMods)
-  local effectList = "haste regeneration sanctuary invis flying dualwield irongrip shield " ..
+  local effectList = "haste regeneration sanctuary invis flying dualwield irongrip shield hammerswing " ..
                      "detectgood detectevil detecthidden detectinvis detectmagic"
   local effectStr = ""
   for effect in effectList:gmatch("%S+") do
