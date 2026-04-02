@@ -641,7 +641,9 @@ function dinv_db.open()
    local dir = dinv_db.getDir()
 
    -- Create directory if it doesn't exist
-   os.execute('if not exist "' .. dir .. '" mkdir "' .. dir .. '"')
+   if not dbot.fileExists(dir) then
+      dbot.shell('mkdir "' .. dir .. '"')
+   end
 
    local path = dinv_db.getPath()
    local handle, err_msg, err_code = sqlite3.open(path)

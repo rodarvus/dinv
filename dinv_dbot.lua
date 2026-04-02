@@ -1466,7 +1466,9 @@ dbot.backup.init = {}
 function dbot.backup.init.atActive()
   -- Create backup directory if it doesn't exist
   local backupDir = dbot.backup.getBackupDir()
-  os.execute('if not exist "' .. backupDir .. '" mkdir "' .. backupDir .. '"')
+  if not dbot.fileExists(backupDir) then
+    dbot.shell('mkdir "' .. backupDir .. '"')
+  end
   return DRL_RET_SUCCESS
 end -- dbot.backup.init.atActive
 

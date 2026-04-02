@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0022] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed console window briefly flashing on plugin reload. Replaced
+           os.execute() calls (which spawn a visible cmd.exe) with
+           dbot.fileExists() check and dbot.shell() (hidden window) for
+           directory creation in database and backup initialization.]]
+  }
+}
+
 dbot.changelog[3.0021] =
 {
   { change = drlDbotChangeLogTypeNew,
