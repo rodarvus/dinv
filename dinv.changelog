@@ -2,6 +2,17 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0034] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed consume shorthand ("dinv consume <type>") not working. The
+           XML alias patterns only matched known subcommands (add/remove/
+           display/buy/small/big). Added a catch-all alias at lower priority
+           that matches any word, enabling the shorthand to reach the CLI
+           handler.]]
+  }
+}
+
 dbot.changelog[3.0033] =
 {
   { change = drlDbotChangeLogTypeNew,
