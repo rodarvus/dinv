@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0025] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed undefined error constants. Three misspellings (DRL_MISSING_ENTRY,
+           DRL_RET_INVALID_PARAMETER, DRL_RET_INVALID_PARAMS) returned nil
+           instead of proper error codes. Fixed 10 occurrences across
+           dinv_items.lua, dinv_consume.lua, and dinv_dbot.lua.]]
+  }
+}
+
 dbot.changelog[3.0024] =
 {
   { change = drlDbotChangeLogTypeFix,

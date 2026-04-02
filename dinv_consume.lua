@@ -277,7 +277,7 @@ function inv.consume.addCR()
     end -- if
   else
     dbot.warn("inv.consume.addCR: Failed to identify shop item \"" .. itemName .. "\" in room \"" .. roomId)
-    retval = DRL_MISSING_ENTRY
+    retval = DRL_RET_MISSING_ENTRY
   end -- if
 
   -- Restore the original refresh state (we may have paused it during this operation)

@@ -173,7 +173,7 @@ function dbot.shell(shellCommand)
 
   if (shellCommand == nil) or (shellCommand == "") then
     dbot.warn("dbot.shell: Missing shell command")
-    return DRL_RET_INVALID_PARAMETER
+    return DRL_RET_INVALID_PARAM
   end -- if
 
   dbot.debug("dbot.shell: Executing \"@G" .. "/C " .. shellCommand .. "@W\"")
@@ -525,7 +525,7 @@ function dbot.commLog(msg)
 
   if (msg == nil) or (msg == "") then
     dbot.warn("dbot.commLog: Missing message parameter")
-    return DRL_RET_INVALID_PARAMS
+    return DRL_RET_INVALID_PARAM
   end -- if
 
   local retval = DRL_RET_INTERNAL_ERROR
@@ -3352,12 +3352,12 @@ function dbot.remote.get(url, protocol)
 
   if (url == nil) or (url == "") then
     dbot.warn("dbot.remote.get: missing url parameter")
-    return fileData, DRL_RET_INVALID_PARAMETER
+    return fileData, DRL_RET_INVALID_PARAM
   end -- if
 
   if (protocol == nil) or (protocol == "") then
     dbot.warn("dbot.remote.get: missing protocol parameter")
-    return fileData, DRL_RET_INVALID_PARAMETER
+    return fileData, DRL_RET_INVALID_PARAM
   end -- if
 
   if (dbot.remote.getPkg ~= nil) then

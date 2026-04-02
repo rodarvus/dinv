@@ -823,7 +823,7 @@ function inv.items.ignoreCR()
 
       elseif (containerId == nil) then
         dbot.info("No match found for ignore container: \"" .. inv.items.ignorePkg.container .. "\"")
-        retval = DRL_MISSING_ENTRY
+        retval = DRL_RET_MISSING_ENTRY
 
       else
         -- Ok, we finally have enough info to add a stub for this container
@@ -1785,7 +1785,7 @@ end -- inv.items.refreshCR
 function inv.items.refreshAtTime(min, sec)
   if (min == nil) or (sec == nil) then
     dbot.warn("inv.items.refreshAtTime: nil time given as parameter")
-    return DRL_RET_INVALID_PARAMETER
+    return DRL_RET_INVALID_PARAM
   end -- if
 
   min = tonumber(min) or 0
@@ -1793,7 +1793,7 @@ function inv.items.refreshAtTime(min, sec)
 
   if (min == 0) and (sec == 0) then
     dbot.warn("inv.items.refreshAtTime: invalid time period 0 detected")
-    return DRL_RET_INVALID_PARAMETER
+    return DRL_RET_INVALID_PARAM
   end -- if
 
   -- It's possible (but highly unlikely) that we timed out and disconnected from the mud causing
@@ -3773,13 +3773,13 @@ end -- inv.items.reportItem
 function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
   if (objId == nil) then
     dbot.warn("inv.items.displayItem: objId is nil")
-    return DRL_RET_INVALID_PARAMETER
+    return DRL_RET_INVALID_PARAM
   end -- if
 
   local objIdNum = dbot.tonumber(objId)
   if (objIdNum == nil) then
     dbot.warn("inv.items.displayItem: objId is not a number")
-    return DRL_RET_INVALID_PARAMETER
+    return DRL_RET_INVALID_PARAM
   end -- if
 
   local entry = inv.items.getEntry(objId)
