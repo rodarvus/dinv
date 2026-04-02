@@ -107,7 +107,9 @@ end -- inv.usage.displayCR
 
 function inv.usage.displayItem(priorityName, objId, doDisplayUnused)
 
-  -- TODO: this is very similar to code in inv.items.displayItem: consolidate it into a helper function
+  -- NOTE: The name/ID formatting below is similar to inv.items.displayItem but differs in maxNameLen
+  -- (44 vs 24), ID display conditions, and diff mode prefixes. Extracting a shared helper would
+  -- require 3-4 parameters for ~30 lines of savings — not worth the complexity.
 
   local colorName = inv.items.getField(objId, invFieldColorName) or "Unknown"
   local maxNameLen = 44
