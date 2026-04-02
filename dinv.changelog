@@ -2,6 +2,17 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0006] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Added SQLite database infrastructure module (dinv_db.lua). Defines
+           schema for all persistent state tables: items, cache, priorities,
+           equipment sets, snapshots, consumables, stat bonuses, and config.
+           This is the foundation for migrating from serialized Lua files to
+           SQLite storage.]]
+  }
+}
+
 dbot.changelog[3.0005] =
 {
   { change = drlDbotChangeLogTypeMisc,

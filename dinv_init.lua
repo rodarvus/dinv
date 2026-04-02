@@ -917,6 +917,7 @@ end -- inv.config.new
 -- Load dinv modules
 ----------------------------------------------------------------------------------------------------
 
+dofile(dinv_plugin_dir .. "dinv_db.lua")
 dofile(dinv_plugin_dir .. "dinv_cli.lua")
 dofile(dinv_plugin_dir .. "dinv_items.lua")
 dofile(dinv_plugin_dir .. "dinv_report.lua")
