@@ -147,7 +147,6 @@ end -- inv.weapon.next
 inv.snapshot           = {}
 inv.snapshot.init      = {}
 inv.snapshot.table     = {}
-inv.snapshot.stateName = "inv-snapshot.state"
 
 
 function inv.snapshot.init.atActive()

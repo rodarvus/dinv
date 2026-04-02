@@ -2,6 +2,17 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0020] =
+{
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[Removed dead code from the old file-based storage system. Removed
+           the entire dbot.storage module (saveTable, loadTable, flush, init,
+           fini, fileVersion, hashChars), all stateName variables across 9
+           modules, and dbot.notify.name/dbot.wish.name state file references.
+           The "storage" module was also removed from dbot.modules.]]
+  }
+}
+
 dbot.changelog[3.0019] =
 {
   { change = drlDbotChangeLogTypeFix,

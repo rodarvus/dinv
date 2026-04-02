@@ -42,9 +42,6 @@ inv.statBonus.init         = {}
 inv.statBonus.closingMsg   = "{ \\dinv inv.statBonus }"
 inv.statBonus.currentBonus = { int = 0, luck = 0, wis = 0, str = 0, dex = 0, con = 0 }
 
-inv.statBonus.stateNameSpells = "inv-stats-spells.state"
-inv.statBonus.stateNameEquip  = "inv-stats-equip.state"
-
 
 function inv.statBonus.init.atInstall()
   local retval = DRL_RET_SUCCESS

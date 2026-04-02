@@ -43,7 +43,6 @@
 inv.consume           = {}
 inv.consume.init      = {}
 inv.consume.table     = {}
-inv.consume.stateName = "inv-consume.state"
 
 
 function inv.consume.init.atActive()

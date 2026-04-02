@@ -46,7 +46,6 @@
 inv.priority           = {}
 inv.priority.init      = {}
 inv.priority.table     = {}
-inv.priority.stateName = "inv-priorities.state"
 
 
 function inv.priority.init.atActive()

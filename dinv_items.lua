@@ -122,7 +122,6 @@ inv.items               = {}
 inv.items.init          = {}
 inv.items.table         = {}
 
-inv.items.stateName     = "inv-items.state"
 
 inv.items.mainState     = invItemsRefreshDirty -- state for the main inventory (as detected by invdata)
 inv.items.wornState     = invItemsRefreshDirty -- state for items you are wearing (as detected by eqdata)

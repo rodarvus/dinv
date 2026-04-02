@@ -789,7 +789,6 @@ end -- inv.version.display
 inv.config           = {}
 inv.config.init      = {}
 inv.config.table     = {} 
-inv.config.stateName = "inv-config.state"
 
 
 function inv.config.init.atActive()

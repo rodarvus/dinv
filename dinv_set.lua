@@ -62,7 +62,6 @@
 inv.set                  = {}
 inv.set.init             = {}
 inv.set.table            = {}
-inv.set.stateName        = "inv-set.state"
 inv.set.createPkg        = nil
 inv.set.displayPkg       = nil
 inv.set.createAndWearPkg = nil

@@ -32,7 +32,6 @@ inv.tags           = {}
 inv.tags.init      = {}
 inv.tags.table     = {}
 inv.tags.cleanup   = {}
-inv.tags.stateName = "inv-tags.state"
 
 invTagsRefresh   = "refresh"
 invTagsBuild     = "build"

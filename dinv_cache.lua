@@ -77,10 +77,6 @@ inv.cache.recent.name   = "recent"
 inv.cache.frequent.name = "frequent"
 inv.cache.custom.name   = "custom"
 
-inv.cache.recent.stateName   = "inv-cache-recent.state"
-inv.cache.frequent.stateName = "inv-cache-frequent.state"
-inv.cache.custom.stateName   = "inv-cache-custom.state"
-
 inv.cache.recent.defaultNumEntries   = 1000
 inv.cache.frequent.defaultNumEntries = 100
 inv.cache.custom.defaultNumEntries   = 1500

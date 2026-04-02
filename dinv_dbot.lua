@@ -27,8 +27,8 @@ dbot.init = {}
 dbot.init.initializedInstall = false
 dbot.init.initializedActive  = false
 
--- storage should be first (to create state directories) and gmcp should be last (so we can save data)
-dbot.modules = "storage emptyLine backup notify prompt invmon wish execute pagesize gmcp"
+-- gmcp should be last (so we can save data)
+dbot.modules = "emptyLine backup notify prompt invmon wish execute pagesize gmcp"
 
 
 function dbot.init.atInstall()
@@ -770,8 +770,6 @@ dbot.notify        = {}
 dbot.notify.init   = {}
 dbot.notify.prefix = pluginNameAbbr
 
-dbot.notify.name = "dbot-notify.state"
-
 drlDbotNotifyUserLevelNone     = "none"
 drlDbotNotifyUserLevelLight    = "light"
 drlDbotNotifyUserLevelStandard = "standard"
@@ -1434,180 +1432,6 @@ function dbot.gmcp.getConfig(configMode)
 end -- dbot.gmcp.getConfig
 
 
-----------------------------------------------------------------------------------------------------
--- Module to manage loading and saving data to persistent storage
-----------------------------------------------------------------------------------------------------
---
--- Functions:
---   dbot.storage.init.atActive()
---   dbot.storage.fini(doSaveState)
---
---   dbot.storage.flush() -- Saves mushclient world or plugin state
---
---   dbot.storage.saveTable(fileName, tableName, theTable)
---   dbot.storage.loadTable(fileName, resetFn)
---
-----------------------------------------------------------------------------------------------------
-
-dbot.storage      = {} 
-dbot.storage.init = {}
-
-dbot.storage.fileVersion = 1
-dbot.storage.hashChars   = (2 * 20) -- utils.hash uses a 160-bit (20 byte) hash w/ 2 hex chars per byte
-
-
-function dbot.storage.init.atActive()
-  local retval
-
-  -- Create directories for our state if they do not yet exist
-  retval = dbot.shell("if not exist \"" .. pluginStatePath .. "\" mkdir \"" .. pluginStatePath .. "\" > nul")
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("dbot.storage.init.atActive: Failed to create plugin state directory \"" ..
-              pluginStatePath .. "\"")
-  end -- if
-  dbot.spinUntilExists(pluginStatePath, 1)
-
-  local baseDir = dbot.backup.getBaseDir()
-  dbot.debug("dbot.storage.init.atActive: baseDir=\"" .. baseDir .. "\"")
-  retval = dbot.shell("if not exist \"" .. baseDir .. "\" mkdir \"" .. baseDir .. "\" > nul")
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("dbot.storage.init.atActive: Failed to create character-specific state directory \"" ..
-              baseDir .. "\"")
-  end -- if
-  dbot.spinUntilExists(baseDir, 1)
-
-  local currentDir = dbot.backup.getCurrentDir()
-  dbot.debug("dbot.storage.init.atActive: currentDir=\"" .. currentDir .. "\"")
-  retval = dbot.shell("if not exist \"" .. currentDir .. "\" mkdir \"" .. currentDir .. "\" > nul")
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("dbot.storage.init.atActive: Failed to create current state directory \"" .. currentDir .. "\"")
-  end -- if
-  dbot.spinUntilExists(currentDir, 1)
-
-  return DRL_RET_SUCCESS
-
-end -- dbot.storage.init.atActive
-
-
-function dbot.storage.fini(doSaveState)
-  -- Placeholder: nothing to clean up here yet
-
-  return DRL_RET_SUCCESS
-end -- dbot.storage.fini
-
-
--- Save all of our state to disk.  The modules all have xyz.save() functions to update their variables.
--- We just need to flush the state out to disk.
-function dbot.storage.flush()
-
-  local isInPlugin = true
-
-  local pluginName = GetPluginName()
-  if (pluginName == "") then
-    isInPlugin = false
-  end -- if
-
-  if (isInPlugin) then
-    SaveState()
-  else
-    Save("")
-  end -- if
-
-  return DRL_RET_SUCCESS
-end -- dbot.storage.flush
-
-
-function dbot.storage.saveTable(fileName, tableName, theTable, doForceSave)
-  local retval = DRL_RET_SUCCESS
-
-  if (not dbot.init.initializedActive) and (not doForceSave) then
-    dbot.note("Skipping save for \"" .. (tableName or "Unknown") .. "\" table: plugin is not initialized")
-    return DRL_RET_UNINITIALIZED
-  end -- if
-
-  if (fileName == nil) or (fileName == "") then
-    dbot.warn("dbot.storage.saveTable: Missing fileName parameter")
-    return DRL_RET_INVALID_PARAM
-  end -- if
-
-  if (tableName == nil) or (tableName == "") then
-    dbot.warn("dbot.storage.saveTable: Missing tableName parameter")
-    return DRL_RET_INVALID_PARAM
-  end -- if
-
-  if (theTable == nil) then
-    dbot.warn("dbot.storage.saveTable: Missing table parameter")
-    return DRL_RET_INVALID_PARAM
-  end -- if
-
-  local shortName = string.gsub(fileName, ".*\\", "")
-  dbot.debug("dbot.storage.saveTable: Saving \"@G" .. shortName .. "@W\"")
-
-  local fileData = "\n" .. serialize.save(tableName, theTable) 
-  local fileHash = utils.hash((fileData or "") .. dbot.storage.fileVersion)
-
-  local f, errString, errNum = io.open(fileName, "w+")
-  if (f == nil) then
-    dbot.warn("dbot.storage.saveTable: Failed to save file: @R" .. (errString or "unknown error") .. "@W")
-  else
-    assert(f:write(dbot.storage.fileVersion .. "\n", fileHash, fileData),
-           "dbot.storage.saveTable failed write to file \"" .. (fileName or "nil") .. "\"")
-    assert(f:flush(), "dbot.storage.saveTable failed flush to file \"" .. (fileName or "nil") .. "\"")
-    assert(f:close(), "dbot.storage.saveTable failed close to file \"" .. (fileName or "nil") .. "\"")
-  end -- if
-
-  return retval
-end -- dbot.storage.saveTable
-
-
-function dbot.storage.loadTable(fileName, resetFn)
-  local retval = DRL_RET_SUCCESS
-
-  if (fileName == nil) or (fileName == "") or (resetFn == nil) then
-    dbot.warn("dbot.storage.loadTable: Missing parameter")
-    return DRL_RET_INVALID_PARAM
-  end -- if
-
-  --TODO: possibly replace spaces in file name with "\ "?
-
-  local shortName = string.gsub(fileName, ".*\\", "")
-  dbot.debug("dbot.storage.loadTable: Loading \"@G" .. shortName .. "@W\"")
-
-  local f = io.open(fileName, "r")
-  if (f ~= nil) then
-    local fileVersion, fileHash, savedState = f:read("*l", dbot.storage.hashChars, "*a")
-    if (fileVersion == nil) then
-      dbot.error("dbot.storage.loadTable: failed to read table from file \"@R" .. fileName ..
-                 "@W\": OS reported \"" .. (fileHash or "nil") .. "\", err=" .. (savedState or "nil"))
-      resetFn()
-      return DRL_RET_INTERNAL_ERROR
-
-    elseif (fileHash ~= utils.hash((savedState or "") .. fileVersion)) then
-      dbot.error("dbot.storage.loadTable: failed to load table from file \"@R" .. fileName ..
-                 "@W\": file is corrupted -- see \"dinv help backup\" to restore from a backup)")
-      resetFn()
-      return DRL_RET_INTERNAL_ERROR
-    end -- if
-
-    -- This is a placeholder for if/when we ever change the format of our saved state files
-    if (tonumber(fileVersion or "") ~= tonumber(dbot.storage.fileVersion or "")) then
-      dbot.error("dbot.storage.loadTable: File \"@G" .. fileName .. "@W\" uses an old file format")
-      return DRL_RET_UNSUPPORTED
-    end -- if
-
-    loadstring(savedState)()
-
-    local retSuccess, errMsg, errCode = f:close()
-    if (retSuccess ~= true) then
-      dbot.error("dbot.storage.loadTable: Closing file \"" .. (fileName or "nil") ..
-                 "\" reported \"" .. (errMsg or "nil") .. "\", err=" .. (errCode or "nil"))
-    end -- if
-  else
-    retval = resetFn()
-  end -- if
-
-  return retval
-end -- dbot.storage.loadTable
 
 
 ----------------------------------------------------------------------------------------------------
@@ -2658,8 +2482,6 @@ dbot.wish.table   = {}
 dbot.wish.init    = {}
 dbot.wish.trigger = {}
 dbot.wish.timer   = {}
-
-dbot.wish.name = "dbot-wish.state"
 
 dbot.wish.trigger.startName = "drlDbotWishTriggerStart"
 dbot.wish.trigger.itemName  = "drlDbotWishTriggerItem"
