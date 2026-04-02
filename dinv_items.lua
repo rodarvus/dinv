@@ -4488,6 +4488,43 @@ function inv.items.organize.cleanupCR()
     return inv.tags.stop(invTagsOrganize, endTag, retval)
   end -- if
 
+  -- Pre-scan: detect items that match organize queries for multiple containers and warn the user
+  local itemToContainers = {}  -- itemId → { {containerId, containerName, query}, ... }
+  for objId, _ in pairs(inv.items.table) do
+    local organizeQuery = inv.items.getStatField(objId, invQueryKeyOrganize) or ""
+    if (organizeQuery ~= "") then
+      local containerIdArray, scanRetval = inv.items.searchCR(organizeQuery)
+      if (scanRetval == DRL_RET_SUCCESS) then
+        local containerName = inv.items.getField(objId, invFieldColorName) or "Unknown"
+        for _, invId in ipairs(invIdArray) do
+          for _, containerId in ipairs(containerIdArray) do
+            if (invId == containerId) and
+               (inv.items.getStatField(invId, invStatFieldType) ~= invmon.typeStr[invmonTypeContainer]) then
+              if not itemToContainers[invId] then
+                itemToContainers[invId] = {}
+              end
+              table.insert(itemToContainers[invId], {
+                containerId = objId,
+                containerName = containerName,
+                query = organizeQuery,
+              })
+            end
+          end
+        end
+      end
+    end
+  end
+
+  for itemId, containers in pairs(itemToContainers) do
+    if #containers > 1 then
+      local itemName = inv.items.getField(itemId, invFieldColorName) or "Unknown"
+      dbot.warn("Item \"" .. itemName .. "@W\" matches organize queries for multiple containers:")
+      for _, c in ipairs(containers) do
+        dbot.print("  \"" .. c.containerName .. "@W\" (" .. c.query .. ")")
+      end
+    end
+  end
+
   -- For each container that has an organization query associated with it, find all items that
   -- match that query.  Any item that appears in both the container's ID array and the inventory
   -- ID array belongs to the container and should be moved there.

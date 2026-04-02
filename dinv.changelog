@@ -2,6 +2,17 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0039] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Added organize overlap detection. When running "dinv organize",
+           items that match organize queries for multiple containers now
+           produce a warning showing which containers conflict. Items are
+           still organized (first-match wins) but the user is informed of
+           ambiguous placement.]]
+  }
+}
+
 dbot.changelog[3.0038] =
 {
   { change = drlDbotChangeLogTypeNew,
