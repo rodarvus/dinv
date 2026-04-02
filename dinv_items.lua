@@ -5773,6 +5773,7 @@ function inv.items.trigger.invmon(action, objId, containerId, wearLoc)
       end -- if
     end -- if
 
+    inv.items.setField(objId, invFieldHomeContainer, containerId)
     retval = inv.items.setField(objId, invFieldObjLoc, containerId)
 
   elseif (action == invmonActionConsumed) then

@@ -2,6 +2,18 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0036] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed items not being put back into organized containers after
+           "dinv set wear". The homeContainer field was only set when items
+           were taken OUT of a container, not when put INTO one. Items
+           identified while already inside a container had no homeContainer,
+           causing them to go to main inventory instead of back to the bag.
+           Now homeContainer is set on both put and remove operations.]]
+  }
+}
+
 dbot.changelog[3.0035] =
 {
   { change = drlDbotChangeLogTypeFix,
