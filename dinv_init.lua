@@ -631,7 +631,7 @@ function inv.reset(moduleNames, endTag)
   local retval = DRL_RET_SUCCESS
   local numModulesReset = 0
 
-  if (moduleNames == nil) or (modulesNames == "") then
+  if (moduleNames == nil) or (moduleNames == "") then
     dbot.warn("inv.reset: missing module names to reset")
   end -- if
 

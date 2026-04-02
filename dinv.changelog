@@ -2,6 +2,14 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0026] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed typo in inv.reset(): "modulesNames" should be "moduleNames".
+           The empty-string guard never triggered due to the misspelling.]]
+  }
+}
+
 dbot.changelog[3.0025] =
 {
   { change = drlDbotChangeLogTypeFix,
