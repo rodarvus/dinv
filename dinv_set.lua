@@ -102,24 +102,70 @@ end -- inv.set.fini
 
 
 function inv.set.save()
-  local retval = dbot.storage.saveTable(dbot.backup.getCurrentDir() .. inv.set.stateName,
-                                        "inv.set.table", inv.set.table)
-  if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
-    dbot.warn("inv.set.save: Failed to save set table: " .. dbot.retval.getString(retval))
-  end -- if
+  local db = dinv_db.handle
+  if not db then return DRL_RET_UNINITIALIZED end
 
-  return retval
+  if not inv.set.table then return DRL_RET_UNINITIALIZED end
+
+  -- Delete all existing set rows and re-insert
+  db:exec("DELETE FROM sets")
+
+  for priorityName, levels in pairs(inv.set.table) do
+    for level, equipSet in pairs(levels) do
+      for wearLoc, itemData in pairs(equipSet) do
+        local query = string.format(
+          "INSERT INTO sets (priority_name, level, wear_loc, obj_id, score) VALUES (%s, %d, %s, %s, %s)",
+          dinv_db.fixsql(priorityName),
+          level,
+          dinv_db.fixsql(wearLoc),
+          dinv_db.fixnum(itemData.id),
+          dinv_db.fixnum(itemData.score))
+        db:exec(query)
+        if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+          dbot.warn("inv.set.save: Failed to save set " .. priorityName .. "[" .. level .. "]")
+          return DRL_RET_INTERNAL_ERROR
+        end
+      end
+    end
+  end
+
+  return DRL_RET_SUCCESS
 end -- inv.set.save
 
 
 function inv.set.load()
-  local retval = dbot.storage.loadTable(dbot.backup.getCurrentDir() .. inv.set.stateName, inv.set.reset)
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("inv.set.load: Failed to load table from file \"@R" .. 
-              dbot.backup.getCurrentDir() .. inv.set.stateName .. "@W\": " .. dbot.retval.getString(retval))
-  end -- if
+  local db = dinv_db.handle
+  if not db then
+    inv.set.reset()
+    return DRL_RET_SUCCESS
+  end
 
-  return retval
+  -- Check if any set rows exist
+  local count = 0
+  for row in db:nrows("SELECT COUNT(*) as cnt FROM sets") do
+    count = row.cnt
+  end
+
+  if count == 0 then
+    inv.set.table = {}
+    return DRL_RET_SUCCESS
+  end
+
+  inv.set.table = {}
+  for row in db:nrows("SELECT priority_name, level, wear_loc, obj_id, score FROM sets") do
+    if not inv.set.table[row.priority_name] then
+      inv.set.table[row.priority_name] = {}
+    end
+    if not inv.set.table[row.priority_name][row.level] then
+      inv.set.table[row.priority_name][row.level] = {}
+    end
+    inv.set.table[row.priority_name][row.level][row.wear_loc] = {
+      id    = row.obj_id,
+      score = row.score,
+    }
+  end
+
+  return DRL_RET_SUCCESS
 end -- inv.set.load
 
 

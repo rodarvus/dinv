@@ -2,6 +2,14 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0013] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Migrate equipment set storage to SQLite. Equipment sets (per
+           priority, level, and wear location) now persist in the sets table.]]
+  }
+}
+
 dbot.changelog[3.0012] =
 {
   { change = drlDbotChangeLogTypeNew,
