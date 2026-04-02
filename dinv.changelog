@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0012] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Migrate priority storage to SQLite. Equipment priorities and their
+           level-range blocks (with all stat weights and location/damtype
+           exclusions) now persist in the priorities and priority_blocks tables.]]
+  }
+}
+
 dbot.changelog[3.0011] =
 {
   { change = drlDbotChangeLogTypeNew,

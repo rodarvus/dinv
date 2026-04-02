@@ -78,41 +78,149 @@ function inv.priority.fini(doSaveState)
 end -- inv.priority.fini
 
 
-function inv.priority.save()
-  local retval = dbot.storage.saveTable(dbot.backup.getCurrentDir() .. inv.priority.stateName,
-                                        "inv.priority.table", inv.priority.table)
-  if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
-    dbot.warn("inv.priority.save: Failed to save priority table: " .. dbot.retval.getString(retval))
-  end -- if
+-- Mapping between Lua priority keys and SQL column names.
+-- Location exclusions use "excl_" prefix, damtype exclusions use "excl_dam_" prefix.
+-- Normal stat weights map to identically-named columns.
+inv.priority.luaToSql = {}
+inv.priority.sqlToLua = {}
 
-  return retval
+-- Build mapping from inv.priority.fieldTable (populated at load time via dinv_data.lua dofile).
+-- This function is called once at the end of this file after fieldTable is defined.
+function inv.priority.buildColumnMap()
+  -- Location exclusion names (the ~ prefixed keys that disable wear locations)
+  local locationExclusions = {
+    ["~lightEq"] = true, ["~head"] = true, ["~eyes"] = true, ["~lear"] = true,
+    ["~rear"] = true, ["~neck1"] = true, ["~neck2"] = true, ["~back"] = true,
+    ["~medal1"] = true, ["~medal2"] = true, ["~medal3"] = true, ["~medal4"] = true,
+    ["~torso"] = true, ["~body"] = true, ["~waist"] = true, ["~arms"] = true,
+    ["~lwrist"] = true, ["~rwrist"] = true, ["~hands"] = true, ["~lfinger"] = true,
+    ["~rfinger"] = true, ["~legs"] = true, ["~feet"] = true, ["~shield"] = true,
+    ["~wielded"] = true, ["~second"] = true, ["~hold"] = true, ["~float"] = true,
+    ["~above"] = true, ["~portal"] = true, ["~sleeping"] = true,
+  }
+
+  for _, entry in ipairs(inv.priority.fieldTable) do
+    local luaKey = entry[1]
+    local sqlCol
+
+    if locationExclusions[luaKey] then
+      -- Location exclusion: ~hold → excl_hold
+      sqlCol = "excl_" .. luaKey:sub(2)
+    elseif luaKey:sub(1, 1) == "~" then
+      -- Damtype exclusion: ~slash → excl_dam_slash
+      sqlCol = "excl_dam_" .. luaKey:sub(2)
+    else
+      -- Normal stat weight: str → str
+      sqlCol = luaKey
+    end
+
+    inv.priority.luaToSql[luaKey] = sqlCol
+    inv.priority.sqlToLua[sqlCol] = luaKey
+  end
+end
+
+
+function inv.priority.save()
+  local db = dinv_db.handle
+  if not db then return DRL_RET_UNINITIALIZED end
+
+  if not inv.priority.table then return DRL_RET_UNINITIALIZED end
+
+  -- Delete all existing priority data and re-insert
+  db:exec("DELETE FROM priority_blocks")
+  db:exec("DELETE FROM priorities")
+
+  for priorityName, blocks in pairs(inv.priority.table) do
+    -- Insert the priority name
+    local query = string.format("INSERT INTO priorities (name) VALUES (%s)",
+                                dinv_db.fixsql(priorityName))
+    db:exec(query)
+    if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+      dbot.warn("inv.priority.save: Failed to save priority " .. priorityName)
+      return DRL_RET_INTERNAL_ERROR
+    end
+
+    local priorityId = db:last_insert_rowid()
+
+    -- Insert each block
+    for blockIdx, block in ipairs(blocks) do
+      -- Build column list and value list from the block's priorities
+      local columns = "priority_id, block_index, min_level, max_level"
+      local values = string.format("%d, %d, %d, %d",
+                                   priorityId, blockIdx,
+                                   block.minLevel or 1, block.maxLevel or 291)
+
+      for luaKey, weight in pairs(block.priorities) do
+        local sqlCol = inv.priority.luaToSql[luaKey]
+        if sqlCol and weight ~= 0 then
+          columns = columns .. ", " .. sqlCol
+          values = values .. ", " .. tostring(weight)
+        end
+      end
+
+      query = string.format("INSERT INTO priority_blocks (%s) VALUES (%s)", columns, values)
+      db:exec(query)
+      if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+        dbot.warn("inv.priority.save: Failed to save priority block for " .. priorityName)
+        return DRL_RET_INTERNAL_ERROR
+      end
+    end
+  end
+
+  return DRL_RET_SUCCESS
 end -- inv.priority.save
 
 
 function inv.priority.load()
+  local db = dinv_db.handle
+  if not db then
+    inv.priority.reset()
+    return DRL_RET_SUCCESS
+  end
 
-  local retval = dbot.storage.loadTable(dbot.backup.getCurrentDir() .. inv.priority.stateName,
-                                        inv.priority.reset)
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("inv.priority.load: Failed to load table from file \"@R" .. 
-              dbot.backup.getCurrentDir() .. inv.priority.stateName .. "@W\": " ..
-              dbot.retval.getString(retval))
-  end -- if
+  -- Check if any priorities exist
+  local count = 0
+  for row in db:nrows("SELECT COUNT(*) as cnt FROM priorities") do
+    count = row.cnt
+  end
 
-  -- Check if the priority table version we loaded is compatible with the current code
-  if (inv.version.table ~= nil) and (inv.version.table.priorityFormat ~= nil) and
-     (inv.config.table ~= nil)  and (inv.config.table.priorityFormat ~= nil) then
-    if (inv.version.table.priorityFormat.major ~= inv.config.table.priorityFormat.major) and
-       (inv.version.table.priorityFormat.minor ~= inv.config.table.priorityFormat.minor) then
-      -- TODO: This is a placeholder for when (or if?) we ever change the priority table format
-    end -- if
-  else
-    dbot.error("inv.priority.load: Missing inventory version information")
-    retval = DRL_RET_INTERNAL_ERROR
-  end -- if
+  if count == 0 then
+    inv.priority.reset()
+    return DRL_RET_SUCCESS
+  end
 
-  return retval
+  -- Load all priorities
+  inv.priority.table = {}
 
+  for priRow in db:nrows("SELECT id, name FROM priorities") do
+    local priorityName = priRow.name
+    local priorityId = priRow.id
+    inv.priority.table[priorityName] = {}
+
+    -- Load blocks for this priority, ordered by block_index
+    local blockQuery = string.format(
+      "SELECT * FROM priority_blocks WHERE priority_id = %d ORDER BY block_index", priorityId)
+
+    for blockRow in db:nrows(blockQuery) do
+      local block = {
+        minLevel = blockRow.min_level,
+        maxLevel = blockRow.max_level,
+        priorities = {},
+      }
+
+      -- Iterate through the SQL-to-Lua mapping to rebuild the priorities table
+      for sqlCol, luaKey in pairs(inv.priority.sqlToLua) do
+        local val = blockRow[sqlCol]
+        if val and val ~= 0 then
+          block.priorities[luaKey] = val
+        end
+      end
+
+      table.insert(inv.priority.table[priorityName], block)
+    end
+  end
+
+  return DRL_RET_SUCCESS
 end -- inv.priority.load
 
 
@@ -1851,5 +1959,8 @@ inv.priority.fieldTable = {
   { "~water"      , "Set to 1 to disable weapons with damtype water" }
 
 }
+
+-- Build the Lua↔SQL column mapping now that fieldTable is defined
+inv.priority.buildColumnMap()
 
 
