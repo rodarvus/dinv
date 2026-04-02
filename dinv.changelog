@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0033] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Added consume shorthand: "dinv consume <type>" now works as a
+           shortcut for "dinv consume big <type>". For example, "dinv consume
+           fly" will use the best available fly potion for your level.]]
+  }
+}
+
 dbot.changelog[3.0032] =
 {
   { change = drlDbotChangeLogTypeFix,

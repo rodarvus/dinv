@@ -3035,6 +3035,9 @@ function inv.cli.consume.fn(name, line, wildcards)
     inv.consume.buy(itemType, itemNum, container)
   elseif (command == drlConsumeSmall) or (command == drlConsumeBig) then
     inv.consume.use(itemType, command, itemNum, container)
+  elseif (command ~= "") and (inv.consume.table ~= nil) and (inv.consume.table[command] ~= nil) then
+    -- Shorthand: "dinv consume <type>" defaults to "dinv consume big <type>"
+    inv.consume.use(command, drlConsumeBig, tonumber(itemType) or 1, itemName)
   else
     inv.cli.consume.usage()
   end -- if
@@ -3044,7 +3047,7 @@ end -- inv.cli.consume.fn
 
 function inv.cli.consume.usage()
   dbot.print("@W    " .. pluginNameCmd .. " consume @G[add | remove | display | " ..
-             "buy | small | big] <type> <name or quantity> @Y<container>@w") 
+             "buy | small | big | <type>] <type or name or quantity> @Y<container>@w")
 end -- inv.cli.consume.usage
 
 
