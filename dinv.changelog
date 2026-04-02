@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0041] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Consume buy now shows which item and level was selected before
+           running to the shop. Previously the selection was silent and users
+           had no idea which item would be purchased.]]
+  }
+}
+
 dbot.changelog[3.0040] =
 {
   { change = drlDbotChangeLogTypeFix,

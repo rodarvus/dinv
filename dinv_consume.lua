@@ -446,6 +446,9 @@ function inv.consume.buy(typeName, numItems, containerName)
     return DRL_RET_MISSING_ENTRY
   end -- if
 
+  dbot.info("Buying " .. numItems .. "x \"@G" .. bestEntry.name .. "@W\" (Level " ..
+            bestEntry.level .. ") from room " .. bestEntry.room)
+
   if (inv.consume.buyPkg ~= nil) then
     dbot.info("Skipping request to buy consumable \"" .. typeName .. "\": another request is in progress")
     return DRL_RET_BUSY
