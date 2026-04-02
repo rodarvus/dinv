@@ -2,6 +2,18 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0016] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Added 10 missing affectMod columns to the items and cache_recent
+           SQLite tables and the item column mapping. Without these columns,
+           effect pseudo-stats (sanctuary, haste, flying, invis, regeneration,
+           detectinvis, detecthidden, detectevil, detectgood, detectmagic)
+           were lost on plugin reload, breaking equipment set scoring for
+           items with beneficial effects.]]
+  }
+}
+
 dbot.changelog[3.0015] =
 {
   { change = drlDbotChangeLogTypeNew,
