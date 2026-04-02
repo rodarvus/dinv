@@ -1,0 +1,382 @@
+----------------------------------------------------------------------------------------------------
+-- Module to track which tags are enabled
+--
+-- Tags add opening and terminating strings to the output.  They surround a particular operation
+-- so that the user can know when the operation starts, when it stops, and what the final return
+-- value of the operation is.
+--
+-- inv.tags.init.atActive()
+-- inv.tags.fini(doSaveState)
+--
+-- inv.tags.save()
+-- inv.tags.load()
+-- inv.tags.reset()
+--
+-- inv.tags.enable()
+-- inv.tags.disable()
+-- inv.tags.isEnabled()
+--
+-- inv.tags.display()
+-- inv.tags.set(tagNames, tagValue)
+--
+-- inv.tags.start(moduleName, startTag)
+-- inv.tags.stop(moduleName, endTag, returnValue)
+--
+-- inv.tags.new(tagMsg, infoMsg, setupFn, cleanupFn)
+--
+-- inv.tags.cleanup.timed(tag, retval)
+-- inv.tags.cleanup.info(tag, retval)
+----------------------------------------------------------------------------------------------------
+
+inv.tags           = {}
+inv.tags.init      = {}
+inv.tags.table     = {}
+inv.tags.cleanup   = {}
+inv.tags.stateName = "inv-tags.state"
+
+invTagsRefresh   = "refresh"
+invTagsBuild     = "build"
+invTagsSearch    = "search" 
+invTagsGet       = "get"
+invTagsPut       = "put"
+invTagsStore     = "store"
+invTagsKeyword   = "keyword"
+invTagsOrganize  = "organize"
+invTagsSet       = "set"
+invTagsSnapshot  = "snapshot"
+invTagsPriority  = "priority"
+invTagsAnalyze   = "analyze"
+invTagsUsage     = "usage"
+invTagsCompare   = "compare"
+invTagsCovet     = "covet"
+invTagsBackup    = "backup"
+invTagsReset     = "reset"
+invTagsForget    = "forget"
+invTagsNotify    = "notify"
+invTagsCache     = "cache"
+invTagsVersion   = "version"
+invTagsHelp      = "help"
+
+inv.tags.modules = invTagsBuild     .. " " ..
+                   invTagsRefresh   .. " " ..
+                   invTagsSearch    .. " " ..
+                   invTagsGet       .. " " ..
+                   invTagsPut       .. " " ..
+                   invTagsStore     .. " " ..
+                   invTagsKeyword   .. " " ..
+                   invTagsOrganize  .. " " ..
+                   invTagsSet       .. " " ..
+                   invTagsSnapshot  .. " " ..
+                   invTagsPriority  .. " " ..
+                   invTagsAnalyze   .. " " ..
+                   invTagsUsage     .. " " ..
+                   invTagsCompare   .. " " ..
+                   invTagsCovet     .. " " ..
+                   invTagsBackup    .. " " ..
+                   invTagsReset     .. " " ..
+                   invTagsForget    .. " " ..
+                   invTagsNotify    .. " " ..
+                   invTagsCache     .. " " ..
+                   invTagsVersion   .. " " ..
+                   invTagsHelp
+
+
+drlInvTagOn      = "on"
+drlInvTagOff     = "off"
+
+
+function inv.tags.init.atActive()
+  local retval = DRL_RET_SUCCESS
+
+  -- Pull in what we already know
+  retval = inv.tags.load()
+  if (retval ~= DRL_RET_SUCCESS) then
+    dbot.warn("inv.tags.init.atActive: Failed to load tags data: " .. dbot.retval.getString(retval))
+  end -- if
+
+  return retval
+end -- inv.tags.init.atActive
+
+
+function inv.tags.fini(doSaveState)
+  local retval = DRL_RET_SUCCESS
+
+  if (doSaveState) then
+    -- Save our current tags data
+    retval = inv.tags.save()
+    if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
+      dbot.warn("inv.tags.fini: Failed to save tags data: " .. dbot.retval.getString(retval))
+    end -- if
+  end -- if
+
+  return retval
+end -- inv.tags.fini
+
+
+function inv.tags.save()
+  local retval = dbot.storage.saveTable(dbot.backup.getCurrentDir() .. inv.tags.stateName,
+                                        "inv.tags.table", inv.tags.table)
+  if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
+    dbot.warn("inv.tags.save: Failed to save tags table: " .. dbot.retval.getString(retval))
+  end -- if
+
+  return retval
+end -- inv.tags.save
+
+
+function inv.tags.load()
+  local retval = dbot.storage.loadTable(dbot.backup.getCurrentDir() .. inv.tags.stateName, inv.tags.reset)
+  if (retval ~= DRL_RET_SUCCESS) then
+    dbot.warn("inv.tags.load: Failed to load table from file \"@R" .. 
+              dbot.backup.getCurrentDir() .. inv.tags.stateName .. "@W\": " .. dbot.retval.getString(retval))
+  end -- if
+
+  return retval
+end -- inv.tags.load
+
+
+function inv.tags.reset()
+  inv.tags.table = {}
+
+  for tag in inv.tags.modules:gmatch("%S+") do
+    inv.tags.table[tag] = drlInvTagOff
+  end -- for
+
+  -- This is a top-level flag enabling or disabling all other tags
+  inv.tags.table["tags"] = drlInvTagOn
+
+  local retval = inv.tags.save()
+  if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
+    dbot.warn("inv.tags.reset: Failed to save tags persistent data: " .. dbot.retval.getString(retval))
+  end -- if
+
+  return retval
+end -- inv.tags.reset
+
+
+function inv.tags.enable()
+  inv.tags.table["tags"] = drlInvTagOn
+  dbot.info("Tags module is @GENABLED@W (specific tags may or may not be enabled)")
+  return inv.tags.save()
+end -- inv.tags.enable
+
+
+function inv.tags.disable()
+  inv.tags.table["tags"] = drlInvTagOff
+  dbot.info("Tags module is @RDISABLED@W (individual tag status is ignored when the module is disabled)")
+  return inv.tags.save()
+end -- inv.tags.disable
+
+
+function inv.tags.isEnabled()
+  if (inv.tags.table ~= nil) and (inv.tags.table["tags"] ~= nil) and
+     (inv.tags.table["tags"] == drlInvTagOn) then
+    return true
+  else
+    return false
+  end -- if
+end -- inv.tags.isEnabled
+
+
+function inv.tags.display()
+  local retval = DRL_RET_SUCCESS
+  local isEnabled
+
+  if inv.tags.isEnabled() then
+    isEnabled = "@GENABLED@W"
+  else
+    isEnabled = "@RDISABLED@W"
+  end -- if
+
+  dbot.print("@y" .. pluginNameAbbr .. "@W : tags are " .. isEnabled)
+  dbot.print("@WSupported tags")
+
+  for tag in inv.tags.modules:gmatch("%S+") do
+    local tagValue = inv.tags.table[tag] or "uninitialized"
+    local valuePrefix
+
+    if (tagValue == drlInvTagOn) then
+      valuePrefix = "@G"
+    else
+      valuePrefix = "@R"
+    end -- if
+
+    dbot.print(string.format("@C  %10s@W = ", tag) .. valuePrefix .. tagValue)
+  end -- for
+
+  return retval
+end -- inv.tags.display
+
+
+function inv.tags.set(tagNames, tagValue)
+  local retval = DRL_RET_SUCCESS
+
+  if (tagValue ~= drlInvTagOn) and (tagValue ~= drlInvTagOff) then
+    dbot.warn("inv.tags.set: Invalid tag value \"" .. (tagValue or "nil") .. "\"")
+    return DRL_RET_INVALID_PARAM
+  end -- if
+
+  for tag in tagNames:gmatch("%S+") do
+    if dbot.isWordInString(tag, inv.tags.modules) then
+      inv.tags.table[tag] = tagValue
+
+      local valuePrefix
+      if (tagValue == drlInvTagOn) then
+        valuePrefix = "@G"
+      else
+        valuePrefix = "@R"
+      end -- if
+
+      dbot.note("Set tag \"@C" .. tag .. "@W\" to \"" .. valuePrefix .. tagValue .. "@W\"")
+    else
+      dbot.warn("inv.tags.set: Failed to set tag \"@C" .. tag .. "@W\": Unsupported tag")
+      retval = DRL_RET_INVALID_PARAM
+    end -- if
+  end -- for
+
+  local saveRetval = inv.tags.save()
+  if (saveRetval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
+    dbot.warn("inv.tags.set: Failed to save tags persistent data: " .. dbot.retval.getString(saveRetval))
+  end -- if
+
+  -- If the only problem that arose was with the save, return the save's return value.  Otherwise,
+  -- return whatever return value we hit while setting the tags.
+  if (retval == DRL_RET_SUCCESS) and (saveRetval ~= DRL_RET_SUCCESS) then
+    return saveRetval
+  else
+    return retval
+  end -- if
+end -- inv.tags.set
+
+
+function inv.tags.start(moduleName, startTag)
+  local retval = DRL_RET_SUCCESS
+
+--[[ TODO: I don't think that we actually want to use this after all.  The problem is that
+           the start tag won't be displayed until any pending commands that are queued up on
+           the server actually complete.  We could wait until we get confirmation that the
+           command finished and our completion message was displayed before we continue.
+           However, that would add quite a bit of latency and overhead for the user.
+
+           Also, I'm not convinced that seeing a start tag is that helpful.  If someone kicks
+           off a command, they probably are much more interested in knowing when it is done
+           (i.e., seeing the end tag) than knowing that they made the original request -- which
+           really shouldn't be a surprise since they are the ones that made the request ;-)
+
+  if (moduleName ~= nil) and (startTag ~= nil) and (startTag ~= "") and 
+     (inv.tags.table ~= nil) and (inv.tags.table[moduleName] == drlInvTagOn) and
+     inv.tags.isEnabled() then
+    retval = dbot.execute.fast.command("echo " .. "{" .. startTag .. "}")
+  end -- if
+--]]
+
+  return retval
+end -- inv.tags.start
+
+
+function inv.tags.stop(moduleName, endTag, retval)
+  if (retval == nil) then
+    retval = DRL_RET_INTERNAL_ERROR
+  end -- if
+
+  if (endTag == nil) then
+    return retval
+  end -- if
+
+  -- Run the end tag's cleanup callback function (if one exists).  Otherwise run the default
+  -- cleanup callback function.
+  if (endTag.cleanupFn ~= nil) then
+    endTag.cleanupFn(endTag, retval)
+  else
+    inv.tags.cleanup.info(endTag, retval)
+  end -- if
+
+  -- Output the end tag's message if the specified module tag is enabled
+  if (moduleName ~= nil) and (endTag.tagMsg ~= nil) and (endTag.tagMsg ~= "") and 
+     (inv.tags.table ~= nil) and (inv.tags.table[moduleName] == drlInvTagOn) and
+     inv.tags.isEnabled() then
+    local tagMsg = "{/" .. endTag.tagMsg .. ":" .. dbot.getTime() - endTag.startTime .. ":" .. retval .. 
+                   ":" .. dbot.retval.getString(retval) .. "}"
+    local charState = dbot.gmcp.getState()
+
+    -- If we are in a state that allows echo'ing messages, send the end tag.  Otherwise, warn the
+    -- user.
+    if (charState == dbot.stateActive)   or
+       (charState == dbot.stateCombat)   or
+       (charState == dbot.stateSleeping) or
+       (charState == dbot.stateTBD)      or
+       (charState == dbot.stateResting)  or
+       (charState == dbot.stateRunning)  then
+      dbot.execute.fast.command("echo " .. tagMsg)
+    else
+      dbot.warn("You are in state \"@C" .. dbot.gmcp.getStateString(charState) ..
+                "@W\": Could not echo end tag \"@G" .. tagMsg .. "@W\"")
+    end -- if
+  end -- if
+
+  return retval
+end -- inv.tags.end
+
+
+function inv.tags.new(tagMsg, infoMsg, setupFn, cleanupFn)
+  local newTag = {}
+
+  newTag.tagMsg    = tagMsg or ""
+  newTag.infoMsg   = infoMsg or ""
+  newTag.cleanupFn = cleanupFn
+  newTag.startTime = dbot.getTime()
+
+  if (setupFn ~= nil) then
+    setupFn(newTag)
+  end -- if
+
+  return newTag
+end -- inv.tags.new
+
+
+function inv.tags.cleanup.timed(tag, retval)
+  if (tag == nil) or (retval == nil) then
+    return
+  end -- if
+
+  -- If an info message is included in the end tag, merge it with the time.  Otherwise just
+  -- print the execution time.
+  local executionTime = dbot.getTime() - tag.startTime
+  local minutes = math.floor(executionTime / 60)
+  local seconds = executionTime - (minutes * 60)
+  local timeString = ""
+
+  if (minutes == 1) then
+    timeString = minutes .. " minute, "
+  elseif (minutes > 1) then
+    timeString = minutes .. " minutes, "
+  end -- if
+
+  if (seconds == 1) then
+    timeString = timeString .. seconds .. " second"
+  else
+    timeString = timeString .. seconds .. " seconds"
+  end -- if
+
+  if (tag.infoMsg ~= nil) and (tag.infoMsg ~= "") then
+    dbot.info(tag.infoMsg .. " (@C" .. timeString .. "@W): " .. dbot.retval.getString(retval))
+  else
+    dbot.info("Total time for command: " .. timeString)
+  end -- if
+
+end -- inv.tags.cleanup.timed
+
+
+function inv.tags.cleanup.info(tag, retval)
+  if (tag == nil) or (retval == nil) then
+    return
+  end -- if
+
+  -- Print the "info" message if one is included in the end tag
+  if (tag.infoMsg ~= nil) and (tag.infoMsg ~= "") then
+    dbot.info(tag.infoMsg .. ": " .. dbot.retval.getString(retval))
+  end -- if
+
+end -- inv.tags.cleanup.info
+
+
