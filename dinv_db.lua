@@ -224,6 +224,132 @@ dinv_db.envelopeColumns = {
 }
 
 
+-- SQL-translatable field sets for search pre-filtering.
+-- Partial match fields use LIKE '%value%'; all others use exact match or numeric comparison.
+dinv_db.partialMatchFields = {
+  name = true, leadsto = true, foundat = true,
+}
+
+-- Fields that require Lua post-filtering (not translatable to simple SQL).
+dinv_db.luaOnlyFields = {
+  keywords = true, flags = true, wearable = true, clan = true, spells = true,
+  custom = true, rname = true, rloc = true, rlocation = true,
+  location = true, loc = true,  -- location uses invFieldObjLoc, not a stat column
+}
+
+-- Pre-filter a single query array via SQL. Returns a set (table) of obj_ids
+-- that match the SQL-translatable criteria, or nil if no SQL filtering is possible.
+-- kvArray is { {key1, val1}, {key2, val2}, ... }
+function dinv_db.searchItems(kvArray)
+  local db = dinv_db.handle
+  if not db then return nil end
+  if not kvArray or #kvArray == 0 then return nil end
+
+  local conditions = {}
+
+  for _, kv in ipairs(kvArray) do
+    local key = string.lower(kv[1])
+    local value = kv[2]
+    local valueNum = tonumber(value)
+
+    -- Parse prefix: ~, min, max
+    local invert = false
+    local prefix = nil
+    if key:sub(1, 1) == "~" then
+      invert = true
+      key = key:sub(2)
+    elseif key:sub(1, 3) == "min" then
+      prefix = "min"
+      key = key:sub(4)
+    elseif key:sub(1, 3) == "max" then
+      prefix = "max"
+      key = key:sub(4)
+    end
+
+    -- Skip fields that require Lua handling
+    if dinv_db.luaOnlyFields[key] then
+      -- Can't translate this criterion to SQL; skip it (Lua will handle it)
+
+    elseif prefix == "min" and valueNum then
+      -- Min numeric: column >= value
+      local sqlCol = dinv_db.sqlToLuaStat[key] and key or nil
+      -- Check reverse: maybe the Lua field name maps to a different SQL column
+      for sc, lf in pairs(dinv_db.sqlToLuaStat) do
+        if lf == key then sqlCol = sc; break end
+      end
+      if sqlCol then
+        table.insert(conditions, sqlCol .. " >= " .. tostring(valueNum))
+      end
+
+    elseif prefix == "max" and valueNum then
+      -- Max numeric: column <= value
+      local sqlCol = nil
+      for sc, lf in pairs(dinv_db.sqlToLuaStat) do
+        if lf == key then sqlCol = sc; break end
+      end
+      if sqlCol then
+        table.insert(conditions, sqlCol .. " <= " .. tostring(valueNum))
+      end
+
+    elseif dinv_db.partialMatchFields[key] then
+      -- Partial string match: LIKE '%value%'
+      local sqlCol = nil
+      for sc, lf in pairs(dinv_db.sqlToLuaStat) do
+        if lf == key then sqlCol = sc; break end
+      end
+      if sqlCol then
+        local escaped = value:gsub("'", "''")
+        if invert then
+          table.insert(conditions, "(" .. sqlCol .. " IS NULL OR " .. sqlCol .. " NOT LIKE '%" .. escaped .. "%')")
+        else
+          table.insert(conditions, sqlCol .. " LIKE '%" .. escaped .. "%'")
+        end
+      end
+
+    elseif valueNum then
+      -- Numeric exact match
+      local sqlCol = nil
+      for sc, lf in pairs(dinv_db.sqlToLuaStat) do
+        if lf == key then sqlCol = sc; break end
+      end
+      if sqlCol then
+        if invert then
+          table.insert(conditions, sqlCol .. " != " .. tostring(valueNum))
+        else
+          table.insert(conditions, sqlCol .. " = " .. tostring(valueNum))
+        end
+      end
+
+    else
+      -- String exact match (case-insensitive)
+      local sqlCol = nil
+      for sc, lf in pairs(dinv_db.sqlToLuaStat) do
+        if lf == key then sqlCol = sc; break end
+      end
+      if sqlCol then
+        local escaped = value:gsub("'", "''")
+        if invert then
+          table.insert(conditions, "(" .. sqlCol .. " IS NULL OR LOWER(" .. sqlCol .. ") != LOWER('" .. escaped .. "'))")
+        else
+          table.insert(conditions, "LOWER(" .. sqlCol .. ") = LOWER('" .. escaped .. "')")
+        end
+      end
+    end
+  end
+
+  -- If no conditions were translatable, return nil (caller will do full scan)
+  if #conditions == 0 then return nil end
+
+  local query = "SELECT obj_id FROM items WHERE " .. table.concat(conditions, " AND ")
+  local candidates = {}
+  for row in db:nrows(query) do
+    candidates[row.obj_id] = true
+  end
+
+  return candidates
+end
+
+
 -- Build an INSERT statement for an item entry into the specified table.
 -- entry is the dinv item structure: { identifyLevel, objectLocation, homeContainer, colorName, stats={...} }
 -- objId is the item's object ID (integer key)

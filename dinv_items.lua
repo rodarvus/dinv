@@ -3122,8 +3122,18 @@ function inv.items.search(arrayOfQueryArrays, allowIgnored)
 
   for _, queryArray in ipairs(arrayOfQueryArrays) do
 
+    -- Pre-filter via SQL for simple criteria (level, type, name, etc.)
+    -- Returns a set of candidate obj_ids, or nil if no SQL filtering is possible
+    local sqlCandidates = dinv_db.searchItems(queryArray)
+
     -- Walk through the inventory table looking for entries that match the requested queries
     for itemId,itemObj in pairs(inv.items.table) do
+
+      -- If SQL pre-filtering produced candidates, skip items not in the set
+      if sqlCandidates and not sqlCandidates[itemId] then
+        -- Item was excluded by SQL; skip Lua matching
+      else
+
       -- Verify that the inventory entry looks reasonable
       assert(itemId ~= nil, "inv.items.search: inventory table key is nil")
       if (itemObj == nil) then
@@ -3322,6 +3332,7 @@ function inv.items.search(arrayOfQueryArrays, allowIgnored)
       if (itemMatches == true) then
         table.insert(idArray, tonumber(itemId))
       end -- if
+      end -- if sqlCandidates skip
     end -- for
   end -- for
 

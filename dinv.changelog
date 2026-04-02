@@ -2,6 +2,18 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0037] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Added hybrid SQL+Lua search. Simple search criteria (level range,
+           type, name, exact/partial string matches) are pre-filtered via SQL
+           to reduce the candidate set before Lua handles complex features
+           (keyword/flag word matching, spells, relative names, inversions on
+           word-match fields). Fully backward compatible — all existing query
+           syntax works unchanged.]]
+  }
+}
+
 dbot.changelog[3.0036] =
 {
   { change = drlDbotChangeLogTypeFix,
