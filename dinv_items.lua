@@ -418,29 +418,52 @@ end -- inv.items.fini
 
 
 function inv.items.save()
-  local retval = dbot.storage.saveTable(dbot.backup.getCurrentDir() .. inv.items.stateName,
-                                        "inv.items.table", inv.items.table)
-  if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
-    dbot.warn("inv.items.save: Failed to save items table: " .. dbot.retval.getString(retval))
-  end -- if
+  local db = dinv_db.handle
+  if not db then return DRL_RET_UNINITIALIZED end
 
-  return retval
+  if not inv.items.table then return DRL_RET_UNINITIALIZED end
+
+  -- Delete all existing item rows and re-insert
+  db:exec("DELETE FROM items")
+
+  for objId, entry in pairs(inv.items.table) do
+    local query = dinv_db.buildItemInsert("items", objId, entry)
+    db:exec(query)
+    if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+      dbot.warn("inv.items.save: Failed to save item " .. tostring(objId))
+      return DRL_RET_INTERNAL_ERROR
+    end
+  end
+
+  return DRL_RET_SUCCESS
 end -- inv.items.save
 
 
 function inv.items.load()
-  local retval = dbot.storage.loadTable(dbot.backup.getCurrentDir() .. inv.items.stateName, inv.items.reset)
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("inv.items.load: Failed to load table from file \"@R" .. 
-              dbot.backup.getCurrentDir() .. inv.items.stateName .. "@W\": " .. dbot.retval.getString(retval))
-  end -- if
+  local db = dinv_db.handle
+  if not db then
+    inv.items.reset()
+    return DRL_RET_SUCCESS
+  end
 
-  if (inv.items.table == nil) then
-    dbot.error("inv.items.load: Failed to load inventory table")
-    return DRL_RET_INTERNAL_ERROR
-  end -- if
+  -- Check if any items exist
+  local count = 0
+  for row in db:nrows("SELECT COUNT(*) as cnt FROM items") do
+    count = row.cnt
+  end
 
-  return retval
+  if count == 0 then
+    inv.items.table = {}
+    return DRL_RET_SUCCESS
+  end
+
+  inv.items.table = {}
+  for row in db:nrows("SELECT * FROM items") do
+    local entry = dinv_db.rowToItemEntry(row)
+    inv.items.table[row.obj_id] = entry
+  end
+
+  return DRL_RET_SUCCESS
 end -- inv.items.load
 
 
