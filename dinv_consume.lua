@@ -170,8 +170,6 @@ function inv.consume.add(typeName, itemName)
     return DRL_RET_INVALID_PARAM
   end -- if
 
-  itemLevel = tonumber(itemLevel or "")
-
   if (inv.consume.addPkg ~= nil) then
     dbot.info("Skipping request to add a consumable item: another request is in progress")
     return DRL_RET_BUSY
@@ -180,8 +178,8 @@ function inv.consume.add(typeName, itemName)
   inv.consume.addPkg       = {}
   inv.consume.addPkg.type  = typeName
   inv.consume.addPkg.name  = itemName
-  inv.consume.addPkg.level = itemLevel
-  inv.consume.addPkg.room  = roomId
+  inv.consume.addPkg.level = nil  -- resolved during addCR from identified item
+  inv.consume.addPkg.room  = nil  -- resolved during addCR from current room
 
   wait.make(inv.consume.addCR)
 
@@ -237,8 +235,8 @@ function inv.consume.addCR()
   if (retval == DRL_RET_SUCCESS) then
     retval = dbot.callback.wait(resultData, inv.items.timer.idTimeoutThresholdSec)
     if (retval ~= DRL_RET_SUCCESS) then
-      dbot.warn("inv.consume.addCR: Appraisal timed out for shopkeeper item" .. 
-                inv.consume.addPkg.auctionNum)
+      dbot.warn("inv.consume.addCR: Appraisal timed out for shopkeeper item " ..
+                (inv.consume.addPkg.name or "unknown"))
     end -- if
   end -- if
 

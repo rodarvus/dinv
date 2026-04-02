@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0029] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed consume module bugs. Removed references to undefined globals
+           itemLevel and roomId in inv.consume.add() (always nil, handled
+           gracefully by addCR fallback). Fixed reference to nonexistent
+           auctionNum field in error message.]]
+  }
+}
+
 dbot.changelog[3.0028] =
 {
   { change = drlDbotChangeLogTypeFix,
