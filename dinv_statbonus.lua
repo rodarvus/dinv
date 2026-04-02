@@ -98,44 +98,94 @@ end -- inv.statBonus.fini
 
 
 function inv.statBonus.save()
-  local spellRetval = dbot.storage.saveTable(dbot.backup.getCurrentDir() .. inv.statBonus.stateNameSpells,
-                                             "inv.statBonus.spellBonus", inv.statBonus.spellBonus)
-  if (spellRetval ~= DRL_RET_SUCCESS) and (spellRetval ~= DRL_RET_UNINITIALIZED) then
-    dbot.warn("inv.statBonus.save: Failed to save spellBonus table: " .. dbot.retval.getString(spellRetval))
-  end -- if
+  local db = dinv_db.handle
+  if not db then return DRL_RET_UNINITIALIZED end
 
-  local equipRetval = dbot.storage.saveTable(dbot.backup.getCurrentDir() .. inv.statBonus.stateNameEquip,
-                                             "inv.statBonus.equipBonus", inv.statBonus.equipBonus)
-  if (equipRetval ~= DRL_RET_SUCCESS) and (equipRetval ~= DRL_RET_UNINITIALIZED) then
-    dbot.warn("inv.statBonus.save: Failed to save equipBonus table: " .. dbot.retval.getString(equipRetval))
-  end -- if
+  -- Delete all existing stat bonus rows and re-insert
+  db:exec("DELETE FROM stat_bonuses")
 
-  if (spellRetval ~= DRL_RET_SUCCESS) then
-    return spellRetval
-  else
-    return equipRetval
-  end -- if
+  local stats = { "int", "wis", "luck", "str", "dex", "con" }
 
+  -- Save spell bonuses (ave and max per level)
+  if inv.statBonus.spellBonus then
+    for level, data in pairs(inv.statBonus.spellBonus) do
+      for _, stat in ipairs(stats) do
+        local aveVal = (data.ave and data.ave[stat]) or nil
+        local maxVal = (data.max and data.max[stat]) or nil
+        if aveVal or maxVal then
+          local query = string.format(
+            "INSERT INTO stat_bonuses (bonus_type, level, stat_name, ave_val, max_val) VALUES ('spell', %d, %s, %s, %s)",
+            level, dinv_db.fixsql(stat), dinv_db.fixnum(aveVal), dinv_db.fixnum(maxVal))
+          db:exec(query)
+          if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+            dbot.warn("inv.statBonus.save: Failed to save spell bonus")
+            return DRL_RET_INTERNAL_ERROR
+          end
+        end
+      end
+    end
+  end
+
+  -- Save equipment bonuses (single value per level per stat)
+  if inv.statBonus.equipBonus then
+    for level, data in pairs(inv.statBonus.equipBonus) do
+      for _, stat in ipairs(stats) do
+        local val = data[stat]
+        if val then
+          local query = string.format(
+            "INSERT INTO stat_bonuses (bonus_type, level, stat_name, current_val) VALUES ('equip', %d, %s, %s)",
+            level, dinv_db.fixsql(stat), dinv_db.fixnum(val))
+          db:exec(query)
+          if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+            dbot.warn("inv.statBonus.save: Failed to save equip bonus")
+            return DRL_RET_INTERNAL_ERROR
+          end
+        end
+      end
+    end
+  end
+
+  return DRL_RET_SUCCESS
 end -- inv.statBonus.save
 
 
 function inv.statBonus.load()
+  local db = dinv_db.handle
+  if not db then
+    inv.statBonus.reset()
+  else
+    -- Check if any stat bonus rows exist
+    local count = 0
+    for row in db:nrows("SELECT COUNT(*) as cnt FROM stat_bonuses") do
+      count = row.cnt
+    end
 
-  local spellRetval = dbot.storage.loadTable(dbot.backup.getCurrentDir() .. inv.statBonus.stateNameSpells,
-                                             inv.statBonus.reset)
-  if (spellRetval ~= DRL_RET_SUCCESS) then
-    dbot.warn("inv.statBonus.load: Failed to load spellBonus table from file \"@R" .. 
-              dbot.backup.getCurrentDir() .. inv.statBonus.stateNameSpells .. "@W\": " ..
-              dbot.retval.getString(spellRetval))
-  end -- if
+    if count == 0 then
+      inv.statBonus.spellBonus = {}
+      inv.statBonus.equipBonus = {}
+    else
+      -- Load spell bonuses
+      inv.statBonus.spellBonus = {}
+      for row in db:nrows("SELECT level, stat_name, ave_val, max_val FROM stat_bonuses WHERE bonus_type = 'spell'") do
+        local level = row.level
+        if not inv.statBonus.spellBonus[level] then
+          inv.statBonus.spellBonus[level] = { ave = {}, max = {} }
+        end
+        if row.ave_val then inv.statBonus.spellBonus[level].ave[row.stat_name] = row.ave_val end
+        if row.max_val then inv.statBonus.spellBonus[level].max[row.stat_name] = row.max_val end
+      end
 
-  local equipRetval = dbot.storage.loadTable(dbot.backup.getCurrentDir() .. inv.statBonus.stateNameEquip,
-                                             inv.statBonus.reset)
-  if (equipRetval ~= DRL_RET_SUCCESS) then
-    dbot.warn("inv.statBonus.load: Failed to load equipBonus table from file \"@R" .. 
-              dbot.backup.getCurrentDir() .. inv.statBonus.stateNameEquip .. "@W\": " ..
-              dbot.retval.getString(equipRetval))
-  end -- if
+      -- Load equipment bonuses
+      inv.statBonus.equipBonus = {}
+      for row in db:nrows("SELECT level, stat_name, current_val FROM stat_bonuses WHERE bonus_type = 'equip'") do
+        local level = row.level
+        if not inv.statBonus.equipBonus[level] then
+          inv.statBonus.equipBonus[level] = {}
+        end
+        inv.statBonus.equipBonus[level][row.stat_name] = row.current_val
+      end
+    end
+  end
 
   -- Kick off a timer to continually update the bonuses.  Ideally, we would just call the
   -- inv.statBonus.timer.update() function here.  Unfortunately, that function relies on mushclient
@@ -145,12 +195,7 @@ function inv.statBonus.load()
                   timer_flag.Enabled + timer_flag.Replace + timer_flag.OneShot,
                   "inv.statBonus.set"))
 
-  if (spellRetval ~= DRL_RET_SUCCESS) then
-    return spellRetval
-  else
-    return equipRetval
-  end -- if
-
+  return DRL_RET_SUCCESS
 end -- inv.statBonus.load()
 
 

@@ -2,6 +2,14 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0011] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Migrate stat bonus storage to SQLite. Spell and equipment stat
+           bonuses by level now persist in the stat_bonuses table.]]
+  }
+}
+
 dbot.changelog[3.0010] =
 {
   { change = drlDbotChangeLogTypeNew,
