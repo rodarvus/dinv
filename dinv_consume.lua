@@ -80,27 +80,28 @@ function inv.consume.save()
 
   if not inv.consume.table then return DRL_RET_UNINITIALIZED end
 
-  -- Delete all existing consumable rows and re-insert
-  db:exec("DELETE FROM consumables")
+  return dinv_db.transaction(function()
+    db:exec("DELETE FROM consumables")
 
-  for typeName, items in pairs(inv.consume.table) do
-    for _, item in ipairs(items) do
-      local query = string.format(
-        "INSERT INTO consumables (type_name, level, name, room, full_name) VALUES (%s, %s, %s, %s, %s)",
-        dinv_db.fixsql(typeName),
-        dinv_db.fixnum(item.level),
-        dinv_db.fixsql(item.name),
-        dinv_db.fixsql(item.room),
-        dinv_db.fixsql(item.fullName))
-      db:exec(query)
-      if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
-        dbot.warn("inv.consume.save: Failed to save consumable " .. (item.name or "?"))
-        return DRL_RET_INTERNAL_ERROR
+    for typeName, items in pairs(inv.consume.table) do
+      for _, item in ipairs(items) do
+        local query = string.format(
+          "INSERT INTO consumables (type_name, level, name, room, full_name) VALUES (%s, %s, %s, %s, %s)",
+          dinv_db.fixsql(typeName),
+          dinv_db.fixnum(item.level),
+          dinv_db.fixsql(item.name),
+          dinv_db.fixsql(item.room),
+          dinv_db.fixsql(item.fullName))
+        db:exec(query)
+        if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+          dbot.warn("inv.consume.save: Failed to save consumable " .. (item.name or "?"))
+          return DRL_RET_INTERNAL_ERROR
+        end
       end
     end
-  end
 
-  return DRL_RET_SUCCESS
+    return DRL_RET_SUCCESS
+  end)
 end -- inv.consume.save
 
 

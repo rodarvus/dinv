@@ -183,18 +183,20 @@ function inv.cache.saveRecent()
   local cache = inv.cache.recent.table
   if not cache or not cache.entries then return DRL_RET_UNINITIALIZED end
 
-  db:exec("DELETE FROM cache_recent")
+  return dinv_db.transaction(function()
+    db:exec("DELETE FROM cache_recent")
 
-  for objId, cacheEntry in pairs(cache.entries) do
-    local query = dinv_db.buildItemInsert("cache_recent", objId, cacheEntry.entry)
-    db:exec(query)
-    if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
-      dbot.warn("inv.cache.saveRecent: Failed to save cached item " .. tostring(objId))
-      return DRL_RET_INTERNAL_ERROR
+    for objId, cacheEntry in pairs(cache.entries) do
+      local query = dinv_db.buildItemInsert("cache_recent", objId, cacheEntry.entry)
+      db:exec(query)
+      if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+        dbot.warn("inv.cache.saveRecent: Failed to save cached item " .. tostring(objId))
+        return DRL_RET_INTERNAL_ERROR
+      end
     end
-  end
 
-  return DRL_RET_SUCCESS
+    return DRL_RET_SUCCESS
+  end)
 end -- inv.cache.saveRecent
 
 
@@ -212,23 +214,25 @@ function inv.cache.saveCustom()
   local cache = inv.cache.custom.table
   if not cache or not cache.entries then return DRL_RET_UNINITIALIZED end
 
-  db:exec("DELETE FROM cache_custom")
+  return dinv_db.transaction(function()
+    db:exec("DELETE FROM cache_custom")
 
-  for objId, cacheEntry in pairs(cache.entries) do
-    local entry = cacheEntry.entry or {}
-    local query = string.format(
-      "INSERT INTO cache_custom (obj_id, keywords, organize) VALUES (%s, %s, %s)",
-      dinv_db.fixnum(objId),
-      dinv_db.fixsql(entry.keywords),
-      dinv_db.fixsql(entry.organize))
-    db:exec(query)
-    if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
-      dbot.warn("inv.cache.saveCustom: Failed to save custom cache for " .. tostring(objId))
-      return DRL_RET_INTERNAL_ERROR
+    for objId, cacheEntry in pairs(cache.entries) do
+      local entry = cacheEntry.entry or {}
+      local query = string.format(
+        "INSERT INTO cache_custom (obj_id, keywords, organize) VALUES (%s, %s, %s)",
+        dinv_db.fixnum(objId),
+        dinv_db.fixsql(entry.keywords),
+        dinv_db.fixsql(entry.organize))
+      db:exec(query)
+      if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+        dbot.warn("inv.cache.saveCustom: Failed to save custom cache for " .. tostring(objId))
+        return DRL_RET_INTERNAL_ERROR
+      end
     end
-  end
 
-  return DRL_RET_SUCCESS
+    return DRL_RET_SUCCESS
+  end)
 end -- inv.cache.saveCustom
 
 

@@ -184,26 +184,27 @@ function inv.snapshot.save()
 
   if not inv.snapshot.table then return DRL_RET_UNINITIALIZED end
 
-  -- Delete all existing snapshot rows and re-insert
-  db:exec("DELETE FROM snapshots")
+  return dinv_db.transaction(function()
+    db:exec("DELETE FROM snapshots")
 
-  for snapName, equipSet in pairs(inv.snapshot.table) do
-    for wearLoc, itemData in pairs(equipSet) do
-      local query = string.format(
-        "INSERT INTO snapshots (snapshot_name, wear_loc, obj_id, score) VALUES (%s, %s, %s, %s)",
-        dinv_db.fixsql(snapName),
-        dinv_db.fixsql(wearLoc),
-        dinv_db.fixnum(itemData.id),
-        dinv_db.fixnum(itemData.score))
-      db:exec(query)
-      if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
-        dbot.warn("inv.snapshot.save: Failed to save snapshot " .. snapName)
-        return DRL_RET_INTERNAL_ERROR
+    for snapName, equipSet in pairs(inv.snapshot.table) do
+      for wearLoc, itemData in pairs(equipSet) do
+        local query = string.format(
+          "INSERT INTO snapshots (snapshot_name, wear_loc, obj_id, score) VALUES (%s, %s, %s, %s)",
+          dinv_db.fixsql(snapName),
+          dinv_db.fixsql(wearLoc),
+          dinv_db.fixnum(itemData.id),
+          dinv_db.fixnum(itemData.score))
+        db:exec(query)
+        if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+          dbot.warn("inv.snapshot.save: Failed to save snapshot " .. snapName)
+          return DRL_RET_INTERNAL_ERROR
+        end
       end
     end
-  end
 
-  return DRL_RET_SUCCESS
+    return DRL_RET_SUCCESS
+  end)
 end -- inv.snapshot.save
 
 

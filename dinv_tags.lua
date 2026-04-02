@@ -119,20 +119,21 @@ function inv.tags.save()
 
   if not inv.tags.table then return DRL_RET_UNINITIALIZED end
 
-  -- Delete existing tag rows and re-insert
-  db:exec("DELETE FROM config WHERE key LIKE 'tag.%'")
+  return dinv_db.transaction(function()
+    db:exec("DELETE FROM config WHERE key LIKE 'tag.%'")
 
-  for tagName, tagValue in pairs(inv.tags.table) do
-    local query = string.format("INSERT INTO config (key, value) VALUES (%s, %s)",
-                                dinv_db.fixsql("tag." .. tagName), dinv_db.fixsql(tagValue))
-    db:exec(query)
-    if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
-      dbot.warn("inv.tags.save: Failed to save tag " .. tagName)
-      return DRL_RET_INTERNAL_ERROR
+    for tagName, tagValue in pairs(inv.tags.table) do
+      local query = string.format("INSERT INTO config (key, value) VALUES (%s, %s)",
+                                  dinv_db.fixsql("tag." .. tagName), dinv_db.fixsql(tagValue))
+      db:exec(query)
+      if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+        dbot.warn("inv.tags.save: Failed to save tag " .. tagName)
+        return DRL_RET_INTERNAL_ERROR
+      end
     end
-  end
 
-  return DRL_RET_SUCCESS
+    return DRL_RET_SUCCESS
+  end)
 end -- inv.tags.save
 
 

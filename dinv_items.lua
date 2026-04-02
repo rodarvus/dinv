@@ -423,19 +423,20 @@ function inv.items.save()
 
   if not inv.items.table then return DRL_RET_UNINITIALIZED end
 
-  -- Delete all existing item rows and re-insert
-  db:exec("DELETE FROM items")
+  return dinv_db.transaction(function()
+    db:exec("DELETE FROM items")
 
-  for objId, entry in pairs(inv.items.table) do
-    local query = dinv_db.buildItemInsert("items", objId, entry)
-    db:exec(query)
-    if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
-      dbot.warn("inv.items.save: Failed to save item " .. tostring(objId))
-      return DRL_RET_INTERNAL_ERROR
+    for objId, entry in pairs(inv.items.table) do
+      local query = dinv_db.buildItemInsert("items", objId, entry)
+      db:exec(query)
+      if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+        dbot.warn("inv.items.save: Failed to save item " .. tostring(objId))
+        return DRL_RET_INTERNAL_ERROR
+      end
     end
-  end
 
-  return DRL_RET_SUCCESS
+    return DRL_RET_SUCCESS
+  end)
 end -- inv.items.save
 
 

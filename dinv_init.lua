@@ -843,47 +843,48 @@ function inv.config.save()
   local t = inv.config.table
   if not t then return DRL_RET_UNINITIALIZED end
 
-  -- Delete existing config rows and re-insert
-  db:exec("DELETE FROM config WHERE key LIKE 'config.%'")
+  return dinv_db.transaction(function()
+    db:exec("DELETE FROM config WHERE key LIKE 'config.%'")
 
-  -- Serialize version subtables as strings
-  local function verStr(v)
-    if type(v) == "table" then
-      return tostring(v.major or 0) .. "." .. tostring(v.minor or 0)
+    -- Serialize version subtables as strings
+    local function verStr(v)
+      if type(v) == "table" then
+        return tostring(v.major or 0) .. "." .. tostring(v.minor or 0)
+      end
+      return tostring(v or "")
     end
-    return tostring(v or "")
-  end
 
-  local fields = {
-    ["config.pluginVer"]       = tostring(t.pluginVer or ""),
-    ["config.tableFormat"]     = verStr(t.tableFormat),
-    ["config.cacheFormat"]     = verStr(t.cacheFormat),
-    ["config.consumeFormat"]   = verStr(t.consumeFormat),
-    ["config.priorityFormat"]  = verStr(t.priorityFormat),
-    ["config.setFormat"]       = verStr(t.setFormat),
-    ["config.snapshotFormat"]  = verStr(t.snapshotFormat),
-    ["config.isPromptEnabled"] = tostring(t.isPromptEnabled),
-    ["config.isBackupEnabled"] = tostring(t.isBackupEnabled),
-    ["config.isBuildExecuted"] = tostring(t.isBuildExecuted),
-    ["config.doIgnoreKeyring"] = tostring(t.doIgnoreKeyring),
-    ["config.isRegenEnabled"]  = tostring(t.isRegenEnabled),
-    ["config.regenOrigObjId"]  = tostring(t.regenOrigObjId or 0),
-    ["config.regenNewObjId"]   = tostring(t.regenNewObjId or 0),
-    ["config.refreshPeriod"]   = tostring(t.refreshPeriod or 0),
-    ["config.refreshEagerSec"] = tostring(t.refreshEagerSec or 0),
-  }
+    local fields = {
+      ["config.pluginVer"]       = tostring(t.pluginVer or ""),
+      ["config.tableFormat"]     = verStr(t.tableFormat),
+      ["config.cacheFormat"]     = verStr(t.cacheFormat),
+      ["config.consumeFormat"]   = verStr(t.consumeFormat),
+      ["config.priorityFormat"]  = verStr(t.priorityFormat),
+      ["config.setFormat"]       = verStr(t.setFormat),
+      ["config.snapshotFormat"]  = verStr(t.snapshotFormat),
+      ["config.isPromptEnabled"] = tostring(t.isPromptEnabled),
+      ["config.isBackupEnabled"] = tostring(t.isBackupEnabled),
+      ["config.isBuildExecuted"] = tostring(t.isBuildExecuted),
+      ["config.doIgnoreKeyring"] = tostring(t.doIgnoreKeyring),
+      ["config.isRegenEnabled"]  = tostring(t.isRegenEnabled),
+      ["config.regenOrigObjId"]  = tostring(t.regenOrigObjId or 0),
+      ["config.regenNewObjId"]   = tostring(t.regenNewObjId or 0),
+      ["config.refreshPeriod"]   = tostring(t.refreshPeriod or 0),
+      ["config.refreshEagerSec"] = tostring(t.refreshEagerSec or 0),
+    }
 
-  for k, v in pairs(fields) do
-    local query = string.format("INSERT INTO config (key, value) VALUES (%s, %s)",
-                                dinv_db.fixsql(k), dinv_db.fixsql(v))
-    db:exec(query)
-    if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
-      dbot.warn("inv.config.save: Failed to save config key " .. k)
-      return DRL_RET_INTERNAL_ERROR
+    for k, v in pairs(fields) do
+      local query = string.format("INSERT INTO config (key, value) VALUES (%s, %s)",
+                                  dinv_db.fixsql(k), dinv_db.fixsql(v))
+      db:exec(query)
+      if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+        dbot.warn("inv.config.save: Failed to save config key " .. k)
+        return DRL_RET_INTERNAL_ERROR
+      end
     end
-  end
 
-  return DRL_RET_SUCCESS
+    return DRL_RET_SUCCESS
+  end)
 end -- inv.config.save
 
 

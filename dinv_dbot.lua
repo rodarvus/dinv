@@ -834,16 +834,18 @@ function dbot.notify.save()
   local db = dinv_db.handle
   if not db then return DRL_RET_UNINITIALIZED end
 
-  db:exec("DELETE FROM config WHERE key = 'notify.level'")
-  local query = string.format("INSERT INTO config (key, value) VALUES ('notify.level', %s)",
-                              dinv_db.fixsql(dbot.notify.table.notifyLevel or notifyLevelDefault))
-  db:exec(query)
-  if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
-    dbot.warn("dbot.notify.save: Failed to save notify level")
-    return DRL_RET_INTERNAL_ERROR
-  end
+  return dinv_db.transaction(function()
+    db:exec("DELETE FROM config WHERE key = 'notify.level'")
+    local query = string.format("INSERT INTO config (key, value) VALUES ('notify.level', %s)",
+                                dinv_db.fixsql(dbot.notify.table.notifyLevel or notifyLevelDefault))
+    db:exec(query)
+    if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+      dbot.warn("dbot.notify.save: Failed to save notify level")
+      return DRL_RET_INTERNAL_ERROR
+    end
 
-  return DRL_RET_SUCCESS
+    return DRL_RET_SUCCESS
+  end)
 end -- dbot.notify.save
 
 
@@ -2728,20 +2730,21 @@ function dbot.wish.save()
 
   if not dbot.wish.table then return DRL_RET_UNINITIALIZED end
 
-  -- Delete existing wish rows and re-insert
-  db:exec("DELETE FROM config WHERE key LIKE 'wish.%'")
+  return dinv_db.transaction(function()
+    db:exec("DELETE FROM config WHERE key LIKE 'wish.%'")
 
-  for wishName, _ in pairs(dbot.wish.table) do
-    local query = string.format("INSERT INTO config (key, value) VALUES (%s, 'true')",
-                                dinv_db.fixsql("wish." .. wishName))
-    db:exec(query)
-    if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
-      dbot.warn("dbot.wish.save: Failed to save wish " .. wishName)
-      return DRL_RET_INTERNAL_ERROR
+    for wishName, _ in pairs(dbot.wish.table) do
+      local query = string.format("INSERT INTO config (key, value) VALUES (%s, 'true')",
+                                  dinv_db.fixsql("wish." .. wishName))
+      db:exec(query)
+      if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+        dbot.warn("dbot.wish.save: Failed to save wish " .. wishName)
+        return DRL_RET_INTERNAL_ERROR
+      end
     end
-  end
 
-  return DRL_RET_SUCCESS
+    return DRL_RET_SUCCESS
+  end)
 end -- dbot.wish.save
 
 

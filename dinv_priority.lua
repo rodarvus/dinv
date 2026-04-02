@@ -126,48 +126,46 @@ function inv.priority.save()
 
   if not inv.priority.table then return DRL_RET_UNINITIALIZED end
 
-  -- Delete all existing priority data and re-insert
-  db:exec("DELETE FROM priority_blocks")
-  db:exec("DELETE FROM priorities")
+  return dinv_db.transaction(function()
+    db:exec("DELETE FROM priority_blocks")
+    db:exec("DELETE FROM priorities")
 
-  for priorityName, blocks in pairs(inv.priority.table) do
-    -- Insert the priority name
-    local query = string.format("INSERT INTO priorities (name) VALUES (%s)",
-                                dinv_db.fixsql(priorityName))
-    db:exec(query)
-    if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
-      dbot.warn("inv.priority.save: Failed to save priority " .. priorityName)
-      return DRL_RET_INTERNAL_ERROR
-    end
-
-    local priorityId = db:last_insert_rowid()
-
-    -- Insert each block
-    for blockIdx, block in ipairs(blocks) do
-      -- Build column list and value list from the block's priorities
-      local columns = "priority_id, block_index, min_level, max_level"
-      local values = string.format("%d, %d, %d, %d",
-                                   priorityId, blockIdx,
-                                   block.minLevel or 1, block.maxLevel or 291)
-
-      for luaKey, weight in pairs(block.priorities) do
-        local sqlCol = inv.priority.luaToSql[luaKey]
-        if sqlCol and weight ~= 0 then
-          columns = columns .. ", " .. sqlCol
-          values = values .. ", " .. tostring(weight)
-        end
-      end
-
-      query = string.format("INSERT INTO priority_blocks (%s) VALUES (%s)", columns, values)
+    for priorityName, blocks in pairs(inv.priority.table) do
+      local query = string.format("INSERT INTO priorities (name) VALUES (%s)",
+                                  dinv_db.fixsql(priorityName))
       db:exec(query)
       if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
-        dbot.warn("inv.priority.save: Failed to save priority block for " .. priorityName)
+        dbot.warn("inv.priority.save: Failed to save priority " .. priorityName)
         return DRL_RET_INTERNAL_ERROR
       end
-    end
-  end
 
-  return DRL_RET_SUCCESS
+      local priorityId = db:last_insert_rowid()
+
+      for blockIdx, block in ipairs(blocks) do
+        local columns = "priority_id, block_index, min_level, max_level"
+        local values = string.format("%d, %d, %d, %d",
+                                     priorityId, blockIdx,
+                                     block.minLevel or 1, block.maxLevel or 291)
+
+        for luaKey, weight in pairs(block.priorities) do
+          local sqlCol = inv.priority.luaToSql[luaKey]
+          if sqlCol and weight ~= 0 then
+            columns = columns .. ", " .. sqlCol
+            values = values .. ", " .. tostring(weight)
+          end
+        end
+
+        query = string.format("INSERT INTO priority_blocks (%s) VALUES (%s)", columns, values)
+        db:exec(query)
+        if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+          dbot.warn("inv.priority.save: Failed to save priority block for " .. priorityName)
+          return DRL_RET_INTERNAL_ERROR
+        end
+      end
+    end
+
+    return DRL_RET_SUCCESS
+  end)
 end -- inv.priority.save
 
 

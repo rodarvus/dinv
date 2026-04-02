@@ -2,6 +2,17 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0018] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed critical performance issue with SQLite writes. All save
+           operations now use explicit BEGIN/COMMIT transactions instead of
+           autocommit. This reduces disk syncs from hundreds of individual
+           transactions to one per save, dramatically improving performance
+           for reload, set creation, and set display operations.]]
+  }
+}
+
 dbot.changelog[3.0017] =
 {
   { change = drlDbotChangeLogTypeFix,

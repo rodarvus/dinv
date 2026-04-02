@@ -48,6 +48,24 @@ function dinv_db.fixsql(s)
    end
 end
 
+-- Execute a function inside a BEGIN/COMMIT transaction.
+-- If fn returns a non-success error code, ROLLBACK instead of COMMIT.
+-- Returns whatever fn returns.
+function dinv_db.transaction(fn)
+   local db = dinv_db.handle
+   if not db then return fn() end
+
+   db:exec("BEGIN")
+   local retval = fn()
+   if retval ~= DRL_RET_SUCCESS and retval ~= DRL_RET_UNINITIALIZED then
+      db:exec("ROLLBACK")
+   else
+      db:exec("COMMIT")
+   end
+   return retval
+end
+
+
 -- Convert a number to SQL-safe string. Returns the number or NULL.
 function dinv_db.fixnum(n)
    if n ~= nil then

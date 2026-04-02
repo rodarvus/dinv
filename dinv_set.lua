@@ -107,29 +107,30 @@ function inv.set.save()
 
   if not inv.set.table then return DRL_RET_UNINITIALIZED end
 
-  -- Delete all existing set rows and re-insert
-  db:exec("DELETE FROM sets")
+  return dinv_db.transaction(function()
+    db:exec("DELETE FROM sets")
 
-  for priorityName, levels in pairs(inv.set.table) do
-    for level, equipSet in pairs(levels) do
-      for wearLoc, itemData in pairs(equipSet) do
-        local query = string.format(
-          "INSERT INTO sets (priority_name, level, wear_loc, obj_id, score) VALUES (%s, %d, %s, %s, %s)",
-          dinv_db.fixsql(priorityName),
-          level,
-          dinv_db.fixsql(wearLoc),
-          dinv_db.fixnum(itemData.id),
-          dinv_db.fixnum(itemData.score))
-        db:exec(query)
-        if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
-          dbot.warn("inv.set.save: Failed to save set " .. priorityName .. "[" .. level .. "]")
-          return DRL_RET_INTERNAL_ERROR
+    for priorityName, levels in pairs(inv.set.table) do
+      for level, equipSet in pairs(levels) do
+        for wearLoc, itemData in pairs(equipSet) do
+          local query = string.format(
+            "INSERT INTO sets (priority_name, level, wear_loc, obj_id, score) VALUES (%s, %d, %s, %s, %s)",
+            dinv_db.fixsql(priorityName),
+            level,
+            dinv_db.fixsql(wearLoc),
+            dinv_db.fixnum(itemData.id),
+            dinv_db.fixnum(itemData.score))
+          db:exec(query)
+          if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+            dbot.warn("inv.set.save: Failed to save set " .. priorityName .. "[" .. level .. "]")
+            return DRL_RET_INTERNAL_ERROR
+          end
         end
       end
     end
-  end
 
-  return DRL_RET_SUCCESS
+    return DRL_RET_SUCCESS
+  end)
 end -- inv.set.save
 
 

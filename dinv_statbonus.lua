@@ -101,51 +101,52 @@ function inv.statBonus.save()
   local db = dinv_db.handle
   if not db then return DRL_RET_UNINITIALIZED end
 
-  -- Delete all existing stat bonus rows and re-insert
-  db:exec("DELETE FROM stat_bonuses")
+  return dinv_db.transaction(function()
+    db:exec("DELETE FROM stat_bonuses")
 
-  local stats = { "int", "wis", "luck", "str", "dex", "con" }
+    local stats = { "int", "wis", "luck", "str", "dex", "con" }
 
-  -- Save spell bonuses (ave and max per level)
-  if inv.statBonus.spellBonus then
-    for level, data in pairs(inv.statBonus.spellBonus) do
-      for _, stat in ipairs(stats) do
-        local aveVal = (data.ave and data.ave[stat]) or nil
-        local maxVal = (data.max and data.max[stat]) or nil
-        if aveVal or maxVal then
-          local query = string.format(
-            "INSERT INTO stat_bonuses (bonus_type, level, stat_name, ave_val, max_val) VALUES ('spell', %d, %s, %s, %s)",
-            level, dinv_db.fixsql(stat), dinv_db.fixnum(aveVal), dinv_db.fixnum(maxVal))
-          db:exec(query)
-          if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
-            dbot.warn("inv.statBonus.save: Failed to save spell bonus")
-            return DRL_RET_INTERNAL_ERROR
+    -- Save spell bonuses (ave and max per level)
+    if inv.statBonus.spellBonus then
+      for level, data in pairs(inv.statBonus.spellBonus) do
+        for _, stat in ipairs(stats) do
+          local aveVal = (data.ave and data.ave[stat]) or nil
+          local maxVal = (data.max and data.max[stat]) or nil
+          if aveVal or maxVal then
+            local query = string.format(
+              "INSERT INTO stat_bonuses (bonus_type, level, stat_name, ave_val, max_val) VALUES ('spell', %d, %s, %s, %s)",
+              level, dinv_db.fixsql(stat), dinv_db.fixnum(aveVal), dinv_db.fixnum(maxVal))
+            db:exec(query)
+            if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+              dbot.warn("inv.statBonus.save: Failed to save spell bonus")
+              return DRL_RET_INTERNAL_ERROR
+            end
           end
         end
       end
     end
-  end
 
-  -- Save equipment bonuses (single value per level per stat)
-  if inv.statBonus.equipBonus then
-    for level, data in pairs(inv.statBonus.equipBonus) do
-      for _, stat in ipairs(stats) do
-        local val = data[stat]
-        if val then
-          local query = string.format(
-            "INSERT INTO stat_bonuses (bonus_type, level, stat_name, current_val) VALUES ('equip', %d, %s, %s)",
-            level, dinv_db.fixsql(stat), dinv_db.fixnum(val))
-          db:exec(query)
-          if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
-            dbot.warn("inv.statBonus.save: Failed to save equip bonus")
-            return DRL_RET_INTERNAL_ERROR
+    -- Save equipment bonuses (single value per level per stat)
+    if inv.statBonus.equipBonus then
+      for level, data in pairs(inv.statBonus.equipBonus) do
+        for _, stat in ipairs(stats) do
+          local val = data[stat]
+          if val then
+            local query = string.format(
+              "INSERT INTO stat_bonuses (bonus_type, level, stat_name, current_val) VALUES ('equip', %d, %s, %s)",
+              level, dinv_db.fixsql(stat), dinv_db.fixnum(val))
+            db:exec(query)
+            if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+              dbot.warn("inv.statBonus.save: Failed to save equip bonus")
+              return DRL_RET_INTERNAL_ERROR
+            end
           end
         end
       end
     end
-  end
 
-  return DRL_RET_SUCCESS
+    return DRL_RET_SUCCESS
+  end)
 end -- inv.statBonus.save
 
 
