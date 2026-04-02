@@ -262,7 +262,7 @@ end
 function dinv_db.rowToItemEntry(row)
   local entry = {
     identifyLevel  = row.identify_level,
-    objectLocation = row.object_location,
+    objectLocation = tonumber(row.object_location) or row.object_location,
     homeContainer  = row.home_container,
     colorName      = row.color_name,
     stats          = {},

@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0024] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed objectLocation type mismatch after SQLite load. Container IDs
+           were stored as TEXT but expected as numbers by Lua equality checks.
+           This broke container removal (items inside deleted containers were
+           not cleaned up) and location-based searches after plugin reload.]]
+  }
+}
+
 dbot.changelog[3.0023] =
 {
   { change = drlDbotChangeLogTypeFix,
