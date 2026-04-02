@@ -2,6 +2,18 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0023] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed note mode compatibility issue. When entering note write mode,
+           dinv sets a noteIsPending flag and creates a trigger to clear it.
+           If another plugin disabled triggers during note mode, the flag was
+           never cleared, permanently blocking dinv command execution. Now the
+           flag is cleared when the user sends any regular command (proving
+           they are no longer in note mode). Same fix applied to quitIsPending.]]
+  }
+}
+
 dbot.changelog[3.0022] =
 {
   { change = drlDbotChangeLogTypeFix,

@@ -387,6 +387,16 @@ function OnPluginSend(msg)
     return false -- Don't send the command right now
 
   else
+    -- If the user is sending commands, they are not in note mode or quitting
+    if dbot.execute.noteIsPending then
+      dbot.execute.noteIsPending = false
+      dbot.deleteTrigger("drlNoteWriteConfirmationTrigger")
+    end
+    if dbot.execute.quitIsPending then
+      dbot.execute.quitIsPending = false
+      dbot.deleteTrigger("drlQuitCancelConfirmationTrigger")
+    end
+
     -- It is helpful in some scenarios for us to know that something special is pending.  For
     -- example, we might be sending a command to the mud to go AFK, or quit, or write a note.
     setPending(msg)
