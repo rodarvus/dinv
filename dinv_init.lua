@@ -157,12 +157,6 @@ function OnPluginSaveState()
     end -- if
   end -- for
 
-  -- Update any automatic backups for the saved plugin state
-  retval = dbot.backup.current()
-  if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_BUSY) and (retval ~= DRL_RET_IN_COMBAT) then
-    dbot.warn("OnPluginSaveState: Failed to backup plugin state: " .. dbot.retval.getString(retval))
-  end -- if
-
 end -- OnPluginSaveState
 
 
@@ -262,11 +256,6 @@ function OnPluginTelnetOption(msg)
     -- on starting an atomic operation if we will shortly be in afk mode.  Once we know we are in AFK
     -- mode, we no longer have a "pending" state.
     dbot.execute.afkIsPending = false
-
-    -- If we are AFK, we may as well make a backup.  We don't have anything better to do...  We don't
-    -- want to do this if someone quickly toggles AFK though so we wait a few seconds and verify that
-    -- we are still AFK before we kick off the backup.
-    check (DoAfterSpecial(5, "dbot.backup.atAFK()", sendto.script))
 
   end -- if
 
@@ -592,12 +581,6 @@ function inv.fini(doSaveState)
   inv.state = invStateHalted
 
   if dbot.gmcp.isInitialized then
-    -- Update any automatic backups for the saved plugin state
-    retval = dbot.backup.current()
-    if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
-      dbot.warn("inv.fini: Failed to backup plugin state: " .. dbot.retval.getString(retval))
-    end -- if
-
     -- Loop through all of the inv modules and call their de-init functions
     for module in inv.modules:gmatch("%S+") do
       local initVal = inv[module].fini(doSaveState)

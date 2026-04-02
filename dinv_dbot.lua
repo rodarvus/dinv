@@ -1435,423 +1435,221 @@ end -- dbot.gmcp.getConfig
 
 
 ----------------------------------------------------------------------------------------------------
--- Module to handle saving and backing up state
+-- Module to handle backing up the SQLite database
 ----------------------------------------------------------------------------------------------------
 --
 -- dinv backup [list | create | delete | restore] [name]
 --
--- Directory layout
---   dinv-[pluginId]/charname
---     current
---     backups
---       auto1-[date]
---       auto2-[date]
---       auto3-[date]
---       [name]-[date]
+-- Backups are .db file copies stored in:
+--   {pluginStatePath}/{charName}/backup/{name}.db
 --
 -- Functions:
 --  dbot.backup.init.atActive()
 --  dbot.backup.fini(doSaveState)
 --
---  dbot.backup.getBaseDir()
---  dbot.backup.getCharDir()
---  dbot.backup.getCurrentDir()
 --  dbot.backup.getBackupDir()
+--  dbot.backup.getBackups()
 --
---  dbot.backup.getBackups() -- returns list of backup dir names
---  dbot.backup.getFile(name)
---
---  dbot.backup.current()    -- if auto1-date ~= current date, rotates current and the "autoN" backups
+--  dbot.backup.preBuild()    -- automatic backup before dinv build confirm
 --
 --  dbot.backup.list(endTag)
 --  dbot.backup.create(name, endTag)
 --  dbot.backup.delete(name, endTag, isQuiet)
 --  dbot.backup.restore(name, endTag)
 --
---  dbot.backup.timer
-
 ----------------------------------------------------------------------------------------------------
 
 dbot.backup      = {}
 dbot.backup.init = {}
 
-dbot.backup.timer = {}
-dbot.backup.timer.name = "drlInvBackupTimer"
-dbot.backup.timer.hour = 4
-dbot.backup.timer.min  = 0
-dbot.backup.timer.sec  = 30
-
 
 function dbot.backup.init.atActive()
-  local retval = DRL_RET_SUCCESS
-
+  -- Create backup directory if it doesn't exist
   local backupDir = dbot.backup.getBackupDir()
-  dbot.debug("dbot.backup.init.atActive: backupDir=\"" .. backupDir .. "\"")
-
-  retval = dbot.shell("if not exist \"" .. backupDir .. "\" mkdir \"" .. backupDir .. "\" > nul")
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("dbot.backup.init.atActive: Failed to create backup directory \"" .. backupDir .. "\"")
-    return retval
-  end -- if
-  dbot.spinUntilExists(backupDir, 1)
-
-  -- Add a backup timer to periodically back up the plugin state.  We keep the timer running
-  -- even if automatic backups are currently disabled.  The dbot.backup.current() function
-  -- only does the backup if automatic backups are enabled so it doesn't hurt to call it
-  -- periodically from the timer.  Yes, I should probably redo this so that we start the
-  -- timer when someone re-enables automatic backups but I'm feeling a bit lazy and this
-  -- only runs once every 4 hours by default so there's not a ton of overhead...
-  check (AddTimer(dbot.backup.timer.name, 
-                  dbot.backup.timer.hour, dbot.backup.timer.min, dbot.backup.timer.sec, "",
-                  timer_flag.Enabled + timer_flag.Replace,
-                  "dbot.backup.current"))
-
-  return retval
+  os.execute('if not exist "' .. backupDir .. '" mkdir "' .. backupDir .. '"')
+  return DRL_RET_SUCCESS
 end -- dbot.backup.init.atActive
 
 
 function dbot.backup.fini(doSaveState)
-  local retval = DRL_RET_SUCCESS
-
-  dbot.deleteTimer(dbot.backup.timer.name)
-
-  return retval
+  return DRL_RET_SUCCESS
 end -- dbot.backup.fini
 
 
-function dbot.backup.getBaseDir()
-  return pluginStatePath .. "\\" .. dbot.gmcp.getName() .. "\\", DRL_RET_SUCCESS
-end -- dbot.backup.getBaseDir
-
-
-function dbot.backup.getCurrentDir()
-  return pluginStatePath .. "\\" .. dbot.gmcp.getName() .. "\\current\\" , DRL_RET_SUCCESS
-end -- dbot.backup.getCurrentDir
-
-
 function dbot.backup.getBackupDir()
-  return pluginStatePath .. "\\" .. dbot.gmcp.getName() .. "\\backup\\" , DRL_RET_SUCCESS
+  return dinv_db.getDir() .. "backup\\", DRL_RET_SUCCESS
 end -- dbot.backup.getBackupDir
 
 
--- Returns an array of backup directory names
+-- Copy a file using Lua I/O. Returns true on success.
+local function copyFile(src, dst)
+  local srcFile = io.open(src, "rb")
+  if not srcFile then return false end
+
+  local data = srcFile:read("*a")
+  srcFile:close()
+
+  if not data then return false end
+
+  local dstFile = io.open(dst, "wb")
+  if not dstFile then return false end
+
+  dstFile:write(data)
+  dstFile:close()
+  return true
+end
+
+
+-- Returns an array of backup info tables, sorted most recent first.
+-- Each entry: { fileName = "name.db", baseName = "name", fullPath = "...", baseTime = timestamp }
 function dbot.backup.getBackups()
-  local backupNames = {}
+  local backups = {}
 
-  local backupDir, retval = dbot.backup.getBackupDir()
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("dbot.backup.getBackups: Failed to get backup directory: " .. dbot.retval.getString(retval))
-    return backupNames, retval
-  end -- if
+  local backupDir = dbot.backup.getBackupDir()
+  local dirQuery = string.gsub(backupDir, "\\", "/") .. "*.db"
+  local dirTable = utils.readdir(dirQuery)
+  if not dirTable then
+    return backups, DRL_RET_SUCCESS
+  end
 
-  -- Read the backup directory.  We use the unix-style pathname because the utils.readdir()
-  -- function won't take the windows-style path.  Yeah, I know that seems crazy.  I'm probably
-  -- doing something silly that prevents it from working.  The unix-style paths aren't too evil
-  -- as a work-around though.
-  local dirQuery = string.gsub(backupDir, "\\", "/") .. "*"
-  local backDirTable, error = utils.readdir(dirQuery)
-  if (backDirTable == nil) then
-    return backupNames, DRL_RET_MISSING_ENTRY
-  end -- if
+  for fileName, fileEntry in pairs(dirTable) do
+    if not fileEntry.directory then
+      -- Parse name from "somename-timestamp.db"
+      local baseName, baseTime = fileName:match("^(.*)-(%d+)%.db$")
+      if baseName then
+        table.insert(backups, {
+          fileName = fileName,
+          baseName = baseName,
+          fullPath = backupDir .. fileName,
+          baseTime = tonumber(baseTime) or 0,
+        })
+      end
+    end
+  end
 
-  -- Loop through every directory entry and pull out all of the directories that have the
-  -- [name]-[timestamp] format.  Those are our backup candidates.
-  for backName, backEntry in pairs(backDirTable) do
-    local _, _, baseName, baseTime = string.find(backName, "(.*)-(%d+)$")
-    baseTime = tonumber(baseTime or 0)
+  -- Sort most recent first
+  table.sort(backups, function(a, b) return a.baseTime > b.baseTime end)
 
-    if (baseName ~= nil) and (backEntry.directory ~= nil) and (backEntry.directory) then
-      table.insert(backupNames, { dirName = backupDir .. backName,
-                                  fullName = backName,
-                                  baseName = baseName,
-                                  baseTime = baseTime })
-    end -- if
-  end -- for
-
-  -- Sort the backups by date from most recent to oldest
-  if (#backupNames > 0) then
-    table.sort(backupNames, function (back1, back2) return back1.baseTime > back2.baseTime end)
-  end -- if
-
-  return backupNames, retval
+  return backups, DRL_RET_SUCCESS
 end -- dbot.backup.getBackups
 
 
--- Returns a table holding info on the specific backup or nil if it doesn't exist, error code
-function dbot.backup.getFile(name)
+-- Automatic backup before dinv build confirm (only if database has items).
+function dbot.backup.preBuild()
+  local db = dinv_db.handle
+  if not db then return DRL_RET_UNINITIALIZED end
 
-  local backupNames, retval = dbot.backup.getBackups()
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("dbot.backup.getFileName: Failed to get backup list: " .. dbot.retval.getString(retval))
-    return nil, retval
-  end -- if
+  -- Only backup if we have existing items
+  local count = 0
+  for row in db:nrows("SELECT COUNT(*) as cnt FROM items") do
+    count = row.cnt
+  end
 
-  for _, backupName in ipairs(backupNames) do
-    if (backupName.baseName == name) then
-      return backupName, DRL_RET_SUCCESS
-    end -- if
-  end -- for
-
-  return nil, DRL_RET_SUCCESS
-end -- dbot.backup.getFile(name)
-
-
--- The automatic backup scheme: auto --> auto2 --> auto3
-dbot.backup.inProgress = false
-function dbot.backup.current()
-  local retval
-  local backupFile
-  local backupDir
-  local autoPrefix = "auto"
-  local maxNumAutoBackups = 3
-  local newestBackupName = autoPrefix
-  local oldestBackupName = autoPrefix .. maxNumAutoBackups
-
-  if (dbot.gmcp.isInitialized == false) then
-    dbot.debug("dbot.backup.current: Skipping backup request: GMCP is not initialized")
-    return DRL_RET_UNINITIALIZED
-  end -- if
-
-  if (not dbot.init.initializedActive) or (not inv.init.initializedActive) then
-    dbot.note("Skipping backup: Plugin is not yet initialized.  Have you been AFK or sleeping this entire login?")
-    return DRL_RET_UNINITIALIZED
-  end -- if
-
-  if (not inv.config.table.isBackupEnabled) then
-    dbot.debug("Automatic backups are disabled")
+  if count == 0 then
+    dbot.debug("dbot.backup.preBuild: Skipping pre-build backup (no items in database)")
     return DRL_RET_SUCCESS
-  end -- if
+  end
 
-  if dbot.gmcp.stateIsInCombat() then
-    dbot.info("Skipping automatic backup: You are in combat!  We'll try again later.")
-    return DRL_RET_IN_COMBAT
-  end -- if
-
-  if dbot.backup.inProgress then
-    dbot.info("Skipping backup request: another backup request is in progress")
-    return DRL_RET_BUSY
-  end -- if
-
-  dbot.backup.inProgress = true
-
-  backupDir, retval = dbot.backup.getBackupDir()
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("dbot.backup.current: Failed to get backup directory: " .. dbot.retval.getString(retval))
-    dbot.backup.inProgress = false
-    return retval
-  end -- if
-
-  -- Check if the newest backup was made today.  If it was, update it with the current data, leave
-  -- the other backups alone, and return.  Otherwise, rotate the backups down one slot chronologically.
-  backupFile, retval = dbot.backup.getFile(newestBackupName)
-  if (backupFile ~= nil) then
-    if (os.date("%x", dbot.getTime()) == os.date("%x", backupFile.baseTime)) then
-      retval = dbot.backup.create(newestBackupName, nil)
-      if (retval ~= DRL_RET_SUCCESS) then
-        dbot.warn("dbot.backup.current: Failed to create newest automatic backup \"@G" .. newestBackupName ..
-                  "@W\": " .. dbot.retval.getString(retval))
-      end -- if
-      dbot.backup.inProgress = false
-      return retval
-    end -- if
-  end -- if  
-
-  -- We need to rotate the backups.  Whack the oldest auto backup if we have hit our max number of
-  -- supported auto backups.
-  backupFile, retval = dbot.backup.getFile(oldestBackupName)
-  if (backupFile ~= nil) then
-    retval = dbot.backup.delete(oldestBackupName)
-    if (retval ~= DRL_RET_SUCCESS) then
-      dbot.warn("dbot.backup.current: Failed to delete backup \"@G" .. oldestBackupName .. "@W\"" ..
-                dbot.retval.getString(retval))
-    end -- if
-  end -- if
-
-  -- Now rename any other auto backups by bumping them back in the order (e.g., auto2 --> auto3)
-  for backupNum = (maxNumAutoBackups - 1), 1, -1 do
-    local currentBackup = autoPrefix .. backupNum
-    local olderBackup = autoPrefix .. (backupNum + 1)
-
-    -- As a one-off, we don't call the most recent backup "auto1".  Instead, we just call it "auto".
-    -- I think this is a little more clear and it looks cleaner when the user sees that we just made
-    -- a backup named "auto".
-    if (backupNum == 1) then
-      currentBackup = autoPrefix
-    end -- if
-
-    backupFile, retval = dbot.backup.getFile(currentBackup)
-    if (backupFile ~= nil) then
-      dbot.note("Moving backup \"@G" .. currentBackup .. "@W\" to \"@G" .. olderBackup .. "@W\"")
-      local fullOlderBackup = string.gsub(backupFile.dirName, currentBackup, olderBackup)
-      fullOlderBackup = string.gsub(fullOlderBackup, ".*\\", "")
-
-      dbot.debug("CLI: " .. "rename \"" .. backupFile.dirName .. "\" \"" .. fullOlderBackup .. "\" > nul")
-      dbot.shell("rename \"" .. backupFile.dirName .. "\" \"" .. fullOlderBackup .. "\" > nul")
-
-      -- Shell commands running in the background aren't guaranteed to complete in the order
-      -- they were made.  As a result, we spin here until we know that the backup was actually
-      -- renamed before we move on to the next backup.
-      dbot.spinUntilExistsBusy(backupDir .. fullOlderBackup, 5)
-
-    end -- if
-  end -- for
-
-  -- Finally, create a new auto backup by mirroring the current state
-  retval = dbot.backup.create(newestBackupName, nil)
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("dbot.backup.current: Failed to create newest automatic backup \"@G" .. newestBackupName ..
-              "@W\": " .. dbot.retval.getString(retval))
-  end -- if
-
-  dbot.backup.inProgress = false
-  return retval
-end -- dbot.backup.current
-
-
--- If may be convenient for us to make an auto-backup if someone is AFK for a while.  This
--- function will do that.  This could potentially be called in OnPluginTelnetOption when we
--- detect that we entered AFK mode.  It's not clear if this will be useful or annoying...
--- We'll kick the tires of this optimization and see if it sticks.
-function dbot.backup.atAFK()
-  local retval = DRL_RET_SUCCESS
-
-  if dbot.gmcp.isInitialized and (dbot.gmcp.getState() == dbot.stateAFK) and dbot.init.initializedActive then
-    retval = dbot.backup.current()
-    if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
-      dbot.warn("dbot.backup.atAFK: Failed to backup plugin state: " .. dbot.retval.getString(retval))
-    end -- if
-  end -- if
-
-  return retval
-end -- dbot.backup.atAFK
+  local backupName = "pre-build"
+  dbot.info("Creating automatic backup before build...")
+  return dbot.backup.create(backupName, nil)
+end -- dbot.backup.preBuild
 
 
 function dbot.backup.list(endTag)
-  local backupNames, retval = dbot.backup.getBackups()
+  local backups, retval = dbot.backup.getBackups()
 
   if (retval ~= DRL_RET_SUCCESS) then
     dbot.warn("dbot.backup.list: Failed to get backup list: " .. dbot.retval.getString(retval))
-  elseif (backupNames == nil) or 
-         ((backupNames ~= nil) and (#backupNames == 0)) then
+  elseif (#backups == 0) then
     dbot.info("No backups detected")
   else
-    local suffix = ""
-    if (#backupNames ~= 1) then
-      suffix = "s"
-    end -- if
-    dbot.info("Detected " .. #backupNames .. " backup" .. suffix)
-    for _, backupName in ipairs(backupNames) do
-      dbot.print("  @W(@c" .. os.date("%c", backupName.baseTime) .. "@W) @G" .. backupName.baseName)
-    end -- if
-  end -- if
+    local suffix = (#backups ~= 1) and "s" or ""
+    dbot.info("Detected " .. #backups .. " backup" .. suffix)
+    for _, backup in ipairs(backups) do
+      dbot.print("  @W(@c" .. os.date("%c", backup.baseTime) .. "@W) @G" .. backup.baseName)
+    end
+  end
 
   return inv.tags.stop(invTagsBackup, endTag, retval)
 end -- dbot.backup.list
 
 
 function dbot.backup.create(name, endTag)
-  local retval = DRL_RET_SUCCESS
-
   if (name == nil) or (name == "") then
     dbot.warn("dbot.backup.create: Missing name parameter")
     return inv.tags.stop(invTagsBackup, endTag, DRL_RET_INVALID_PARAM)
-  end -- if
+  end
 
-  local currentDir, retval = dbot.backup.getCurrentDir()
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("dbot.backup.create: Failed to get current directory: " .. dbot.retval.getString(retval))
-    return inv.tags.stop(invTagsBackup, endTag, retval)
-  end -- if
-  currentDir = string.gsub(currentDir, "\\$", "") -- Some versions of xcopy hate if there is a trailing slash
+  -- Remove any old backups with the same name
+  dbot.backup.delete(name, nil, true)
 
-  local backupDir, retval = dbot.backup.getBackupDir()
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("dbot.backup.create: Failed to get backup directory: " .. dbot.retval.getString(retval))
-    return inv.tags.stop(invTagsBackup, endTag, retval)
-  end -- if
+  -- Close the database to ensure the file is consistent
+  dinv_db.close()
 
-  -- Remove any old backups with the same name.  Creating a backup "foo" will remove any previous
-  -- backups that were created with the name "foo".
-  retval = dbot.backup.delete(name, nil, true)
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("dbot.backup.create: Failed to remove old backup \"@G" .. name .. "@W\"" ..
-              dbot.retval.getString(retval))
-    return inv.tags.stop(invTagsBackup, endTag, retval)
-  end -- if
-
-  -- We append the time to the end of the backup name to help track it
+  local srcPath = dinv_db.getPath()
+  local backupDir = dbot.backup.getBackupDir()
   local backupTime = dbot.getTime()
-  local newBackupDir = backupDir .. name .. "-" .. backupTime
-  dbot.debug("dbot.backup.create: CLI = \"@y" .. "xcopy /E /I \"" .. currentDir .. "\" \"" .. newBackupDir ..
-             "\" > nul@W\"")
-  retval = dbot.shell("xcopy /E /I \"" .. currentDir .. "\" \"" .. newBackupDir .. "\" > nul")
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("dbot.backup.create: Failed to create backup, xcopy shell failed: " ..
-              dbot.retval.getString(retval))
-  else
-    dbot.info("Created backup @W(@c" .. os.date("%c", backupTime) .. "@W) @G" .. name)
-  end -- if
+  local dstPath = backupDir .. name .. "-" .. backupTime .. ".db"
 
-  return inv.tags.stop(invTagsBackup, endTag, retval)
+  local ok = copyFile(srcPath, dstPath)
+
+  -- Reopen the database
+  dinv_db.open()
+
+  if not ok then
+    dbot.warn("dbot.backup.create: Failed to copy database to backup")
+    return inv.tags.stop(invTagsBackup, endTag, DRL_RET_INTERNAL_ERROR)
+  end
+
+  dbot.info("Created backup @W(@c" .. os.date("%c", backupTime) .. "@W) @G" .. name)
+  return inv.tags.stop(invTagsBackup, endTag, DRL_RET_SUCCESS)
 end -- dbot.backup.create
 
 
 function dbot.backup.delete(name, endTag, isQuiet)
-  local retval = DRL_RET_SUCCESS
-
   if (name == nil) or (name == "") then
     dbot.warn("dbot.backup.delete: Missing name parameter")
     return inv.tags.stop(invTagsBackup, endTag, DRL_RET_INVALID_PARAM)
-  end -- if
+  end
 
-  local backupNames, retval = dbot.backup.getBackups()
+  local backups, retval = dbot.backup.getBackups()
   if (retval ~= DRL_RET_SUCCESS) then
     dbot.warn("dbot.backup.delete: Failed to get backup list: " .. dbot.retval.getString(retval))
     return inv.tags.stop(invTagsBackup, endTag, retval)
-  end -- if
+  end
 
-  -- Check if the backup name we want to delete is one of the available backups and whack it if it is
-  local numBackupsDeleted = 0
-  for _, backupName in ipairs(backupNames) do
-    if (backupName.baseName == name) then
-      dbot.debug("dbot.backup.delete: Executing \"rmdir /s /q \"" .. backupName.dirName .. "\"\"")
-      dbot.shell("rmdir /s /q \"" .. backupName.dirName .. "\" > nul")
-      retval = dbot.spinWhileExistsBusy(backupName.dirName, 5)
-      if (retval ~= DRL_RET_SUCCESS) then
-        dbot.warn("dbot.backup.delete: Failed to delete backup \"@G" .. name .. "@W\": " ..
-                  dbot.retval.getString(retval))
-        break
-      else
-        if (isQuiet == false) then
-          dbot.info("Deleted backup @W(@c" .. os.date("%c", backupName.baseTime) ..
-                    "@W) @G" .. backupName.baseName)
-        end -- if
-      end -- if
-      numBackupsDeleted = numBackupsDeleted + 1
-    end -- if
-  end -- if
+  local numDeleted = 0
+  for _, backup in ipairs(backups) do
+    if (backup.baseName == name) then
+      os.remove(backup.fullPath)
+      if not isQuiet then
+        dbot.info("Deleted backup @W(@c" .. os.date("%c", backup.baseTime) ..
+                  "@W) @G" .. backup.baseName)
+      end
+      numDeleted = numDeleted + 1
+    end
+  end
 
-  if (numBackupsDeleted == 0) and (isQuiet == false) then
-    dbot.info("Failed to delete backup: No backups matching name \"@G" .. name .. "@w\" were found")
-  end -- if
+  if (numDeleted == 0) and not isQuiet then
+    dbot.info("No backups matching name \"@G" .. name .. "@w\" were found")
+  end
 
-  return inv.tags.stop(invTagsBackup, endTag, retval)
+  return inv.tags.stop(invTagsBackup, endTag, DRL_RET_SUCCESS)
 end -- dbot.backup.delete
 
 
 dbot.backup.restorePkg = nil
 function dbot.backup.restore(name, endTag)
-  local retval = DRL_RET_SUCCESS
-
   if (name == nil) or (name == "") then
     dbot.warn("dbot.backup.restore: Missing name parameter")
     return inv.tags.stop(invTagsBackup, endTag, DRL_RET_INVALID_PARAM)
-  end -- if
+  end
 
   if (dbot.backup.restorePkg ~= nil) then
     dbot.info("Skipping backup restore request: another restore is in progress")
     return inv.tags.stop(invTagsBackup, endTag, DRL_RET_BUSY)
-  end -- if
+  end
 
   dbot.backup.restorePkg        = {}
   dbot.backup.restorePkg.name   = name
@@ -1859,67 +1657,67 @@ function dbot.backup.restore(name, endTag)
 
   wait.make(dbot.backup.restoreCR)
 
-  return retval
+  return DRL_RET_SUCCESS
 end -- dbot.backup.restore
 
 
 function dbot.backup.restoreCR()
   if (dbot.backup.restorePkg == nil) then
-    dbot.warn("dbot.backup.restoreCR: restore package is nil!?!?")
-    return inv.tags.stop(invTagsBackup, endTag, DRL_RET_INTERNAL_ERROR)
-  end -- if
+    dbot.warn("dbot.backup.restoreCR: restore package is nil")
+    return inv.tags.stop(invTagsBackup, nil, DRL_RET_INTERNAL_ERROR)
+  end
 
   local name   = dbot.backup.restorePkg.name
   local endTag = dbot.backup.restorePkg.endTag
+  local retval = DRL_RET_SUCCESS
 
-  local backupNames, retval = dbot.backup.getBackups()
+  local backups
+  backups, retval = dbot.backup.getBackups()
   if (retval ~= DRL_RET_SUCCESS) then
     dbot.warn("dbot.backup.restore: Failed to get backup list: " .. dbot.retval.getString(retval))
     dbot.backup.restorePkg = nil
     return inv.tags.stop(invTagsBackup, endTag, retval)
-  end -- if
+  end
 
-  local currentDir, retval = dbot.backup.getCurrentDir()
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("dbot.backup.restore: Failed to get current directory: " .. dbot.retval.getString(retval))
-    dbot.backup.restorePkg = nil
-    return inv.tags.stop(invTagsBackup, endTag, retval)
-  end -- if
-  currentDir = string.gsub(currentDir, "\\$", "") -- Some versions of xcopy hate if there is a trailing slash
+  -- Find the matching backup
+  local backupPath = nil
+  local backupTime = 0
+  for _, backup in ipairs(backups) do
+    if (backup.baseName == name) then
+      backupPath = backup.fullPath
+      backupTime = backup.baseTime
+      break
+    end
+  end
 
-  -- Check if the backup name we want to restore is one of the available backups and use it if it is
-  local didRestore = false
-  for _, backupName in ipairs(backupNames) do
-    if (backupName.baseName == name) then
-      dbot.info("Restoring backup @W(@c" .. os.date("%c", backupName.baseTime) ..
-                "@W) @G" .. backupName.baseName)
-      dbot.shell("rmdir /s /q \"" .. currentDir .. "\" > nul")
-      dbot.spinWhileExists(currentDir, 5) -- Spin for up to 5 seconds waiting for confirmation it is gone
-
-      dbot.debug("dbot.backup.restore: \"@y" .. "xcopy /E /I \"" .. backupName.dirName .. "\" \"" ..
-                 currentDir   .. "\"@W\"")
-      dbot.shell("xcopy /E /I \"" .. backupName.dirName .. "\" \"" .. currentDir .. "\" > nul")
-      dbot.spinUntilExists(currentDir, 5) -- Spin for up to 5 seconds waiting for confirmation it is there
-
-      -- We want to re-init everything to pick up the restored state.  We don't want to save the
-      -- current state which will be overwritten.
-      local retval = inv.reload(drlDoNotSaveState)
-      if (retval ~= DRL_RET_SUCCESS) then
-        dbot.warn("dbot.backup.restore: Failed to reload plugin: " .. dbot.retval.getString(retval))
-      end -- if
-
-      didRestore = true
-      break -- Don't restore multiple backups if they have the same name but a different date
-    end -- if
-  end -- if
-
-  if (not didRestore) and (retval == DRL_RET_SUCCESS) then
+  if not backupPath then
     dbot.warn("Failed to restore backup \"@G" .. name .. "@W\": could not find backup")
-    retval = DRL_RET_MISSING_ENTRY
-  end -- if
+    dbot.backup.restorePkg = nil
+    return inv.tags.stop(invTagsBackup, endTag, DRL_RET_MISSING_ENTRY)
+  end
+
+  dbot.info("Restoring backup @W(@c" .. os.date("%c", backupTime) .. "@W) @G" .. name)
+
+  -- Close the database, copy backup over it, then reload
+  dinv_db.close()
+
+  local dstPath = dinv_db.getPath()
+  local ok = copyFile(backupPath, dstPath)
+
+  if not ok then
+    dbot.warn("dbot.backup.restore: Failed to copy backup over database")
+    dinv_db.open()
+    dbot.backup.restorePkg = nil
+    return inv.tags.stop(invTagsBackup, endTag, DRL_RET_INTERNAL_ERROR)
+  end
+
+  -- Reload the plugin to pick up the restored state (without saving current state)
+  retval = inv.reload(drlDoNotSaveState)
+  if (retval ~= DRL_RET_SUCCESS) then
+    dbot.warn("dbot.backup.restore: Failed to reload plugin: " .. dbot.retval.getString(retval))
+  end
 
   dbot.backup.restorePkg = nil
-
   return inv.tags.stop(invTagsBackup, endTag, retval)
 end -- dbot.backup.restoreCR
 

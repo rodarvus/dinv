@@ -2,6 +2,18 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0021] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Rewrote backup system for SQLite. Backups are now simple .db file
+           copies using Lua I/O (no more xcopy/rmdir shell commands).
+           Automatic periodic backups removed. A pre-build backup is created
+           automatically before "dinv build confirm" if the database has
+           items. Manual backup commands (create/list/delete/restore) remain
+           available. AFK and shutdown auto-backups removed.]]
+  }
+}
+
 dbot.changelog[3.0020] =
 {
   { change = drlDbotChangeLogTypeMisc,

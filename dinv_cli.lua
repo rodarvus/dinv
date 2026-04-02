@@ -189,6 +189,7 @@ function inv.cli.build.fn(name, line, wildcards)
     inv.tags.stop(invTagsBuild, endTag, DRL_RET_UNINITIALIZED)
 
   elseif (confirmation == "confirm") then
+    dbot.backup.preBuild()
     dbot.info("Build confirmed: Prompts will be disabled until the build completes")
     dbot.info("Commencing inventory build...")
     inv.items.build(endTag)
@@ -2519,18 +2520,6 @@ function inv.cli.backup.fn(name, line, wildcards)
     dbot.info("Skipping backup request: plugin is not yet initialized (are you AFK or sleeping?)")
     retval = inv.tags.stop(invTagsBackup, endTag, DRL_RET_UNINITIALIZED)
 
-  elseif (command == "on") then
-    inv.config.table.isBackupEnabled = true
-    dbot.info("Automatic backups are @GENABLED@W")
-    retval = inv.config.save()
-    retval = inv.tags.stop(invTagsBackup, endTag, retval)
-
-  elseif (command == "off") then
-    inv.config.table.isBackupEnabled = false
-    dbot.info("Automatic backups are @RDISABLED@W")
-    retval = inv.config.save()
-    retval = inv.tags.stop(invTagsBackup, endTag, retval)
-
   elseif (command == "list") then
     retval = dbot.backup.list(endTag)
 
@@ -2545,10 +2534,7 @@ function inv.cli.backup.fn(name, line, wildcards)
     retval = dbot.backup.delete(backupName, endTag, false)
 
   elseif (command == "restore") and (backupName ~= "") then
-    retval = dbot.backup.restore(backupName, endTag)   
-
-  elseif (command == "auto") then -- Note: auto is a hidden mode and not included in the help file
-    retval = dbot.backup.current()
+    retval = dbot.backup.restore(backupName, endTag)
 
   else
     inv.cli.backup.usage()
