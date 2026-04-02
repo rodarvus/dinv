@@ -2,6 +2,14 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0042] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Consume display now shows a restock tip when items have 0 available
+           count. Helps users discover the buy command when they run out.]]
+  }
+}
+
 dbot.changelog[3.0041] =
 {
   { change = drlDbotChangeLogTypeNew,

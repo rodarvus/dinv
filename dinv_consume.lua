@@ -371,6 +371,7 @@ function inv.consume.displayType(typeName, isOwned)
   end -- if
 
   local header = string.format("\n@W@C%-10s@W Level   Room  # Avail  Name", (typeName or "nil"))
+  local hasOutOfStock = false
   local didPrintHeader = false
 
   if (inv.consume.table[typeName] ~= nil) then
@@ -401,9 +402,15 @@ function inv.consume.displayType(typeName, isOwned)
         dbot.print(string.format("             %3d  %5d     %s%4d@w  %s",
                    (entry.level or 0), (entry.room or 0), countColor, count, (entry.name or "nil")))
       end -- if
+      if (count == 0) then hasOutOfStock = true end
       numEntries = numEntries + 1
     end -- for
   end -- if
+
+  if hasOutOfStock and didPrintHeader then
+    dbot.print("@w  Tip: \"@G" .. pluginNameCmd .. " consume buy " .. typeName ..
+               " <quantity>@w\" to restock")
+  end
 
   return numEntries, DRL_RET_SUCCESS
 end -- inv.consume.displayType
