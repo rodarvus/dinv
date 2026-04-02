@@ -1,6 +1,6 @@
 # dinv - Status and Roadmap
 
-**Version:** 3.0030  
+**Version:** 3.0033  
 **Authors:** Durel, Rodarvus  
 **Repository:** https://github.com/rodarvus/dinv  
 **Forked from:** https://github.com/Aardurel/aard-plugins (v2.0056, dormant since Nov 2020)
@@ -9,7 +9,7 @@
 
 dinv is a comprehensive inventory management plugin for Aardwolf MUD, running on MUSHclient. It was forked from Durel's aard_inventory and has been significantly modernized with a modular codebase, SQLite-backed storage, and numerous bug fixes.
 
-## Completed Work (v3.0001–v3.0030)
+## Completed Work (v3.0001–v3.0033)
 
 ### Phase 1: Bug Fixes
 - **v3.0001:** Fixed crash in `searchIdsCSV()` — nil parameter passed to `isSearchRelative()`
@@ -39,6 +39,11 @@ dinv is a comprehensive inventory management plugin for Aardwolf MUD, running on
 - **v3.0028:** Fixed global variable leaks (5 variables)
 - **v3.0029:** Fixed consume module bugs (undefined globals, wrong error field)
 - **v3.0030:** Removed ~300 lines of dead code
+
+### Improvements
+- **v3.0031:** Incremental saves during item identification (crash resilience)
+- **v3.0032:** SQL-powered consume display counts (replaced O(N*M) loop)
+- **v3.0033:** Consume shorthand — `dinv consume <type>` defaults to "big"
 
 ## Upstream Issues Resolution
 
@@ -82,28 +87,23 @@ dinv_report.lua        (93 lines)   Channel reporting
 - DELETE journal mode (no WAL)
 - Explicit transactions for all bulk saves
 - Lazy-loaded equipment sets (deferred until first access)
-- Incremental saves for single-item operations
+- Incremental saves for single-item operations during identification
 - Schema migration framework for future changes
 
 ## Roadmap
 
-### Quick Wins
-- Incremental saves during item identification (crash resilience)
-- SQL-powered consume display counts (replace O(N*M) loop)
-- Consolidate duplicate display helpers
-- Default consume behavior without small/big qualifier
+### Medium Effort (next priorities)
+- **Hybrid SQL+Lua search** — SQL pre-filter for level/type/name, Lua for complex queries
+- **SQL pre-filtering for set creation** — Query eligible items instead of full table scan
+- **Organize overlap detection** — Warn on conflicting container queries
+- **Normalize offhandDam** — Fix case-sensitivity kludge in priority fields
+- **Consolidate display helpers** — Extract shared name/ID formatting code
 
-### Medium Effort
-- Hybrid SQL+Lua search (SQL pre-filter, Lua for complex queries)
-- SQL pre-filtering for set creation (eligible items query)
-- Organize overlap detection
-- Normalize offhandDam priority field name (fix legacy kludge)
-
-### Large Effort
-- Full SQL search engine
-- Item score caching table
-- Partial refresh with incremental saves
-- Consume module overhaul
+### Large Effort (future)
+- **Full SQL search engine** — Translate entire query to SQL
+- **Item score caching** — Precompute scores for analyze mode
+- **Partial refresh** — Support maxNumItems parameter with incremental saves
+- **Consume module overhaul** — Purchase verification, Food type, low-stock warnings
 
 ### Deferred
 - **Migration tool** — Import old aard_inventory state files into SQLite
