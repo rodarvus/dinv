@@ -530,6 +530,11 @@ function inv.init.atActiveCR()
     else
       dbot.debug("Initialized dbot \"at active\" modules")
       dbot.init.initializedActive = true
+
+      -- Open SQLite database
+      if not dinv_db.open() then
+        dbot.error("inv.init.atActiveCR: Failed to open SQLite database")
+      end
     end -- if
   end -- if
 
@@ -611,6 +616,9 @@ function inv.fini(doSaveState)
     if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
       dbot.warn("init.fini: De-initialization of dbot module failed: " .. dbot.retval.getString(retval))
     end -- if
+
+    -- Close SQLite database
+    dinv_db.close()
   end -- if
 
   -- This indicates that we are now uninitialized

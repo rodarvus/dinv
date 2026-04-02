@@ -2,6 +2,14 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0007] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Hook SQLite database into plugin lifecycle. Database is opened
+           after GMCP initialization and closed on plugin shutdown.]]
+  }
+}
+
 dbot.changelog[3.0006] =
 {
   { change = drlDbotChangeLogTypeNew,
