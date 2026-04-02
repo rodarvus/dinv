@@ -855,7 +855,6 @@ function inv.config.save()
       ["config.setFormat"]       = verStr(t.setFormat),
       ["config.snapshotFormat"]  = verStr(t.snapshotFormat),
       ["config.isPromptEnabled"] = tostring(t.isPromptEnabled),
-      ["config.isBackupEnabled"] = tostring(t.isBackupEnabled),
       ["config.isBuildExecuted"] = tostring(t.isBuildExecuted),
       ["config.doIgnoreKeyring"] = tostring(t.doIgnoreKeyring),
       ["config.isRegenEnabled"]  = tostring(t.isRegenEnabled),
@@ -926,7 +925,6 @@ function inv.config.load()
     setFormat       = parseVer(vals["config.setFormat"]),
     snapshotFormat  = parseVer(vals["config.snapshotFormat"]),
     isPromptEnabled = toBool(vals["config.isPromptEnabled"]),
-    isBackupEnabled = toBool(vals["config.isBackupEnabled"]),
     isBuildExecuted = toBool(vals["config.isBuildExecuted"]),
     doIgnoreKeyring = toBool(vals["config.doIgnoreKeyring"]),
     isRegenEnabled  = toBool(vals["config.isRegenEnabled"]),
@@ -964,7 +962,6 @@ function inv.config.new()
            snapshotFormat  = version.snapshotFormat,
 
            isPromptEnabled = true,
-           isBackupEnabled = true,
            isBuildExecuted = false,
            doIgnoreKeyring = false,
            isRegenEnabled  = false,

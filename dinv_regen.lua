@@ -276,31 +276,3 @@ function inv.regen.onWakeCR()
   return retval
 end -- inv.regen.onWakeCR
 
-
---[[
-
-Durel's Bag-of-Tricks (dbot) Layout
------------------------------------
-
-dbot init     : Init / de-init code for the dbot package
-dbot generic  : Top-level generic utility functions (e.g., custom version of tonumber, etc.)
-dbot.retval   : Return values / error codes
-dbot.table    : Convenient functions to manage table accesses
-dbot.notify   : Message notification sub-system
-dbot.gmcp     : Character and world state access functions via the GMCP protocol
-dbot.storage  : Save and load data using persistent storage
-dbot.backup   : System to support backing up and restoring all plugin state
-dbot.emptyLine: Module to allow suppression of empty output lines
-dbot.prompt   : Module to transparently enable or disable the prompt and related output
-dbot.invmon   : Module to check if invmon is enabled
-dbot.ability  : Module to track if a character has access to a particular skill or spell
-dbot.wish     : Module to track which wishes a character has purchased
-dbot.pagesize : Module to determine a character's current page size (# lines before page prompt)
-dbot.execute  : Execute one or more commands without contention from user-entered commands
-dbot.callback : Module to help manage callback functions and parameters
-dbot.remote   : Module to retrieve remote files
-dbot.version  : Module to track version and changelog information and update the plugin
-
---]]
-
-

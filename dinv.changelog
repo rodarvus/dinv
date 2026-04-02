@@ -2,6 +2,18 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0030] =
+{
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[Removed dead code: 4 spin-wait functions (old file storage vestiges),
+           dbot.normalizeMobName, dbot.pluginInfo, dbot.telnet constants,
+           dbot.gmcp.getArea/getHp/getMana/getMoves/stateIsInCombat,
+           inv.cache.clearOld, inv.tags.start (commented-out body), stale
+           dbot layout comment in dinv_regen.lua, and vestigial
+           isBackupEnabled config field. ~250 lines removed.]]
+  }
+}
+
 dbot.changelog[3.0029] =
 {
   { change = drlDbotChangeLogTypeFix,

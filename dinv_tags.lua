@@ -278,31 +278,6 @@ function inv.tags.set(tagNames, tagValue)
 end -- inv.tags.set
 
 
-function inv.tags.start(moduleName, startTag)
-  local retval = DRL_RET_SUCCESS
-
---[[ TODO: I don't think that we actually want to use this after all.  The problem is that
-           the start tag won't be displayed until any pending commands that are queued up on
-           the server actually complete.  We could wait until we get confirmation that the
-           command finished and our completion message was displayed before we continue.
-           However, that would add quite a bit of latency and overhead for the user.
-
-           Also, I'm not convinced that seeing a start tag is that helpful.  If someone kicks
-           off a command, they probably are much more interested in knowing when it is done
-           (i.e., seeing the end tag) than knowing that they made the original request -- which
-           really shouldn't be a surprise since they are the ones that made the request ;-)
-
-  if (moduleName ~= nil) and (startTag ~= nil) and (startTag ~= "") and 
-     (inv.tags.table ~= nil) and (inv.tags.table[moduleName] == drlInvTagOn) and
-     inv.tags.isEnabled() then
-    retval = dbot.execute.fast.command("echo " .. "{" .. startTag .. "}")
-  end -- if
---]]
-
-  return retval
-end -- inv.tags.start
-
-
 function inv.tags.stop(moduleName, endTag, retval)
   if (retval == nil) then
     retval = DRL_RET_INTERNAL_ERROR

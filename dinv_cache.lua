@@ -599,18 +599,5 @@ function inv.cache.dump(cache)
 end -- inv.cache.dump
 
 
--- Remove all cached items older than ageInSec
--- We don't currently use this, but it might be handy at some point
-function inv.cache.clearOld(cache, ageInSec)
-  assert(cache ~= nil, "Cache is nil!!!")
-  local currentTime = dbot.getTime()
-
-  for key,cacheEntry in pairs(cache.entries) do
-    if (cacheEntry == nil) or (cacheEntry.timeCached == nil) or 
-       (currentTime - cacheEntry.timeCached > ageInSec) then
-      inv.cache.remove(cache, key)
-    end -- if
-  end -- for
-end -- inv.cache.clearOld
 
 

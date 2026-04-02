@@ -211,108 +211,6 @@ end -- dbot.fileExists
 
 
 ----------------------------------------------------------------------------------------------------
--- dbot.spinUntilExists: Spin in a sleep-loop waiting for the specified file to be created
-----------------------------------------------------------------------------------------------------
-
-function dbot.spinUntilExists(fileName, timeoutSec)
-  local totTime = 0
-
-  -- Wait until either we detect that the file exists or until we time out
-  while (not dbot.fileExists(fileName)) do
-    if (totTime > timeoutSec) then
-      dbot.warn("dbot.spinUntilExists: Timed out waiting for creation of \"@G" .. fileName .. "@W\"")
-      return DRL_RET_TIMEOUT
-    end -- if
-
-    wait.time(drlSpinnerPeriodDefault)
-    totTime = totTime + drlSpinnerPeriodDefault
-  end -- while
-
-  return DRL_RET_SUCCESS
-end -- dbot.spinUntilExists
-
-
-----------------------------------------------------------------------------------------------------
--- dbot.spinWhileExists: Spin in a sleep-loop waiting for the specified file to be deleted
-----------------------------------------------------------------------------------------------------
-
-function dbot.spinWhileExists(fileName, timeoutSec)
-  local totTime = 0
-
-  -- Wait until either we detect that the file does not exist or until we time out
-  while (dbot.fileExists(fileName)) do
-    if (totTime > timeoutSec) then
-      dbot.warn("dbot.spinWhileExists: Timed out waiting for deletion of \"@G" .. fileName .. "@W\"")
-      return DRL_RET_TIMEOUT
-    end -- if
-
-    wait.time(drlSpinnerPeriodDefault)
-    totTime = totTime + drlSpinnerPeriodDefault
-  end -- while
-
-  return DRL_RET_SUCCESS
-end -- dbot.spinWhileExists
-
-
-----------------------------------------------------------------------------------------------------
--- dbot.spinUntilExistsBusy: Spin in a busy-loop waiting for the specified file to be created
---
--- This is identical to dbot.spinUntilExists() but it uses a busy loop instead of
--- scheduling a wait.  A busy loop is less efficient, but you have the option of 
--- using it outside of a co-routine and that comes in handy in certain circumstances.
-----------------------------------------------------------------------------------------------------
-
-function dbot.spinUntilExistsBusy(fileName, timeoutSec)
-  local startTime = dbot.getTime()
-
-  -- Wait until either we detect that the file exists or until we time out
-  while (not dbot.fileExists(fileName)) do
-
-    -- We time out if we have been in a busy loop for over timeoutSec seconds.  This
-    -- only has a resolution of 1 second so it's possible that we may timeout up to
-    -- 1 second later than the user requested.  I'd rather take a chance of timing
-    -- out a little late than timing out a little early.
-    if (dbot.getTime() - startTime > timeoutSec) then
-      dbot.warn("dbot.spinUntilExists: Timed out waiting for creation of \"@G" .. fileName .. "@W\"")
-      return DRL_RET_TIMEOUT
-    end -- if
-
-  end -- while
-
-  return DRL_RET_SUCCESS
-end -- dbot.spinUntilExistsBusy
-
-
-----------------------------------------------------------------------------------------------------
--- dbot.spinWhileExistsBusy: Spin in a busy-loop waiting for the specified file to be deleted
---
--- This is identical to dbot.spinWhileExists() but it uses a busy loop instead of
--- scheduling a wait.  A busy loop is less efficient, but you have the option of 
--- using it outside of a co-routine and that comes in handy in certain circumstances.
-----------------------------------------------------------------------------------------------------
-
-function dbot.spinWhileExistsBusy(fileName, timeoutSec)
-  local startTime = dbot.getTime()
-
-  -- Wait until either we detect that the file is removed or until we time out
-  while (dbot.fileExists(fileName)) do
-
-    -- We time out if we have been in a busy loop for over timeoutSec seconds.  This
-    -- only has a resolution of 1 second so it's possible that we may timeout up to
-    -- 1 second later than the user requested.  I'd rather take a chance of timing
-    -- out a little late than timing out a little early.
-    if (dbot.getTime() - startTime > timeoutSec) then
-      dbot.warn("dbot.spinWhileExists: Timed out waiting for deletion of \"@G" .. fileName .. "@W\"")
-      return DRL_RET_TIMEOUT
-    end -- if
-
-  end -- while
-
-  return DRL_RET_SUCCESS
-end -- dbot.spinWhileExistsBusy
-
-
-----------------------------------------------------------------------------------------------------
 -- dbot.tonumber: version of tonumber that strips out commas from a number
 ----------------------------------------------------------------------------------------------------
 
@@ -560,30 +458,6 @@ end -- dbot.commLog
 
 
 ----------------------------------------------------------------------------------------------------
--- dbot.normalizeMobName strips out prefix articles from a mob's name
-----------------------------------------------------------------------------------------------------
-
-function dbot.normalizeMobName(fullMobName)
-
-  mobName = fullMobName
-  mobName = mobName:gsub("^a (.-)$", "%1")
-  mobName = mobName:gsub("^A (.-)$", "%1")
-  mobName = mobName:gsub("^an (.-)$", "%1")
-  mobName = mobName:gsub("^An (.-)$", "%1")
-  mobName = mobName:gsub("^the (.-)$", "%1")
-  mobName = mobName:gsub("^The (.-)$", "%1")
-  mobName = mobName:gsub("^some (.-)$", "%1")
-  mobName = mobName:gsub("^Some (.-)$", "%1")
-
-  -- These are convenient hacks for common mobs
-  mobName = mobName:gsub("^.*soul of (.-)$", "%1") -- Silver Volcano
-  mobName = mobName:gsub("^(.-) sea snake$", "%1") -- Woobleville
-
-  return mobName
-end -- normalizeMobName
-
-
-----------------------------------------------------------------------------------------------------
 -- dbot.retval: Return values (AKA error codes)
 --
 -- Functions:
@@ -725,15 +599,6 @@ else
   DRL_ANSI_YELLOW = "@Y"
   DRL_ANSI_WHITE  = "@W"
 end -- if
-
-----------------------------------------------------------------------------------------------------
--- Plugin info fields used by GetPluginInfo()
-----------------------------------------------------------------------------------------------------
-
-dbot.pluginInfo = {}
-dbot.pluginInfo.dir = 20
--- TODO: add other pluginInfo fields
-
 
 ----------------------------------------------------------------------------------------------------
 -- Notification Module
@@ -1087,23 +952,6 @@ function dbot.gmcp.getStateString(state)
 end -- dbot.gmcp.getStateString
 
 
-function dbot.gmcp.getArea()
-  local roomInfo
-  local area = ""
-
-  if dbot.gmcp.isInitialized then
-    roomInfo = gmcp("room.info")
-    if (roomInfo ~= nil) then
-      area = roomInfo.zone
-    end -- if
-  else
-    dbot.note("dbot.gmcp.getArea: GMCP is not initialized")
-  end -- if
-
-  dbot.debug("dbot.gmcp.getArea returns \"" .. (area or "nil") .. "\"")
-  return area
-end -- dbot.gmcp.getArea
-
 
 function dbot.gmcp.getClass()
   local char
@@ -1214,84 +1062,6 @@ function dbot.gmcp.getTier()
 end -- dbot.gmcp.getTier
 
 
-function dbot.gmcp.getHp()
-  local charVitals, charMaxStats
-  local currentHp = 0
-  local maxHp = 0
-
-  if dbot.gmcp.isInitialized then
-    charVitals = gmcp("char.vitals")
-    if (charVitals ~= nil) and (charVitals.hp ~= nil) then
-      currentHp = tonumber(charVitals.hp)
-    end -- if
-
-    charMaxStats = gmcp("char.maxstats")
-    if (charMaxStats ~= nil) and (charMaxStats.maxhp ~= nil) then
-      maxHp = tonumber(charMaxStats.maxhp)
-    end -- if
-
-  else
-    dbot.note("dbot.gmcp.getTier: GMCP is not initialized")
-
-  end -- if
-
-  return currentHp, maxHp
-
-end -- dbot.gmcp.getHp
-
-
-function dbot.gmcp.getMana()
-  local charVitals, charMaxStats
-  local currentMana = 0
-  local maxMana = 0
-
-  if dbot.gmcp.isInitialized then
-    charVitals = gmcp("char.vitals")
-    if (charVitals ~= nil) and (charVitals.mana ~= nil) then
-      currentMana = tonumber(charVitals.mana)
-    end -- if
-
-    charMaxStats = gmcp("char.maxstats")
-    if (charMaxStats ~= nil) and (charMaxStats.maxmana ~= nil) then
-      maxMana = tonumber(charMaxStats.maxmana)
-    end -- if
-
-  else
-    dbot.note("dbot.gmcp.getTier: GMCP is not initialized")
-
-  end -- if
-
-  return currentMana, maxMana
-
-end -- dbot.gmcp.getMana
-
-
-function dbot.gmcp.getMoves()
-  local charVitals, charMaxStats
-  local currentMoves = 0
-  local maxMoves = 0
-
-  if dbot.gmcp.isInitialized then
-    charVitals = gmcp("char.vitals")
-    if (charVitals ~= nil) and (charVitals.moves ~= nil) then
-      currentMoves = tonumber(charVitals.moves)
-    end -- if
-
-    charMaxStats = gmcp("char.maxstats")
-    if (charMaxStats ~= nil) and (charMaxStats.maxmoves ~= nil) then
-      maxMoves = tonumber(charMaxStats.maxmoves)
-    end -- if
-
-  else
-    dbot.note("dbot.gmcp.getTier: GMCP is not initialized")
-
-  end -- if
-
-  return currentMoves, maxMoves
-
-end -- dbot.gmcp.getMoves
-
-
 function dbot.gmcp.isGood()
   local align = dbot.gmcp.getAlign()
 
@@ -1339,11 +1109,6 @@ function dbot.gmcp.statePreventsActions()
     return true
   end -- if
 end -- dbot.gmcp.statePreventsActions
-
-
-function dbot.gmcp.stateIsInCombat()
-  return (dbot.gmcp.getState() == dbot.stateCombat)
-end -- dbot.gmcp.stateIsInCombat()
 
 
 function dbot.gmcp.stateIsActive()
@@ -1722,20 +1487,6 @@ function dbot.backup.restoreCR()
   dbot.backup.restorePkg = nil
   return inv.tags.stop(invTagsBackup, endTag, retval)
 end -- dbot.backup.restoreCR
-
-
-----------------------------------------------------------------------------------------------------
--- Telnet low-level definitions
-----------------------------------------------------------------------------------------------------
-
-dbot.telnet = {}
-
-dbot.telnet.IAC          = 255
-dbot.telnet.SB           = 250
-dbot.telnet.SE           = 240
-dbot.telnet.promptOption = 52
-dbot.telnet.optionOn     = 1
-dbot.telnet.optionOff    = 2
 
 
 ----------------------------------------------------------------------------------------------------
