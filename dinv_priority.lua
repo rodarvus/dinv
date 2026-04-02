@@ -765,10 +765,11 @@ function inv.priority.tableToString(priorityTable, doDisplayUnused, doDisplayCol
     local fieldDesc = fieldEntry[2]
     local useField = true
 
-    -- This is a kludge.  All priority weighting field names are lower case except 
-    -- "offhandDam".  When we added support for case insensitivity, that could cause a problem
-    -- for people with old priorities with "offhandDam" instead of "offhanddam".  Here is a
-    -- one-off to work around that case by handling that one field differently.
+    -- "offhandDam" is the only priority field with mixed case (capital D). All other fields are
+    -- lowercase. Normalizing to lowercase was considered but rejected — it would require changing
+    -- 30+ references across 5 files plus a SQL schema migration, for no functional benefit. This
+    -- workaround handles user input that arrives as lowercase "offhanddam" from case-insensitive
+    -- parsing, converting it to the canonical "offhandDam" used throughout the codebase.
     if (fieldName == "offhanddam") then
       fieldName = "offhandDam"
     end -- if
@@ -987,10 +988,7 @@ function inv.priority.stringToTable(priorityString)
           return priEntry, DRL_RET_INVALID_PARAM
         end -- if
 
-        -- This is a kludge.  All priority weighting field names are lower case except 
-        -- "offhandDam".  When we added support for case insensitivity, that could cause a problem
-        -- for people with old priorities with "offhandDam" instead of "offhanddam".  Here is a
-        -- one-off to work around that case by handling that one field differently.
+        -- See comment in tableToString for why offhandDam keeps its mixed case.
         if (fieldName == "offhanddam") then
           fieldName = "offhandDam"
         end -- if
