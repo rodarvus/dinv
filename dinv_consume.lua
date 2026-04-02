@@ -743,7 +743,7 @@ function inv.consume.useItem(objId, commandArray)
 
   if (itemType == "Potion") then
     consumeCmd = "quaff"
-  elseif (itemType == "Pill") then
+  elseif (itemType == "Pill") or (itemType == "Food") then
     consumeCmd = "eat"
   elseif (itemType == "Scroll") then
     consumeCmd = "recite"
@@ -773,7 +773,7 @@ function inv.consume.useItem(objId, commandArray)
     -- Trade-off: if the command fails (lag, AFK), the item is lost from tracking but still exists
     -- in-game. A "dinv refresh" will re-identify it. This trade-off favors combat speed over
     -- perfect tracking accuracy.
-    if (itemType == "Potion") or (itemType == "Pill") then
+    if (itemType == "Potion") or (itemType == "Pill") or (itemType == "Food") then
       retval = inv.items.remove(objId) 
     end -- if
   end -- if

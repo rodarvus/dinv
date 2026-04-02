@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0044] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Added Food type support to the consume module. Food items are now
+           consumed with the "eat" command (same as pills) and removed from
+           inventory tracking after use.]]
+  }
+}
+
 dbot.changelog[3.0043] =
 {
   { change = drlDbotChangeLogTypeFix,
