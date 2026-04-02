@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0038] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Added SQL pre-filtering for equipment set creation. Items that are
+           overleveled or unidentified are now excluded via SQL before the
+           scoring loop. Speeds up set creation and analysis, especially for
+           large inventories with many items above the target level.]]
+  }
+}
+
 dbot.changelog[3.0037] =
 {
   { change = drlDbotChangeLogTypeNew,

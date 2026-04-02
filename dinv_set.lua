@@ -445,7 +445,24 @@ function inv.set.createWithHandicap(priorityName, level, handicap)
   local isNeutral = dbot.gmcp.isNeutral()
   local isEvil    = dbot.gmcp.isEvil()
 
+  -- Pre-filter via SQL: only items that are identified and at or below target level
+  local sqlCandidates = nil
+  local db = dinv_db.handle
+  if db then
+    sqlCandidates = {}
+    local query = string.format(
+      "SELECT obj_id FROM items WHERE level IS NOT NULL AND level <= %d AND identify_level IN ('partial', 'full')",
+      level)
+    for row in db:nrows(query) do
+      sqlCandidates[row.obj_id] = true
+    end
+  end
+
   for objId,_ in pairs(inv.items.table) do
+    -- Skip items excluded by SQL pre-filter
+    if sqlCandidates and not sqlCandidates[objId] then
+      -- Item is overleveled or unidentified; skip
+    else
     local objIdentified = inv.items.getField(objId, invFieldIdentifyLevel) or ""
     local objLevel      = tonumber(inv.items.getStatField(objId, invStatFieldLevel) or "")
     local objWearables  = inv.items.getStatField(objId, invStatFieldWearable) or ""
@@ -552,6 +569,7 @@ function inv.set.createWithHandicap(priorityName, level, handicap)
 
       end -- if
     end -- if
+    end -- if sqlCandidates skip
   end -- for
 
   -- Check if the char has access to dual weapons at this level by checking the char's
