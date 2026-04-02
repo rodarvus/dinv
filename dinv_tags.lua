@@ -114,24 +114,53 @@ end -- inv.tags.fini
 
 
 function inv.tags.save()
-  local retval = dbot.storage.saveTable(dbot.backup.getCurrentDir() .. inv.tags.stateName,
-                                        "inv.tags.table", inv.tags.table)
-  if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
-    dbot.warn("inv.tags.save: Failed to save tags table: " .. dbot.retval.getString(retval))
-  end -- if
+  local db = dinv_db.handle
+  if not db then return DRL_RET_UNINITIALIZED end
 
-  return retval
+  if not inv.tags.table then return DRL_RET_UNINITIALIZED end
+
+  -- Delete existing tag rows and re-insert
+  db:exec("DELETE FROM config WHERE key LIKE 'tag.%'")
+
+  for tagName, tagValue in pairs(inv.tags.table) do
+    local query = string.format("INSERT INTO config (key, value) VALUES (%s, %s)",
+                                dinv_db.fixsql("tag." .. tagName), dinv_db.fixsql(tagValue))
+    db:exec(query)
+    if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+      dbot.warn("inv.tags.save: Failed to save tag " .. tagName)
+      return DRL_RET_INTERNAL_ERROR
+    end
+  end
+
+  return DRL_RET_SUCCESS
 end -- inv.tags.save
 
 
 function inv.tags.load()
-  local retval = dbot.storage.loadTable(dbot.backup.getCurrentDir() .. inv.tags.stateName, inv.tags.reset)
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("inv.tags.load: Failed to load table from file \"@R" .. 
-              dbot.backup.getCurrentDir() .. inv.tags.stateName .. "@W\": " .. dbot.retval.getString(retval))
-  end -- if
+  local db = dinv_db.handle
+  if not db then
+    inv.tags.reset()
+    return DRL_RET_SUCCESS
+  end
 
-  return retval
+  -- Check if any tag rows exist
+  local count = 0
+  for row in db:nrows("SELECT COUNT(*) as cnt FROM config WHERE key LIKE 'tag.%'") do
+    count = row.cnt
+  end
+
+  if count == 0 then
+    inv.tags.reset()
+    return DRL_RET_SUCCESS
+  end
+
+  inv.tags.table = {}
+  for row in db:nrows("SELECT key, value FROM config WHERE key LIKE 'tag.%'") do
+    local tagName = row.key:sub(5)  -- strip "tag." prefix
+    inv.tags.table[tagName] = row.value
+  end
+
+  return DRL_RET_SUCCESS
 end -- inv.tags.load
 
 

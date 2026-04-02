@@ -837,56 +837,120 @@ end -- inv.config.fini
 
 
 function inv.config.save()
+  local db = dinv_db.handle
+  if not db then return DRL_RET_UNINITIALIZED end
 
-  local retval = dbot.storage.saveTable(dbot.backup.getCurrentDir() .. inv.config.stateName,
-                                        "inv.config.table", inv.config.table)
-  if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
-    dbot.warn("inv.config.save: Failed to save config table: " .. dbot.retval.getString(retval))
-  end -- if
+  local t = inv.config.table
+  if not t then return DRL_RET_UNINITIALIZED end
 
-  return retval
+  -- Delete existing config rows and re-insert
+  db:exec("DELETE FROM config WHERE key LIKE 'config.%'")
 
+  -- Serialize version subtables as strings
+  local function verStr(v)
+    if type(v) == "table" then
+      return tostring(v.major or 0) .. "." .. tostring(v.minor or 0)
+    end
+    return tostring(v or "")
+  end
+
+  local fields = {
+    ["config.pluginVer"]       = tostring(t.pluginVer or ""),
+    ["config.tableFormat"]     = verStr(t.tableFormat),
+    ["config.cacheFormat"]     = verStr(t.cacheFormat),
+    ["config.consumeFormat"]   = verStr(t.consumeFormat),
+    ["config.priorityFormat"]  = verStr(t.priorityFormat),
+    ["config.setFormat"]       = verStr(t.setFormat),
+    ["config.snapshotFormat"]  = verStr(t.snapshotFormat),
+    ["config.isPromptEnabled"] = tostring(t.isPromptEnabled),
+    ["config.isBackupEnabled"] = tostring(t.isBackupEnabled),
+    ["config.isBuildExecuted"] = tostring(t.isBuildExecuted),
+    ["config.doIgnoreKeyring"] = tostring(t.doIgnoreKeyring),
+    ["config.isRegenEnabled"]  = tostring(t.isRegenEnabled),
+    ["config.regenOrigObjId"]  = tostring(t.regenOrigObjId or 0),
+    ["config.regenNewObjId"]   = tostring(t.regenNewObjId or 0),
+    ["config.refreshPeriod"]   = tostring(t.refreshPeriod or 0),
+    ["config.refreshEagerSec"] = tostring(t.refreshEagerSec or 0),
+  }
+
+  for k, v in pairs(fields) do
+    local query = string.format("INSERT INTO config (key, value) VALUES (%s, %s)",
+                                dinv_db.fixsql(k), dinv_db.fixsql(v))
+    db:exec(query)
+    if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+      dbot.warn("inv.config.save: Failed to save config key " .. k)
+      return DRL_RET_INTERNAL_ERROR
+    end
+  end
+
+  return DRL_RET_SUCCESS
 end -- inv.config.save
 
 
 function inv.config.load()
+  local db = dinv_db.handle
+  if not db then
+    inv.config.reset()
+    return DRL_RET_SUCCESS
+  end
 
-  local retval = dbot.storage.loadTable(dbot.backup.getCurrentDir() .. inv.config.stateName, inv.config.reset)
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("inv.config.load: Failed to load table from file \"@R" .. dbot.backup.getCurrentDir() ..
-              inv.config.stateName .. "@W\": " .. dbot.retval.getString(retval))
-  end -- if
+  -- Check if any config rows exist
+  local count = 0
+  for row in db:nrows("SELECT COUNT(*) as cnt FROM config WHERE key LIKE 'config.%'") do
+    count = row.cnt
+  end
 
-  if (inv.config.table == nil) or (inv.config.table.tableFormat == nil) then
-    dbot.error("inv.config.load: inventory configuration table format is nil")
-    return DRL_RET_INTERNAL_ERROR
-  end -- if
+  if count == 0 then
+    -- No saved config — initialize with defaults
+    inv.config.reset()
+    return DRL_RET_SUCCESS
+  end
 
-  -- The following fields were added after dinv was released so we set default values if necessary
-  if (inv.config.table.doIgnoreKeyring == nil) then
-    inv.config.table.doIgnoreKeyring = false -- default value
-  end -- if
-  if (inv.config.table.isRegenEnabled == nil) then
-    inv.config.table.isRegenEnabled = false -- default value
-  end -- if
-  if (inv.config.table.regenOrigObjId == nil) then
-    inv.config.table.regenOrigObjId = 0
-  end -- if
-  if (inv.config.table.regenNewObjId == nil) then
-    inv.config.table.regenNewObjId = 0
-  end -- if
+  -- Load config values into a lookup table
+  local vals = {}
+  for row in db:nrows("SELECT key, value FROM config WHERE key LIKE 'config.%'") do
+    vals[row.key] = row.value
+  end
 
-  return retval
+  -- Helper to parse version strings back to tables
+  local function parseVer(s)
+    if not s or s == "" then return { major = 0, minor = 0 } end
+    local maj, min = s:match("^(%d+)%.(%d+)$")
+    if maj then return { major = tonumber(maj), minor = tonumber(min) } end
+    return { major = 0, minor = 0 }
+  end
 
+  local function toBool(s)
+    return s == "true"
+  end
+
+  inv.config.table = {
+    pluginVer       = vals["config.pluginVer"] or "",
+    tableFormat     = parseVer(vals["config.tableFormat"]),
+    cacheFormat     = parseVer(vals["config.cacheFormat"]),
+    consumeFormat   = parseVer(vals["config.consumeFormat"]),
+    priorityFormat  = parseVer(vals["config.priorityFormat"]),
+    setFormat       = parseVer(vals["config.setFormat"]),
+    snapshotFormat  = parseVer(vals["config.snapshotFormat"]),
+    isPromptEnabled = toBool(vals["config.isPromptEnabled"]),
+    isBackupEnabled = toBool(vals["config.isBackupEnabled"]),
+    isBuildExecuted = toBool(vals["config.isBuildExecuted"]),
+    doIgnoreKeyring = toBool(vals["config.doIgnoreKeyring"]),
+    isRegenEnabled  = toBool(vals["config.isRegenEnabled"]),
+    regenOrigObjId  = tonumber(vals["config.regenOrigObjId"]) or 0,
+    regenNewObjId   = tonumber(vals["config.regenNewObjId"]) or 0,
+    refreshPeriod   = tonumber(vals["config.refreshPeriod"]) or 0,
+    refreshEagerSec = tonumber(vals["config.refreshEagerSec"]) or 0,
+  }
+
+  return DRL_RET_SUCCESS
 end -- inv.config.load
 
 
 function inv.config.reset()
-  local retval
-
   inv.config.table = inv.config.new()
 
-  retval = inv.config.save()
+  local retval = inv.config.save()
   if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
     dbot.warn("inv.config.reset: Failed to save configuration data: " .. dbot.retval.getString(retval))
   end -- if

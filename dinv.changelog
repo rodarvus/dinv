@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0008] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Migrate config, tags, notify, and wish storage to SQLite.
+           These four modules now persist their state in the config table
+           of the SQLite database instead of serialized Lua state files.]]
+  }
+}
+
 dbot.changelog[3.0007] =
 {
   { change = drlDbotChangeLogTypeNew,

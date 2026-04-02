@@ -831,37 +831,48 @@ function dbot.notify.save()
     return dbot.notify.reset()
   end -- if
 
-  local retval = dbot.storage.saveTable(dbot.backup.getCurrentDir() .. dbot.notify.name,
-                                        "dbot.notify.table", dbot.notify.table, true)
-  if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
-    dbot.warn("dbot.notify.save: Failed to save notify table: " .. dbot.retval.getString(retval))
-  end -- if
+  local db = dinv_db.handle
+  if not db then return DRL_RET_UNINITIALIZED end
 
-  return retval
+  db:exec("DELETE FROM config WHERE key = 'notify.level'")
+  local query = string.format("INSERT INTO config (key, value) VALUES ('notify.level', %s)",
+                              dinv_db.fixsql(dbot.notify.table.notifyLevel or notifyLevelDefault))
+  db:exec(query)
+  if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+    dbot.warn("dbot.notify.save: Failed to save notify level")
+    return DRL_RET_INTERNAL_ERROR
+  end
+
+  return DRL_RET_SUCCESS
 end -- dbot.notify.save
 
 
 function dbot.notify.load()
-  local retval = dbot.storage.loadTable(dbot.backup.getCurrentDir() .. dbot.notify.name, dbot.notify.reset)
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("dbot.notify.load: Failed to load table from file \"@R" .. 
-              dbot.backup.getCurrentDir() .. dbot.notify.name .. "@W\": " .. dbot.retval.getString(retval))
-  end -- if
+  local db = dinv_db.handle
+  if not db then
+    dbot.notify.reset()
+    return DRL_RET_SUCCESS
+  end
 
-  return retval
+  local level = nil
+  for row in db:nrows("SELECT value FROM config WHERE key = 'notify.level'") do
+    level = row.value
+  end
+
+  if level then
+    dbot.notify.table = { notifyLevel = level }
+  else
+    dbot.notify.reset()
+  end
+
+  return DRL_RET_SUCCESS
 end -- dbot.notify.load
 
 
 function dbot.notify.reset()
   dbot.notify.table = { notifyLevel = notifyLevelDefault }
 
-  -- We handle saving dbot.module state a little differently than other modules.  Most modules can
-  -- check if dbot.init.initializeActive is true before saving state, but dbot modules don't have that
-  -- luxury because we may need to reset something before we are fully initialized.  Instead, we use
-  -- the "doForceSave" parameter of dbot.storage.saveTable() to explicitly force saving state on a
-  -- reset.  We don't use that parameter on a normal dbot.notify.save() call.
-  local retval = dbot.storage.saveTable(dbot.backup.getCurrentDir() .. dbot.notify.name,
-                                        "dbot.notify.table", dbot.notify.table, true)
+  local retval = dbot.notify.save()
   if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
     dbot.warn("dbot.notify.reset: Failed to save notification data: " .. dbot.retval.getString(retval))
   end -- if
@@ -2712,37 +2723,60 @@ end -- dbot.wish.fini
 
 
 function dbot.wish.save()
-  local retval = dbot.storage.saveTable(dbot.backup.getCurrentDir() .. dbot.wish.name,
-                                        "dbot.wish.table", dbot.wish.table)
-  if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
-    dbot.warn("dbot.wish.save: Failed to save wish table: " .. dbot.retval.getString(retval))
-  end -- if
+  local db = dinv_db.handle
+  if not db then return DRL_RET_UNINITIALIZED end
 
-  return retval
+  if not dbot.wish.table then return DRL_RET_UNINITIALIZED end
+
+  -- Delete existing wish rows and re-insert
+  db:exec("DELETE FROM config WHERE key LIKE 'wish.%'")
+
+  for wishName, _ in pairs(dbot.wish.table) do
+    local query = string.format("INSERT INTO config (key, value) VALUES (%s, 'true')",
+                                dinv_db.fixsql("wish." .. wishName))
+    db:exec(query)
+    if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+      dbot.warn("dbot.wish.save: Failed to save wish " .. wishName)
+      return DRL_RET_INTERNAL_ERROR
+    end
+  end
+
+  return DRL_RET_SUCCESS
 end -- dbot.wish.save
 
 
 function dbot.wish.load()
-  local retval = dbot.storage.loadTable(dbot.backup.getCurrentDir() .. dbot.wish.name, dbot.wish.reset)
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("dbot.wish.load: Failed to load table from file \"@R" .. 
-              dbot.backup.getCurrentDir() .. dbot.wish.name .. "@W\": " .. dbot.retval.getString(retval))
-  end -- if
+  local db = dinv_db.handle
+  if not db then
+    dbot.wish.reset()
+    return DRL_RET_SUCCESS
+  end
 
-  return retval
+  -- Check if any wish rows exist
+  local count = 0
+  for row in db:nrows("SELECT COUNT(*) as cnt FROM config WHERE key LIKE 'wish.%'") do
+    count = row.cnt
+  end
+
+  if count == 0 then
+    dbot.wish.table = {}
+    return DRL_RET_SUCCESS
+  end
+
+  dbot.wish.table = {}
+  for row in db:nrows("SELECT key, value FROM config WHERE key LIKE 'wish.%'") do
+    local wishName = row.key:sub(6)  -- strip "wish." prefix
+    dbot.wish.table[wishName] = true
+  end
+
+  return DRL_RET_SUCCESS
 end -- dbot.wish.load
 
 
 function dbot.wish.reset()
   dbot.wish.table = {}
 
-  -- We handle saving dbot.module state a little differently than other modules.  Most modules can
-  -- check if dbot.init.initializeActive is true before saving state, but dbot modules don't have that
-  -- luxury because we may need to reset something before we are fully initialized.  Instead, we use
-  -- the "doForceSave" parameter of dbot.storage.saveTable() to explicitly force saving state on a
-  -- reset.  We don't use that parameter on a normal dbot.wish.save() call.
-  local retval = dbot.storage.saveTable(dbot.backup.getCurrentDir() .. dbot.wish.name,
-                                        "dbot.wish.table", dbot.wish.table, true)
+  local retval = dbot.wish.save()
   if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
     dbot.warn("dbot.wish.reset: Failed to save wish persistent data: " .. dbot.retval.getString(retval))
   end -- if
