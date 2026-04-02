@@ -751,12 +751,12 @@ function inv.consume.useItem(objId, commandArray)
   if (commandArray ~= nil) then
     table.insert(commandArray, consumeCmd .. " " .. objId)
 
-    -- We don't want the next consume command to try to use the same item again and we also
-    -- don't want to wait for confirmation that we consumed it.  We might be in combat and have
-    -- lots of commands queued up on the mud server so delaying everything until we know we
-    -- consumed the item would take more overhead than we are willing to have.  If something goes
-    -- wrong (e.g., the user goes AFK unexpectedly) and we don't actually end up consuming the item
-    -- then we'll re-identify this item automagically on the next refresh so there isn't much harm done.
+    -- Items are removed from tracking BEFORE the consume command executes. This is intentional:
+    -- it prevents the same item being selected twice in a batch (e.g., quaffing 5 heals in combat).
+    -- Waiting for server confirmation would add unacceptable latency in combat scenarios.
+    -- Trade-off: if the command fails (lag, AFK), the item is lost from tracking but still exists
+    -- in-game. A "dinv refresh" will re-identify it. This trade-off favors combat speed over
+    -- perfect tracking accuracy.
     if (itemType == "Potion") or (itemType == "Pill") then
       retval = inv.items.remove(objId) 
     end -- if
