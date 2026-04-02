@@ -216,7 +216,8 @@ function inv.consume.addCR()
 
   -- Temporarily create an item placeholder with a fake object ID and a fake location.
   -- We will fill in this placeholder with information from a shopkeeper appraisal later.
-  local objId = 42
+  -- Use a negative ID to avoid collision with real item IDs (always positive from the MUD).
+  local objId = -1
   retval = inv.items.add(objId)
   if (retval ~= DRL_RET_SUCCESS) then
     dbot.warn("inv.consume.addCR: Failed to add fake objId " .. (objId or "nil") .. ": " ..

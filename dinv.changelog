@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0040] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed consume add using hardcoded objId 42 for temporary appraisal
+           placeholder. If a real item with ID 42 existed in inventory, it
+           would be silently overwritten. Now uses -1 (negative IDs are never
+           assigned by the MUD server).]]
+  }
+}
+
 dbot.changelog[3.0039] =
 {
   { change = drlDbotChangeLogTypeNew,
