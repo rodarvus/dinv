@@ -2,6 +2,14 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0010] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Migrate snapshot storage to SQLite. Equipment snapshots now
+           persist in the snapshots table.]]
+  }
+}
+
 dbot.changelog[3.0009] =
 {
   { change = drlDbotChangeLogTypeNew,

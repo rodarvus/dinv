@@ -179,27 +179,65 @@ end -- inv.snapshot.fini
 
 
 function inv.snapshot.save()
-  local retval = dbot.storage.saveTable(dbot.backup.getCurrentDir() .. inv.snapshot.stateName,
-                                        "inv.snapshot.table", inv.snapshot.table)
-  if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
-    dbot.warn("inv.snapshot.save: Failed to save snapshot table: " .. dbot.retval.getString(retval))
-  end -- if
+  local db = dinv_db.handle
+  if not db then return DRL_RET_UNINITIALIZED end
 
-  return retval
+  if not inv.snapshot.table then return DRL_RET_UNINITIALIZED end
+
+  -- Delete all existing snapshot rows and re-insert
+  db:exec("DELETE FROM snapshots")
+
+  for snapName, equipSet in pairs(inv.snapshot.table) do
+    for wearLoc, itemData in pairs(equipSet) do
+      local query = string.format(
+        "INSERT INTO snapshots (snapshot_name, wear_loc, obj_id, score) VALUES (%s, %s, %s, %s)",
+        dinv_db.fixsql(snapName),
+        dinv_db.fixsql(wearLoc),
+        dinv_db.fixnum(itemData.id),
+        dinv_db.fixnum(itemData.score))
+      db:exec(query)
+      if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+        dbot.warn("inv.snapshot.save: Failed to save snapshot " .. snapName)
+        return DRL_RET_INTERNAL_ERROR
+      end
+    end
+  end
+
+  return DRL_RET_SUCCESS
 end -- inv.snapshot.save
 
 
 function inv.snapshot.load()
+  local db = dinv_db.handle
+  if not db then
+    inv.snapshot.reset()
+    return DRL_RET_SUCCESS
+  end
 
-  local retval = dbot.storage.loadTable(dbot.backup.getCurrentDir() .. inv.snapshot.stateName, inv.snapshot.reset)
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("inv.snapshot.load: Failed to load table from file \"@R" .. 
-              dbot.backup.getCurrentDir() .. inv.snapshot.stateName .. "@W\": " .. dbot.retval.getString(retval))
-  end -- if
+  -- Check if any snapshot rows exist
+  local count = 0
+  for row in db:nrows("SELECT COUNT(*) as cnt FROM snapshots") do
+    count = row.cnt
+  end
 
-  return retval
+  if count == 0 then
+    inv.snapshot.table = {}
+    return DRL_RET_SUCCESS
+  end
 
-end -- inv.snapshot.load()
+  inv.snapshot.table = {}
+  for row in db:nrows("SELECT snapshot_name, wear_loc, obj_id, score FROM snapshots") do
+    if not inv.snapshot.table[row.snapshot_name] then
+      inv.snapshot.table[row.snapshot_name] = {}
+    end
+    inv.snapshot.table[row.snapshot_name][row.wear_loc] = {
+      id    = row.obj_id,
+      score = row.score,
+    }
+  end
+
+  return DRL_RET_SUCCESS
+end -- inv.snapshot.load
 
 
 function inv.snapshot.reset()
