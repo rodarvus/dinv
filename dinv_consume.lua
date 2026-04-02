@@ -75,30 +75,72 @@ end -- inv.consume.fini
 
 
 function inv.consume.save()
-  local retval = dbot.storage.saveTable(dbot.backup.getCurrentDir() .. inv.consume.stateName,
-                                        "inv.consume.table", inv.consume.table)
-  if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
-    dbot.warn("inv.consume.save: Failed to save consume table: " .. dbot.retval.getString(retval))
-  end -- if
+  local db = dinv_db.handle
+  if not db then return DRL_RET_UNINITIALIZED end
 
-  return retval
+  if not inv.consume.table then return DRL_RET_UNINITIALIZED end
+
+  -- Delete all existing consumable rows and re-insert
+  db:exec("DELETE FROM consumables")
+
+  for typeName, items in pairs(inv.consume.table) do
+    for _, item in ipairs(items) do
+      local query = string.format(
+        "INSERT INTO consumables (type_name, level, name, room, full_name) VALUES (%s, %s, %s, %s, %s)",
+        dinv_db.fixsql(typeName),
+        dinv_db.fixnum(item.level),
+        dinv_db.fixsql(item.name),
+        dinv_db.fixsql(item.room),
+        dinv_db.fixsql(item.fullName))
+      db:exec(query)
+      if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+        dbot.warn("inv.consume.save: Failed to save consumable " .. (item.name or "?"))
+        return DRL_RET_INTERNAL_ERROR
+      end
+    end
+  end
+
+  return DRL_RET_SUCCESS
 end -- inv.consume.save
 
 
 function inv.consume.load()
-  local retval = dbot.storage.loadTable(dbot.backup.getCurrentDir() .. inv.consume.stateName, inv.consume.reset)
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("inv.consume.load: Failed to load table from file \"@R" .. 
-              dbot.backup.getCurrentDir() .. inv.consume.stateName .. "@W\": " .. dbot.retval.getString(retval))
-  end -- if
+  local db = dinv_db.handle
+  if not db then
+    inv.consume.reset()
+    return DRL_RET_SUCCESS
+  end
 
-  return retval
+  -- Check if any consumable rows exist
+  local count = 0
+  for row in db:nrows("SELECT COUNT(*) as cnt FROM consumables") do
+    count = row.cnt
+  end
+
+  if count == 0 then
+    inv.consume.reset()
+    return DRL_RET_SUCCESS
+  end
+
+  -- Load consumables grouped by type_name
+  inv.consume.table = {}
+  for row in db:nrows("SELECT type_name, level, name, room, full_name FROM consumables ORDER BY id") do
+    if not inv.consume.table[row.type_name] then
+      inv.consume.table[row.type_name] = {}
+    end
+    table.insert(inv.consume.table[row.type_name], {
+      level    = row.level,
+      name     = row.name,
+      room     = row.room,
+      fullName = row.full_name,
+    })
+  end
+
+  return DRL_RET_SUCCESS
 end -- inv.consume.load
 
 
 function inv.consume.reset()
-  local retval
-
   -- Start with a few basic consumables from the Aylor potion shop ("runto potion")
   inv.consume.table =
     { heal  = { { level=1,   name="light relief",   room="32476", fullName="(!(Light Relief)!)" },
@@ -107,7 +149,7 @@ function inv.consume.reset()
       fly   = { { level=1,   name="griff",          room="32476", fullName="(!(Griffon's Blood)!)" } }
     }
 
-  retval = inv.consume.save()
+  local retval = inv.consume.save()
   if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
     dbot.warn("inv.consume.reset: Failed to save consumable data: " .. dbot.retval.getString(retval))
   end -- if

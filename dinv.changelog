@@ -2,6 +2,14 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0009] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Migrate consumables storage to SQLite. Consumable item tracking
+           (potions, pills, scrolls) now persists in the consumables table.]]
+  }
+}
+
 dbot.changelog[3.0008] =
 {
   { change = drlDbotChangeLogTypeNew,
