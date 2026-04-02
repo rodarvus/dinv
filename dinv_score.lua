@@ -16,6 +16,12 @@
 -- inv.score.set(set, priorityName, handicap, level)
 -- inv.score.extended(itemOrSet, priorityName, handicap, level, isOffhand)
 --
+-- NOTE: An item score caching table (precomputing scores per priority/level/item) was considered
+-- to speed up dinv analyze. Deferred because: (1) scores depend on stat bonuses which change with
+-- spellups, requiring complex invalidation logic; (2) SQL pre-filtering in set creation (v3.0038)
+-- already reduces the number of items scored; (3) the complexity of cache invalidation outweighs
+-- the benefit for typical inventory sizes. Revisit only if analyze performance is a problem.
+--
 ----------------------------------------------------------------------------------------------------
 
 inv.score = {}

@@ -1115,9 +1115,11 @@ end -- inv.items.discoverSetupFn
 function inv.items.identifyCR(maxNumItems, refreshLocations)
   local retval = DRL_RET_SUCCESS
 
-  -- TODO: Possibly support capping the number of items identified in one call and/or limiting
-  --       which locations have items to identify (e.g., main inventory, containers, etc.)
-  --       For now, we ignore the "maxNumItems" and "refreshLocations" parameters.
+  -- NOTE: Partial refresh (capping items per call, limiting to specific containers) was considered
+  -- but deferred. With incremental saves during identification (v3.0031), crash resilience is
+  -- already addressed. Partial refresh adds complexity (tracking what's been refreshed, resuming)
+  -- for modest benefit. Revisit only if users routinely have 1000+ item inventories.
+  -- For now, we ignore the "maxNumItems" and "refreshLocations" parameters.
 
   -- Count the number of items to identify and keep a record of which items require identification.
   -- We use a temporary array for the objIds of these items so that we can avoid walking the entire
@@ -3111,6 +3113,11 @@ end -- inv.items.keywordCR
 --   { { { invStatFieldType, "weapon" },     { "minlevel", "100" } },
 --     { { invStatFieldWearable, "shield" }, { "minlevel", "100" } }
 --   }
+-- NOTE: A full SQL search engine (translating all query types including keyword/flag word-matching,
+-- spells table, and relative names into SQL) was considered but deferred. The hybrid SQL+Lua
+-- pre-filtering added in v3.0037 handles the most common queries via SQL, and the remaining
+-- Lua-only cases (word-matching, spells, relative names) are inherently hard to express in SQL
+-- without significant complexity. Revisit only if inventory sizes grow beyond ~1000 items.
 function inv.items.search(arrayOfQueryArrays, allowIgnored)
   local retval = DRL_RET_SUCCESS
   local idArray = {}
