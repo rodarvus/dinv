@@ -4716,10 +4716,10 @@ function inv.items.trigger.itemIdStart(line)
 end -- inv.items.trigger.itemIdStart
 
 
-flagsContinuation      = false
-affectModsContinuation = false
-keywordsContinuation   = false
-nameContinuation       = false
+inv.items.trigger.flagsContinuation      = false
+inv.items.trigger.affectModsContinuation = false
+inv.items.trigger.keywordsContinuation   = false
+inv.items.trigger.nameContinuation       = false
 function inv.items.trigger.itemIdStats(line)
   dbot.debug("stats for item " .. inv.items.identifyPkg.objId .. ":\"" .. line .. "\"")
 
@@ -4834,7 +4834,7 @@ function inv.items.trigger.itemIdStats(line)
     dbot.debug("Id = \"" .. id .. "\"")
 
     -- If we hit the id field, we know that there aren't any more name continuation lines
-    nameContinuation = false
+    inv.items.trigger.nameContinuation = false
   end -- if
 
   if (name ~= nil) then
@@ -4843,8 +4843,8 @@ function inv.items.trigger.itemIdStats(line)
 
     -- If we hit the name field, we know that there aren't any more keyword continuation lines.
     -- Instead we assume the name will continue until we hit the Id field.
-    keywordsContinuation = false
-    nameContinuation = true
+    inv.items.trigger.keywordsContinuation = false
+    inv.items.trigger.nameContinuation = true
   end -- if
 
   if (level ~= nil) then
@@ -4882,7 +4882,7 @@ function inv.items.trigger.itemIdStats(line)
 
     -- Assume that the keywords keep continuing on additional lines until we finally hit the name
     -- field.  At that point we know that there are no more keyword lines.
-    keywordsContinuation = true
+    inv.items.trigger.keywordsContinuation = true
   end -- if
 
   if (itemType ~= nil) or (rawMaterial ~= nil) then
@@ -4912,9 +4912,9 @@ function inv.items.trigger.itemIdStats(line)
 
     -- If the flags are continued (they end in a ",") watch for the continuation
     if (string.find(flags, ",$")) then
-      flagsContinuation = true
+      inv.items.trigger.flagsContinuation = true
     else
-      flagsContinuation = false
+      inv.items.trigger.flagsContinuation = false
     end -- if
   end -- if
 
@@ -4924,15 +4924,15 @@ function inv.items.trigger.itemIdStats(line)
 
     -- If the affectMods are continued (they end in a ",") watch for the continuation
     if (string.find(affectMods, ",$")) then
-      affectModsContinuation = true
+      inv.items.trigger.affectModsContinuation = true
     else
-      affectModsContinuation = false
+      inv.items.trigger.affectModsContinuation = false
     end -- if
   end -- if
 
   if (continuation ~= nil) then
     dbot.debug("Continuation = \"" .. continuation .. "\"")
-    if (flagsContinuation) then
+    if (inv.items.trigger.flagsContinuation) then
       -- Add the continuation to the existing flags
       inv.items.setStatField(inv.items.identifyPkg.objId, invStatFieldFlags,
                              (inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldFlags) or "") ..
@@ -4940,10 +4940,10 @@ function inv.items.trigger.itemIdStats(line)
 
       -- If the continued flags end in a comma, keep the continuation going; otherwise stop it
       if not (string.find(continuation, ",$")) then
-        flagsContinuation = false
+        inv.items.trigger.flagsContinuation = false
       end -- if
 
-    elseif (affectModsContinuation) then
+    elseif (inv.items.trigger.affectModsContinuation) then
       -- Add the continuation to the existing affectMods
       inv.items.setStatField(inv.items.identifyPkg.objId, invStatFieldAffectMods,
                             (inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldAffectMods) 
@@ -4951,16 +4951,16 @@ function inv.items.trigger.itemIdStats(line)
 
       -- If the continued affectMods end in a comma, keep the continuation going; otherwise stop it
       if not (string.find(continuation, ",$")) then
-        affectModsContinuation = false
+        inv.items.trigger.affectModsContinuation = false
       end -- if
 
-    elseif (keywordsContinuation) then
+    elseif (inv.items.trigger.keywordsContinuation) then
       -- Add the continuation to the existing keywords
       inv.items.setStatField(inv.items.identifyPkg.objId, invStatFieldKeywords,
                             (inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldKeywords) 
                              or "") .. " " .. continuation)
 
-    elseif (nameContinuation) then
+    elseif (inv.items.trigger.nameContinuation) then
       -- Add the continuation to the existing name
       inv.items.setStatField(inv.items.identifyPkg.objId, invStatFieldName,
                             (inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldName) 

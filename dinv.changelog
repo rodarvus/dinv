@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0028] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed global variable leaks. Added "local" to noCommas in
+           dbot.tonumber(). Moved 4 continuation flags from global scope
+           to inv.items.trigger namespace to prevent global pollution.]]
+  }
+}
+
 dbot.changelog[3.0027] =
 {
   { change = drlDbotChangeLogTypeFix,

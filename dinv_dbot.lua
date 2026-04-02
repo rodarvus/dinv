@@ -317,7 +317,7 @@ end -- dbot.spinWhileExistsBusy
 ----------------------------------------------------------------------------------------------------
 
 function dbot.tonumber(numString)
-  noCommas = string.gsub(numString, ",", "")
+  local noCommas = string.gsub(numString, ",", "")
   return tonumber(noCommas)
 end -- dbot.tonumber
 
