@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0032] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Improved consume display performance. Replaced O(N*M) loop
+           (iterating entire inventory for each consumable entry) with a
+           SQL COUNT query. Significant speedup for large inventories.]]
+  }
+}
+
 dbot.changelog[3.0031] =
 {
   { change = drlDbotChangeLogTypeNew,

@@ -376,15 +376,16 @@ function inv.consume.displayType(typeName, isOwned)
     for _, entry in ipairs(inv.consume.table[typeName]) do
       local count = 0
 
-      for objId, itemEntry in pairs(inv.items.table) do
-        local itemLevel = tonumber(inv.items.getStatField(objId, invStatFieldLevel) or "")
-        local itemName  = inv.items.getStatField(objId, invStatFieldName) or ""
-
-        if (entry.level == itemLevel) and (entry.fullName == itemName) and 
-           (not inv.items.isIgnored(objId)) then
-          count = count + 1
-        end -- if
-      end -- for
+      -- Use SQL to count matching items instead of iterating the entire inventory
+      local db = dinv_db.handle
+      if db and entry.level and entry.fullName then
+        local query = string.format(
+          "SELECT COUNT(*) as cnt FROM items WHERE level = %s AND name = %s AND (keywords IS NULL OR keywords NOT LIKE '%%dinvIgnore%%')",
+          dinv_db.fixnum(entry.level), dinv_db.fixsql(entry.fullName))
+        for row in db:nrows(query) do
+          count = row.cnt
+        end
+      end
 
       local countColor = ""
       if (count > 0) then
