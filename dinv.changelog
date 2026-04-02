@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0045] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Added completion feedback for all consume operations. Add now
+           confirms which item was added. Buy shows "Running to room..."
+           before mapper and confirms purchase sent. Use shows how many
+           items were consumed. Previously all operations ran silently.]]
+  }
+}
+
 dbot.changelog[3.0044] =
 {
   { change = drlDbotChangeLogTypeNew,

@@ -269,10 +269,12 @@ function inv.consume.addCR()
     -- If the item isn't already in the consumable table, add it and then re-sort the table to
     -- account for the new item
     if (itemExists == false) then
-      table.insert(inv.consume.table[typeName], 
+      table.insert(inv.consume.table[typeName],
                   { level = itemLevel, name = itemName, room = roomId, fullName = fullName })
-      table.sort(inv.consume.table[typeName], function (v1, v2) return v1.level < v2.level end) 
+      table.sort(inv.consume.table[typeName], function (v1, v2) return v1.level < v2.level end)
       inv.consume.save()
+      dbot.info("Added \"@G" .. itemName .. "@W\" (Level " .. (itemLevel or "?") ..
+                ") to " .. typeName .. " consumables")
     end -- if
   else
     dbot.warn("inv.consume.addCR: Failed to identify shop item \"" .. itemName .. "\" in room \"" .. roomId)
@@ -488,6 +490,7 @@ function inv.consume.buyCR()
              "\" of \"" .. inv.consume.buyPkg.itemName .. "\"")
 
   -- Run!
+  dbot.info("Running to room " .. inv.consume.buyPkg.room .. "...")
   dbot.execute.fast.command("mapper goto " .. inv.consume.buyPkg.room)
 
   -- Wait until we get to the target room
@@ -514,6 +517,8 @@ function inv.consume.buyCR()
     end -- if
 
     dbot.execute.fast.commands(commands)
+    dbot.info("Purchase command sent for " .. inv.consume.buyPkg.numItems ..
+              "x \"@G" .. inv.consume.buyPkg.itemName .. "@W\"")
   end -- if
 
   -- Clean up and return
@@ -700,6 +705,7 @@ function inv.consume.useCR()
   end -- if
 
   local commandArray = {}
+  local numConsumed = 0
   for i = 1, inv.consume.usePkg.numItems do
     objId, retval = inv.consume.get(inv.consume.usePkg.typeName, inv.consume.usePkg.size, containerId)
     if (objId ~= nil) and (retval == DRL_RET_SUCCESS) then
@@ -708,6 +714,7 @@ function inv.consume.useCR()
         dbot.warn("inv.consume.useCR: Failed to consume item: " .. dbot.retval.getString(retval))
         break
       end -- if
+      numConsumed = numConsumed + 1
     end -- if
 
     if (retval ~= DRL_RET_SUCCESS) then
@@ -729,6 +736,10 @@ function inv.consume.useCR()
       dbot.note("Skipping request to consume items: no items matching the request were found")
     end -- if
   end -- if
+
+  if (numConsumed > 0) then
+    dbot.info("Consumed " .. numConsumed .. "x " .. inv.consume.usePkg.typeName)
+  end
 
   -- Clean up
   inv.consume.usePkg = nil
