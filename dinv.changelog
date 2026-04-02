@@ -2,6 +2,28 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0047] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Items with failed identification are no longer incorrectly marked
+           as fully identified. If the identify output was empty, garbled, or
+           timed out without parsing name or level, the item stays at "none"
+           and will be re-identified on the next refresh. Previously these
+           items were marked "full" with empty stats, preventing re-identification.]]
+  }
+}
+
+dbot.changelog[3.0046] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed items showing "Unknown" type after "dinv build confirm". The
+           item type from invdata (available during discovery) is now set on
+           the item immediately, before the full identify command runs. Items
+           show their correct type (Weapon, Container, Potion, etc.) as soon
+           as discovery completes.]]
+  }
+}
+
 dbot.changelog[3.0045] =
 {
   { change = drlDbotChangeLogTypeNew,

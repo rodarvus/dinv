@@ -5414,13 +5414,19 @@ function inv.items.trigger.itemIdEnd()
 
   -- If we made it through the identification process without discovering we have a
   -- partial identification (e.g., "A full appraisal will reveal further information...")
-  -- then we flag it as having passed a full identification.  As a precaution, we also
-  -- verify, at a minimum, that we were able to detect the object's ID.  If something
-  -- went wrong during the item's identification then the item's stat table might be empty.
-  -- In that case, we want to leave the identifyLevel at "none" so that we re-identify the
-  -- item on the next scan.
+  -- then we flag it as having passed a full identification.  As a precaution, we verify
+  -- that at least one essential stat (name or level) was actually parsed.  If the identify
+  -- output was empty, garbled, or timed out without useful data, we leave the item at
+  -- "none" so it gets re-identified on the next refresh.
   if (inv.items.getField(inv.items.identifyPkg.objId, invFieldIdentifyLevel) == invIdLevelNone) then
-    inv.items.setField(inv.items.identifyPkg.objId, invFieldIdentifyLevel, invIdLevelFull)
+    local hasName  = (inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldName) ~= nil)
+    local hasLevel = (inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldLevel) ~= nil)
+    if hasName or hasLevel then
+      inv.items.setField(inv.items.identifyPkg.objId, invFieldIdentifyLevel, invIdLevelFull)
+    else
+      dbot.debug("Leaving item " .. inv.items.identifyPkg.objId ..
+                 " as unidentified: no stats parsed from identify output")
+    end -- if
   end -- if
 
   local itemType = inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldType) or ""
@@ -5648,10 +5654,14 @@ function inv.items.trigger.itemDataStats(objId, flags, itemName, level, typeFiel
     -- Set the colorized name of the item
     retval = inv.items.setField(objId, invFieldColorName, itemName)
     if (retval ~= DRL_RET_SUCCESS) then
-      dbot.warn("inv.items.trigger.itemDataStats: Failed to set colorName for item " .. objId .. 
+      dbot.warn("inv.items.trigger.itemDataStats: Failed to set colorName for item " .. objId ..
                 ": error " .. dbot.retval.getString(retval))
       return retval
      end -- if
+
+    -- Set the item type from invdata so items show their correct type immediately,
+    -- before the full identify command runs. Identify will overwrite with the same value later.
+    inv.items.setStatField(objId, invStatFieldType, typeName)
   end -- if
 
   dbot.debug("inv.items.trigger.itemDataStats: object " .. objId .. ", flags=\"" .. flags .. 
