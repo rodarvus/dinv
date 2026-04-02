@@ -2,6 +2,14 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0035] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Updated backup alias to remove obsolete subcommands (on, off, auto)
+           that were removed when auto-backups were eliminated in v3.0021.]]
+  }
+}
+
 dbot.changelog[3.0034] =
 {
   { change = drlDbotChangeLogTypeFix,
