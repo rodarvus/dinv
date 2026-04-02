@@ -156,6 +156,8 @@ dinv_db.itemStatColumns = {
   { "detectevil",       "detectevil",      "int"  },
   { "detectgood",       "detectgood",      "int"  },
   { "detectmagic",      "detectmagic",     "int"  },
+  -- Organize query (user-assigned container organization)
+  { "organize",         "organize",        "text" },
   -- Item-specific pseudo-stats
   { "dualwield",        "dualwield",       "int"  },
   { "irongrip",         "irongrip",        "int"  },
@@ -370,7 +372,8 @@ local function init_tables()
          dualwield INTEGER DEFAULT 0,
          irongrip INTEGER DEFAULT 0,
          shield INTEGER DEFAULT 0,
-         hammerswing INTEGER DEFAULT 0
+         hammerswing INTEGER DEFAULT 0,
+         organize TEXT
       );
 
       CREATE TABLE IF NOT EXISTS cache_recent (
@@ -432,7 +435,8 @@ local function init_tables()
          dualwield INTEGER DEFAULT 0,
          irongrip INTEGER DEFAULT 0,
          shield INTEGER DEFAULT 0,
-         hammerswing INTEGER DEFAULT 0
+         hammerswing INTEGER DEFAULT 0,
+         organize TEXT
       );
 
       CREATE TABLE IF NOT EXISTS cache_custom (
@@ -592,11 +596,18 @@ local function run_migrations()
 
    -- Migration 1: Initial schema creation (recorded in open() for fresh databases)
 
+   -- Migration 2: Add organize column to items and cache_recent tables
+   if not migration_applied(2) then
+      db:exec("ALTER TABLE items ADD COLUMN organize TEXT")
+      db:exec("ALTER TABLE cache_recent ADD COLUMN organize TEXT")
+      record_migration(2, "Add organize column to items and cache_recent")
+   end
+
    -- Future migrations go here following this pattern:
    --
-   -- if not migration_applied(2) then
-   --    db:exec("ALTER TABLE items ADD COLUMN new_stat INTEGER DEFAULT 0")
-   --    record_migration(2, "Add new_stat column to items")
+   -- if not migration_applied(N) then
+   --    db:exec("ALTER TABLE ... ADD COLUMN ...")
+   --    record_migration(N, "Description")
    -- end
 end
 

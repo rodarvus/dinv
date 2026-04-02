@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0027] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Added missing "organize" field to items and cache_recent SQLite
+           tables. Organization queries assigned via "dinv organize" were
+           silently dropped on save because the field was not in the column
+           mapping. Includes schema migration for existing databases.]]
+  }
+}
+
 dbot.changelog[3.0026] =
 {
   { change = drlDbotChangeLogTypeFix,
