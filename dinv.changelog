@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0043] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Consume use now warns when the requested quantity exceeds the
+           10-item cap instead of silently capping. The cap is applied in
+           the entry function so the user sees the warning immediately.]]
+  }
+}
+
 dbot.changelog[3.0042] =
 {
   { change = drlDbotChangeLogTypeNew,

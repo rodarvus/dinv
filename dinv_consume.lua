@@ -634,6 +634,12 @@ function inv.consume.use(typeName, size, numItems, containerName)
     numItems = 1
   end -- if
 
+  if (numItems > drlConsumeMaxConsecutiveItems) then
+    dbot.info("Capping consumption to " .. drlConsumeMaxConsecutiveItems ..
+              " items (requested " .. numItems .. ")")
+    numItems = drlConsumeMaxConsecutiveItems
+  end -- if
+
   if (inv.consume.usePkg ~= nil) then
     dbot.info("Skipping request to use \"" .. typeName .. "\": another request is in progress")
     return DRL_RET_BUSY
