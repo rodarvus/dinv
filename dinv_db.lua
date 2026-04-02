@@ -59,6 +59,135 @@ end
 
 
 ----------------------------------------------------------------------------------------------------
+-- Item column definitions (shared by items, cache_recent tables)
+----------------------------------------------------------------------------------------------------
+
+-- Ordered list of stat columns in the items/cache_recent tables.
+-- Each entry: { sqlColumn, luaStatField, type }
+-- type is "text" or "int" (controls how values are escaped for SQL)
+dinv_db.itemStatColumns = {
+  { "name",             "name",            "text" },
+  { "level",            "level",           "int"  },
+  { "weight",           "weight",          "int"  },
+  { "wearable",         "wearable",        "text" },
+  { "score",            "score",           "int"  },
+  { "keywords",         "keywords",        "text" },
+  { "type",             "type",            "text" },
+  { "worth",            "worth",           "int"  },
+  { "flags",            "flags",           "text" },
+  { "affect_mods",      "affectmods",      "text" },
+  { "material",         "material",        "text" },
+  { "found_at",         "foundat",         "text" },
+  { "owned_by",         "ownedby",         "text" },
+  { "clan",             "clan",            "text" },
+  { "spells",           "spells",          "text" },
+  { "leads_to",         "leadsto",         "text" },
+  { "capacity",         "capacity",        "int"  },
+  { "holding",          "holding",         "int"  },
+  { "heaviest_item",    "heaviestitem",    "int"  },
+  { "items_inside",     "itemsinside",     "int"  },
+  { "tot_weight",       "totweight",       "int"  },
+  { "item_burden",      "itemburden",      "int"  },
+  { "weight_reduction", "weightreduction", "int"  },
+  { "str",              "str",             "int"  },
+  { "int",              "int",             "int"  },
+  { "wis",              "wis",             "int"  },
+  { "dex",              "dex",             "int"  },
+  { "con",              "con",             "int"  },
+  { "luck",             "luck",            "int"  },
+  { "hp",               "hp",              "int"  },
+  { "mana",             "mana",            "int"  },
+  { "moves",            "moves",           "int"  },
+  { "hit",              "hit",             "int"  },
+  { "dam",              "dam",             "int"  },
+  { "allphys",          "allphys",         "int"  },
+  { "allmagic",         "allmagic",        "int"  },
+  { "acid",             "acid",            "int"  },
+  { "cold",             "cold",            "int"  },
+  { "energy",           "energy",          "int"  },
+  { "holy",             "holy",            "int"  },
+  { "electric",         "electric",        "int"  },
+  { "negative",         "negative",        "int"  },
+  { "shadow",           "shadow",          "int"  },
+  { "magic",            "magic",           "int"  },
+  { "air",              "air",             "int"  },
+  { "earth",            "earth",           "int"  },
+  { "fire",             "fire",            "int"  },
+  { "light",            "light",           "int"  },
+  { "mental",           "mental",          "int"  },
+  { "sonic",            "sonic",           "int"  },
+  { "water",            "water",           "int"  },
+  { "poison",           "poison",          "int"  },
+  { "disease",          "disease",         "int"  },
+  { "slash",            "slash",           "int"  },
+  { "pierce",           "pierce",          "int"  },
+  { "bash",             "bash",            "int"  },
+  { "ave_dam",          "avedam",          "int"  },
+  { "inflicts",         "inflicts",        "text" },
+  { "dam_type",         "damtype",         "text" },
+  { "weapon_type",      "weapontype",      "text" },
+  { "specials",         "specials",        "text" },
+  { "dualwield",        "dualwield",       "int"  },
+  { "irongrip",         "irongrip",        "int"  },
+  { "shield",           "shield",          "int"  },
+  { "hammerswing",      "hammerswing",     "int"  },
+}
+
+-- Build an INSERT statement for an item entry into the specified table.
+-- entry is the dinv item structure: { identifyLevel, objectLocation, homeContainer, colorName, stats={...} }
+-- objId is the item's object ID (integer key)
+function dinv_db.buildItemInsert(tableName, objId, entry)
+  local cols = "obj_id, identify_level, object_location, home_container, color_name"
+  local vals = string.format("%s, %s, %s, %s, %s",
+    dinv_db.fixnum(objId),
+    dinv_db.fixsql(entry.identifyLevel),
+    dinv_db.fixsql(entry.objectLocation),
+    dinv_db.fixnum(entry.homeContainer),
+    dinv_db.fixsql(entry.colorName))
+
+  local stats = entry.stats or {}
+  for _, colDef in ipairs(dinv_db.itemStatColumns) do
+    local sqlCol   = colDef[1]
+    local luaField = colDef[2]
+    local colType  = colDef[3]
+    local val = stats[luaField]
+    if val ~= nil then
+      cols = cols .. ", " .. sqlCol
+      if colType == "text" then
+        vals = vals .. ", " .. dinv_db.fixsql(val)
+      else
+        vals = vals .. ", " .. dinv_db.fixnum(val)
+      end
+    end
+  end
+
+  return string.format("INSERT OR REPLACE INTO %s (%s) VALUES (%s)", tableName, cols, vals)
+end
+
+-- Read a row from db:nrows() and reconstruct a dinv item entry.
+-- Returns the entry structure: { identifyLevel, objectLocation, homeContainer, colorName, stats={...} }
+function dinv_db.rowToItemEntry(row)
+  local entry = {
+    identifyLevel  = row.identify_level,
+    objectLocation = row.object_location,
+    homeContainer  = row.home_container,
+    colorName      = row.color_name,
+    stats          = {},
+  }
+
+  for _, colDef in ipairs(dinv_db.itemStatColumns) do
+    local sqlCol   = colDef[1]
+    local luaField = colDef[2]
+    if row[sqlCol] ~= nil then
+      entry.stats[luaField] = row[sqlCol]
+    end
+  end
+
+  return entry
+end
+
+
+----------------------------------------------------------------------------------------------------
 -- Database path
 ----------------------------------------------------------------------------------------------------
 

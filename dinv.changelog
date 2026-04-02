@@ -2,6 +2,17 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0014] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Migrate cache storage to SQLite. Recent cache (departed items)
+           persists in cache_recent table. Custom cache (user keywords and
+           organize queries) persists in cache_custom table. Frequent cache
+           is now in-memory only. Added shared item serialization helpers
+           in dinv_db.lua for use by both cache and items modules.]]
+  }
+}
+
 dbot.changelog[3.0013] =
 {
   { change = drlDbotChangeLogTypeNew,

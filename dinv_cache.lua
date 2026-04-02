@@ -177,104 +177,106 @@ end -- inv.cache.save
 
 
 function inv.cache.saveRecent()
-  local retval = DRL_RET_SUCCESS
+  local db = dinv_db.handle
+  if not db then return DRL_RET_UNINITIALIZED end
 
-  if (inv.cache.recent.table ~= nil) then
-    retval = dbot.storage.saveTable(dbot.backup.getCurrentDir() .. inv.cache.recent.stateName,
-                                    "inv.cache.recent.table", inv.cache.recent.table)
-    if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
-      dbot.warn("inv.cache.saveRecent: Failed to save cache.recent table: " ..
-                dbot.retval.getString(retval))
-    end -- if
-  end -- if
+  local cache = inv.cache.recent.table
+  if not cache or not cache.entries then return DRL_RET_UNINITIALIZED end
 
-  return retval
+  db:exec("DELETE FROM cache_recent")
+
+  for objId, cacheEntry in pairs(cache.entries) do
+    local query = dinv_db.buildItemInsert("cache_recent", objId, cacheEntry.entry)
+    db:exec(query)
+    if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+      dbot.warn("inv.cache.saveRecent: Failed to save cached item " .. tostring(objId))
+      return DRL_RET_INTERNAL_ERROR
+    end
+  end
+
+  return DRL_RET_SUCCESS
 end -- inv.cache.saveRecent
 
 
 function inv.cache.saveFrequent()
-  local retval = DRL_RET_SUCCESS
-
-  if (inv.cache.frequent.table ~= nil) then
-    retval = dbot.storage.saveTable(dbot.backup.getCurrentDir() .. inv.cache.frequent.stateName,
-                                    "inv.cache.frequent.table", inv.cache.frequent.table)
-    if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
-      dbot.warn("inv.cache.saveFrequent: Failed to save cache.frequent table: " ..
-                dbot.retval.getString(retval))
-    end -- if
-  end -- if
-
-  return retval
+  -- Frequent cache is no longer persisted separately.
+  -- Its optimization is handled by querying existing items/cache_recent by name.
+  return DRL_RET_SUCCESS
 end -- inv.cache.saveFrequent
 
 
 function inv.cache.saveCustom()
-  local retval = DRL_RET_SUCCESS
+  local db = dinv_db.handle
+  if not db then return DRL_RET_UNINITIALIZED end
 
-  if (inv.cache.custom.table ~= nil) then
-    retval = dbot.storage.saveTable(dbot.backup.getCurrentDir() .. inv.cache.custom.stateName,
-                                    "inv.cache.custom.table", inv.cache.custom.table)
-    if (retval ~= DRL_RET_SUCCESS) and (retval ~= DRL_RET_UNINITIALIZED) then
-      dbot.warn("inv.cache.saveCustom: Failed to save cache.custom table: " ..
-                dbot.retval.getString(retval))
-    end -- if
-  end -- if
+  local cache = inv.cache.custom.table
+  if not cache or not cache.entries then return DRL_RET_UNINITIALIZED end
 
-  return retval
+  db:exec("DELETE FROM cache_custom")
+
+  for objId, cacheEntry in pairs(cache.entries) do
+    local entry = cacheEntry.entry or {}
+    local query = string.format(
+      "INSERT INTO cache_custom (obj_id, keywords, organize) VALUES (%s, %s, %s)",
+      dinv_db.fixnum(objId),
+      dinv_db.fixsql(entry.keywords),
+      dinv_db.fixsql(entry.organize))
+    db:exec(query)
+    if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+      dbot.warn("inv.cache.saveCustom: Failed to save custom cache for " .. tostring(objId))
+      return DRL_RET_INTERNAL_ERROR
+    end
+  end
+
+  return DRL_RET_SUCCESS
 end -- inv.cache.saveCustom
 
 
 function inv.cache.load()
-  local retval = DRL_RET_SUCCESS
+  local db = dinv_db.handle
 
-  local recentRetval = dbot.storage.loadTable(dbot.backup.getCurrentDir() .. inv.cache.recent.stateName,
-                                              inv.cache.resetRecent)
-  if (recentRetval ~= DRL_RET_SUCCESS) then
-    dbot.warn("inv.cache.load: Failed to load cache table from file \"@R" .. 
-              dbot.backup.getCurrentDir() .. inv.cache.recent.stateName .. "@W\": " ..
-              dbot.retval.getString(recentRetval))
-    retval = recentRetval
-  end -- if
-
-  local frequentRetval = dbot.storage.loadTable(dbot.backup.getCurrentDir() .. inv.cache.frequent.stateName,
-                                                inv.cache.resetFrequent)
-  if (frequentRetval ~= DRL_RET_SUCCESS) then
-    dbot.warn("inv.cache.load: Failed to load cache table from file \"@R" .. 
-              dbot.backup.getCurrentDir() .. inv.cache.frequent.stateName .. "@W\": " ..
-              dbot.retval.getString(frequentRetval))
-    retval = frequentRetval
-  end -- if
-
-  local customRetval = dbot.storage.loadTable(dbot.backup.getCurrentDir() .. inv.cache.custom.stateName,
-                                              inv.cache.resetCustom)
-  if (customRetval ~= DRL_RET_SUCCESS) then
-    dbot.warn("inv.cache.load: Failed to load cache table from file \"@R" .. 
-              dbot.backup.getCurrentDir() .. inv.cache.custom.stateName .. "@W\": " ..
-              dbot.retval.getString(customRetval))
-    retval = customRetval
-  end -- if
-
-  if (inv.version.table ~= nil) and (inv.version.table.tableFormat ~= nil) and
-     (inv.config.table ~= nil) and (inv.config.table.tableFormat ~= nil) and
-     (inv.version.table.cacheFormat ~= nil) and (inv.config.table.cacheFormat ~= nil) then
-    -- Check if the inventory table version we loaded is compatible with the current code
-    if (inv.version.table.tableFormat.major ~= inv.config.table.tableFormat.major) and
-       (inv.version.table.tableFormat.minor ~= inv.config.table.tableFormat.minor) then
-      -- TODO: This is a placeholder for when (or if?) we ever change the table format
-    end -- if
-
-    -- Check if the inventory cache version we loaded is compatible with the current code
-    if (inv.version.table.cacheFormat.major ~= inv.config.table.cacheFormat.major) and
-       (inv.version.table.cacheFormat.minor ~= inv.config.table.cacheFormat.minor) then
-      -- TODO: This is a placeholder for when (or if?) we ever change the cache format
-    end -- if
+  -- Load recent cache
+  local recentRetval = DRL_RET_SUCCESS
+  if not db then
+    inv.cache.resetRecent()
   else
-    dbot.error("inv.cache.load: Missing inv.version components")
-    retval = DRL_RET_INTERNAL_ERROR
-  end -- if
+    inv.cache.recent.table = {
+      entries    = {},
+      name       = inv.cache.recent.name,
+      maxEntries = inv.cache.recent.defaultNumEntries,
+    }
+    for row in db:nrows("SELECT * FROM cache_recent") do
+      local entry = dinv_db.rowToItemEntry(row)
+      inv.cache.recent.table.entries[row.obj_id] = { timeCached = 0, entry = entry }
+    end
+  end
 
-  return retval
+  -- Load frequent cache (in-memory only, not persisted)
+  inv.cache.frequent.table = {
+    entries    = {},
+    name       = inv.cache.frequent.name,
+    maxEntries = inv.cache.frequent.defaultNumEntries,
+  }
 
+  -- Load custom cache
+  local customRetval = DRL_RET_SUCCESS
+  if not db then
+    inv.cache.resetCustom()
+  else
+    inv.cache.custom.table = {
+      entries    = {},
+      name       = inv.cache.custom.name,
+      maxEntries = inv.cache.custom.defaultNumEntries,
+    }
+    for row in db:nrows("SELECT obj_id, keywords, organize FROM cache_custom") do
+      inv.cache.custom.table.entries[row.obj_id] = {
+        timeCached = 0,
+        entry = { keywords = row.keywords or "", organize = row.organize or "" },
+      }
+    end
+  end
+
+  return DRL_RET_SUCCESS
 end -- inv.cache.load
 
 
@@ -300,7 +302,7 @@ function inv.cache.resetRecent()
   if (inv.cache.recent ~= nil) then
     retval = inv.cache.resetCache(inv.cache.recent.name)
     if (retval ~= DRL_RET_SUCCESS) then
-      dbot.warn("inv.cache.resetRecent: recent cache reset failed: " .. dbot.retval.getString(recentRetval))
+      dbot.warn("inv.cache.resetRecent: recent cache reset failed: " .. dbot.retval.getString(retval))
     end -- if
   end -- if
 
@@ -314,8 +316,7 @@ function inv.cache.resetFrequent()
   if (inv.cache.frequent ~= nil) then
     retval = inv.cache.resetCache(inv.cache.frequent.name)
     if (retval ~= DRL_RET_SUCCESS) then
-      dbot.warn("inv.cache.resetFrequent: frequent cache reset failed: " ..
-                dbot.retval.getString(frequentRetval))
+      dbot.warn("inv.cache.resetFrequent: frequent cache reset failed: " .. dbot.retval.getString(retval))
     end -- if
   end -- if
 
@@ -329,7 +330,7 @@ function inv.cache.resetCustom()
   if (inv.cache.custom ~= nil) then
     retval = inv.cache.resetCache(inv.cache.custom.name)
     if (retval ~= DRL_RET_SUCCESS) then
-      dbot.warn("inv.cache.resetCustom: custom cache reset failed: " .. dbot.retval.getString(customRetval))
+      dbot.warn("inv.cache.resetCustom: custom cache reset failed: " .. dbot.retval.getString(retval))
     end -- if
   end -- if
 
@@ -352,7 +353,7 @@ function inv.cache.resetCache(cacheName)
   elseif (cacheName == inv.cache.custom.name) then
     numEntries = inv.cache.custom.defaultNumEntries
   end -- if
- 
+
   local retval = inv.cache.config(cacheName, numEntries)
   if (retval ~= DRL_RET_SUCCESS) then
     dbot.warn("inv.cache.resetCache: Failed to configure cache: " .. dbot.retval.getString(retval))
