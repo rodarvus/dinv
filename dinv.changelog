@@ -2,6 +2,51 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0005] =
+{
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[Split all Lua code into individual module files for maintainability.
+           dinv.xml now contains only XML structure and a bootstrap loader.
+           No functional changes.]]
+  }
+}
+
+dbot.changelog[3.0004] =
+{
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[Renamed plugin from aard_inventory to dinv with new plugin ID.
+           Author updated to "Durel, Rodarvus". Auto-update URLs now point
+           to the rodarvus/dinv repository.]]
+  }
+}
+
+dbot.changelog[3.0003] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Added hammerswing as a priority-eligible pseudo-stat. Hammer-type
+           weapons are now tagged during identification, and hammerswing can be
+           weighted in equipment priorities for hammerswing warrior builds.]]
+  }
+}
+
+dbot.changelog[3.0002] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed incorrect equipment rankings when using fractional priority
+           weights. Score precision was truncated to 2 decimal places, causing
+           items to rank incorrectly with weights like 0.4 or 1.5.]]
+  }
+}
+
+dbot.changelog[3.0001] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed a crash in inv.items.searchIdsCSV() where the query string
+           was not passed to isSearchRelative(), causing a nil parameter error.
+           This made the external plugin API non-functional.]]
+  }
+}
+
 dbot.changelog[2.0056] =
 {
   { change = drlDbotChangeLogTypeFix,
