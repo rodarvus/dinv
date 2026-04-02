@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0017] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed crash when displaying potions/pills/scrolls after a plugin
+           reload. The spells field is a nested Lua table (array of spell
+           entries) that was being stored as a flat string in SQLite, losing
+           its structure. Added serialize/deserialize for the spells field.]]
+  }
+}
+
 dbot.changelog[3.0016] =
 {
   { change = drlDbotChangeLogTypeFix,

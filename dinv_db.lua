@@ -145,6 +145,31 @@ dinv_db.itemStatColumns = {
   { "hammerswing",      "hammerswing",     "int"  },
 }
 
+-- Serialize a spells table (array of {level, name, count}) to a string.
+-- Format: "level:count:name;level:count:name;..."
+function dinv_db.serializeSpells(spellsTable)
+  if type(spellsTable) ~= "table" then return nil end
+  local parts = {}
+  for _, spell in ipairs(spellsTable) do
+    table.insert(parts, (spell.level or 0) .. ":" .. (spell.count or 1) .. ":" .. (spell.name or ""))
+  end
+  return table.concat(parts, ";")
+end
+
+-- Deserialize a spells string back to a table (array of {level, name, count}).
+function dinv_db.deserializeSpells(spellsStr)
+  if type(spellsStr) ~= "string" or spellsStr == "" then return {} end
+  local result = {}
+  for entry in spellsStr:gmatch("[^;]+") do
+    local level, count, name = entry:match("^(%d+):(%d+):(.*)$")
+    if level then
+      table.insert(result, { level = tonumber(level), count = tonumber(count), name = name })
+    end
+  end
+  return result
+end
+
+
 -- Build an INSERT statement for an item entry into the specified table.
 -- entry is the dinv item structure: { identifyLevel, objectLocation, homeContainer, colorName, stats={...} }
 -- objId is the item's object ID (integer key)
@@ -165,7 +190,10 @@ function dinv_db.buildItemInsert(tableName, objId, entry)
     local val = stats[luaField]
     if val ~= nil then
       cols = cols .. ", " .. sqlCol
-      if colType == "text" then
+      if luaField == "spells" and type(val) == "table" then
+        -- Spells is a nested table — serialize to string
+        vals = vals .. ", " .. dinv_db.fixsql(dinv_db.serializeSpells(val))
+      elseif colType == "text" then
         vals = vals .. ", " .. dinv_db.fixsql(val)
       else
         vals = vals .. ", " .. dinv_db.fixnum(val)
@@ -191,7 +219,12 @@ function dinv_db.rowToItemEntry(row)
     local sqlCol   = colDef[1]
     local luaField = colDef[2]
     if row[sqlCol] ~= nil then
-      entry.stats[luaField] = row[sqlCol]
+      if luaField == "spells" then
+        -- Spells is stored as serialized string — deserialize back to table
+        entry.stats[luaField] = dinv_db.deserializeSpells(row[sqlCol])
+      else
+        entry.stats[luaField] = row[sqlCol]
+      end
     end
   end
 
