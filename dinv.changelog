@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0051] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed endTag always nil in changelog display. The variable was never
+           extracted from the package, causing tag tracking to malfunction for
+           the "dinv version changelog" command.]]
+  }
+}
+
 dbot.changelog[3.0050] =
 {
   { change = drlDbotChangeLogTypeFix,

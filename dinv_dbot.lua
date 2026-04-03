@@ -3250,6 +3250,8 @@ function dbot.version.changelog.getCR()
     return inv.tags.stop(invTagsVersion, "missing end tag", DRL_RET_INTERNAL_ERROR)
   end -- if
 
+  local endTag = dbot.version.changelog.pkg.endTag
+
   local fileData, retval = dbot.remote.get(dbot.version.changelog.pkg.url,
                                            dbot.version.changelog.pkg.protocol)
   if (retval ~= DRL_RET_SUCCESS) then
