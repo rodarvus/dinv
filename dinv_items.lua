@@ -5562,7 +5562,7 @@ function inv.items.trigger.itemDataStats(objId, flags, itemName, level, typeFiel
   wearLoc = tonumber(wearLoc)
   timer = tonumber(timer)
   if (objId == nil) or (level == nil) or (typeField == nil) or (unique == nil) or 
-     (wearLoc == nil) or (timer == nill) then
+     (wearLoc == nil) or (timer == nil) then
     dbot.warn("inv.items.trigger.itemDataStats: Detected malformed invitem trigger: " ..
               "numeric parameters are not numbers")
     return DRL_RET_INVALID_PARAM
