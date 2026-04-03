@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0059] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed custom cache pruning sort using table objects instead of objId
+           keys when checking the recent cache. Items not in the recent cache
+           were supposed to be pruned first, but the lookup always returned
+           nil so all items were pruned purely by age.]]
+  }
+}
+
 dbot.changelog[3.0058] =
 {
   { change = drlDbotChangeLogTypeFix,

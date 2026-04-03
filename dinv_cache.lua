@@ -488,8 +488,8 @@ function inv.cache.prune(cache)
     end -- for
     table.sort(entryArray,
                function (e1, e2)
-                 local recent1 = inv.cache.recent.table.entries[e1]
-                 local recent2 = inv.cache.recent.table.entries[e2]
+                 local recent1 = inv.cache.recent.table.entries[e1.key]
+                 local recent2 = inv.cache.recent.table.entries[e2.key]
 
                  if (recent1 == nil) and (recent2 ~= nil) then
                    return true
