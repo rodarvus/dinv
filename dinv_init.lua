@@ -18,6 +18,7 @@ require "serialize"
 require "tprint"
 require "gmcphelper"
 require "async"
+require "json"
 
 dofile(GetInfo(60) .. "aardwolf_colors.lua")
 

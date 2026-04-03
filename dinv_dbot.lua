@@ -3314,10 +3314,10 @@ function dbot.version.changelog.displayChange(changeLogEntries)
 end -- dbot.version.changelog.displayChange
 
 
+dbot.version.update.baseUrl = "https://raw.githubusercontent.com/rodarvus/dinv/master/"
+
 function dbot.version.update.release(mode, endTag)
-  local url      = "https://raw.githubusercontent.com/rodarvus/dinv/master/dinv.xml"
-  local protocol = "HTTPS"
-  local retval   = DRL_RET_SUCCESS
+  local retval = DRL_RET_SUCCESS
 
   if (mode == nil) or ((mode ~= drlDbotUpdateCheck) and (mode ~= drlDbotUpdateInstall)) then
     dbot.warn("dbot.version.update.release: Missing or invalid mode parameter")
@@ -3331,8 +3331,6 @@ function dbot.version.update.release(mode, endTag)
 
   dbot.version.update.pkg          = {}
   dbot.version.update.pkg.mode     = mode
-  dbot.version.update.pkg.url      = url
-  dbot.version.update.pkg.protocol = protocol
   dbot.version.update.pkg.endTag   = endTag
 
   wait.make(dbot.version.update.releaseCR)
@@ -3341,66 +3339,173 @@ function dbot.version.update.release(mode, endTag)
 end -- dbot.version.update.release
 
 
-function dbot.version.update.releaseCR()
+-- Read the local manifest file. Returns parsed table or nil.
+function dbot.version.update.readLocalManifest()
+  local pluginDir = GetPluginInfo(GetPluginID(), 20)
+  local f = io.open(pluginDir .. "dinv.manifest", "r")
+  if not f then return nil end
 
+  local data = f:read("*a")
+  f:close()
+
+  local ok, manifest = pcall(json.decode, data)
+  if ok and manifest then return manifest end
+  return nil
+end
+
+
+function dbot.version.update.releaseCR()
   if (dbot.version.update.pkg == nil) or (dbot.version.update.pkg.mode == nil) then
     dbot.error("dbot.version.update.releaseCR: Missing or invalid update package detected")
     return inv.tags.stop(invTagsVersion, "end tag is nil", DRL_RET_INVALID_PARAM)
   end -- if
 
-  local endTag = dbot.version.update.pkg.endTag
+  local endTag   = dbot.version.update.pkg.endTag
+  local mode     = dbot.version.update.pkg.mode
+  local baseUrl  = dbot.version.update.baseUrl
+  local protocol = "HTTPS"
+  local retval   = DRL_RET_SUCCESS
 
-  -- This blocks until the plugin file is returned, an error is detected, or we time out
-  local pluginData, retval = dbot.remote.get(dbot.version.update.pkg.url, dbot.version.update.pkg.protocol)
-  if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("dbot.version.update.releaseCR: Failed to retrieve latest plugin file: " ..
-              dbot.retval.getString(retval))
-
-  elseif (pluginData == nil) then
-    dbot.info("Could not find a remote plugin release")
-    retval = DRL_RET_MISSING_ENTRY
-
-  else
-    local currentVersion = GetPluginInfo(GetPluginID(), 19) or 0
-    local currentVerStr  = string.format("%1.4f", currentVersion)
-    local remoteVerStr   = string.match(pluginData, '%s%s+version="([0-9%.]+)"')
-    local remoteVersion  = tonumber(remoteVerStr or "") or 0
-
-    if (remoteVersion == currentVersion) then
-      dbot.info("You are running the most recent plugin (v" .. currentVerStr .. ")")
-
-    elseif (remoteVersion < currentVersion) then
-      dbot.warn("Your current plugin (v" .. currentVerStr .. ") " ..
-                "is newer than the latest official release (v" .. remoteVerStr .. ")")
-      retval = DRL_RET_VER_MISMATCH
-
-    elseif (dbot.version.update.pkg.mode == drlDbotUpdateCheck) then
-      dbot.info("You are running v" .. currentVerStr .. ", latest version is v" .. remoteVerStr)
-      dbot.info("Changes since your last update:")
-      dbot.version.update.pkg = nil
-      return dbot.version.changelog.get(currentVersion, endTag)
-
-    elseif (dbot.version.update.pkg.mode == drlDbotUpdateInstall) then
-      dbot.info("Updating plugin from version " .. currentVerStr .. " to version " .. remoteVerStr) 
-      dbot.info("Please do not enter anything until the update completes")
-
-      local pluginFile = GetPluginInfo(GetPluginID(), 6)
-      local file = io.open(pluginFile, "w")
-      file:write(pluginData)
-      file:close()
-      dbot.reload()
-
-    else
-      dbot.error("dbot.version.update.callback: Detected invalid mode \"@R" ..
-                 (dbot.version.update.pkg.mode or "nil") .. "@W\"")
-    end -- if
-
+  -- Download remote manifest
+  dbot.info("Checking for updates...")
+  local manifestData, dlRetval = dbot.remote.get(baseUrl .. "dinv.manifest", protocol)
+  if (dlRetval ~= DRL_RET_SUCCESS) or (manifestData == nil) then
+    dbot.warn("Failed to retrieve remote manifest")
+    dbot.version.update.pkg = nil
+    return inv.tags.stop(invTagsVersion, endTag, dlRetval or DRL_RET_MISSING_ENTRY)
   end -- if
 
+  local ok, remoteManifest = pcall(json.decode, manifestData)
+  if not ok or not remoteManifest or not remoteManifest.files then
+    dbot.warn("Failed to parse remote manifest")
+    dbot.version.update.pkg = nil
+    return inv.tags.stop(invTagsVersion, endTag, DRL_RET_INTERNAL_ERROR)
+  end -- if
+
+  -- Read local manifest
+  local localManifest = dbot.version.update.readLocalManifest()
+
+  -- Compare versions
+  local currentVersion = GetPluginInfo(GetPluginID(), 19) or 0
+  local currentVerStr  = string.format("%1.4f", currentVersion)
+  local remoteVersion  = tonumber(remoteManifest.plugin_version or "") or 0
+  local remoteVerStr   = string.format("%1.4f", remoteVersion)
+
+  if (remoteVersion == currentVersion) then
+    dbot.info("You are running the most recent plugin (v" .. currentVerStr .. ")")
+    dbot.version.update.pkg = nil
+    return inv.tags.stop(invTagsVersion, endTag, DRL_RET_SUCCESS)
+
+  elseif (remoteVersion < currentVersion) then
+    dbot.warn("Your current plugin (v" .. currentVerStr .. ") " ..
+              "is newer than the latest official release (v" .. remoteVerStr .. ")")
+    dbot.version.update.pkg = nil
+    return inv.tags.stop(invTagsVersion, endTag, DRL_RET_VER_MISMATCH)
+  end -- if
+
+  -- Build list of changed files
+  local changedFiles = {}
+  local localFiles = (localManifest and localManifest.files) or {}
+  for fileName, remoteVer in pairs(remoteManifest.files) do
+    local localVer = localFiles[fileName]
+    if localVer ~= remoteVer then
+      table.insert(changedFiles, fileName)
+    end -- if
+  end -- for
+
+  if (#changedFiles == 0) then
+    dbot.info("All files are up to date (v" .. currentVerStr .. ")")
+    dbot.version.update.pkg = nil
+    return inv.tags.stop(invTagsVersion, endTag, DRL_RET_SUCCESS)
+  end -- if
+
+  -- Report changes
+  dbot.info("You are running v" .. currentVerStr .. ", latest version is v" .. remoteVerStr)
+  dbot.info(#changedFiles .. " file(s) need updating:")
+  for _, fileName in ipairs(changedFiles) do
+    dbot.print("  @G" .. fileName .. "@W")
+  end -- for
+
+  -- Check mode
+  if (mode == drlDbotUpdateCheck) then
+    dbot.info("Changes since your last update:")
+    dbot.version.update.pkg = nil
+    return dbot.version.changelog.get(currentVersion, endTag)
+  end -- if
+
+  -- Install mode: download changed files
+  dbot.info("Updating plugin to v" .. remoteVerStr .. "...")
+  dbot.info("Please do not enter anything until the update completes")
+
+  local pluginDir = GetPluginInfo(GetPluginID(), 20)
+  local updateSuffix = ".update_" .. string.format("%06x", math.random(0, 0xFFFFFF))
+  local tempFiles = {}  -- { {tempPath, finalPath}, ... }
+  local downloadOk = true
+
+  -- Download each changed file to a temp name
+  for _, fileName in ipairs(changedFiles) do
+    dbot.info("Downloading @G" .. fileName .. "@W...")
+    local fileData, fileRetval = dbot.remote.get(baseUrl .. fileName, protocol)
+    if (fileRetval ~= DRL_RET_SUCCESS) or (fileData == nil) then
+      dbot.warn("Failed to download " .. fileName .. ": " .. dbot.retval.getString(fileRetval or -1))
+      downloadOk = false
+      break
+    end -- if
+
+    local tempPath = pluginDir .. fileName .. updateSuffix
+    local finalPath = pluginDir .. fileName
+    local f = io.open(tempPath, "w")
+    if not f then
+      dbot.warn("Failed to write temp file for " .. fileName)
+      downloadOk = false
+      break
+    end -- if
+    f:write(fileData)
+    f:close()
+
+    table.insert(tempFiles, { temp = tempPath, final = finalPath })
+  end -- for
+
+  -- Also save the remote manifest as a temp file
+  if downloadOk then
+    local manifestTemp = pluginDir .. "dinv.manifest" .. updateSuffix
+    local manifestFinal = pluginDir .. "dinv.manifest"
+    local f = io.open(manifestTemp, "w")
+    if f then
+      f:write(manifestData)
+      f:close()
+      table.insert(tempFiles, { temp = manifestTemp, final = manifestFinal })
+    else
+      dbot.warn("Failed to write temp manifest file")
+      downloadOk = false
+    end -- if
+  end -- if
+
+  if not downloadOk then
+    -- Clean up temp files on failure
+    dbot.warn("Update failed. Cleaning up temporary files...")
+    for _, tf in ipairs(tempFiles) do
+      os.remove(tf.temp)
+    end -- for
+    dbot.version.update.pkg = nil
+    return inv.tags.stop(invTagsVersion, endTag, DRL_RET_INTERNAL_ERROR)
+  end -- if
+
+  -- All downloads succeeded: rename temp files to final names
+  for _, tf in ipairs(tempFiles) do
+    os.remove(tf.final)  -- remove old file first (Windows requires this for rename)
+    local ok, err = os.rename(tf.temp, tf.final)
+    if not ok then
+      dbot.error("Failed to install " .. tf.final .. ": " .. (err or "unknown"))
+      -- Continue trying other files rather than leaving a partial state
+    end -- if
+  end -- for
+
+  dbot.info("Update to v" .. remoteVerStr .. " complete. Reloading plugin...")
   dbot.version.update.pkg = nil
+  dbot.reload()
 
   return inv.tags.stop(invTagsVersion, endTag, retval)
-
 end -- dbot.version.update.releaseCR
 
 

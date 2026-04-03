@@ -2,6 +2,19 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0048] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Rewrote update system for multi-file plugin. Updates now use a
+           manifest file (dinv.manifest) that tracks per-file versions. Only
+           changed files are downloaded on update instead of re-downloading
+           the entire plugin. Downloads use randomized temp file suffixes
+           for security, and all files are renamed atomically after all
+           downloads succeed. Failed updates clean up temp files and leave
+           the current installation intact.]]
+  }
+}
+
 dbot.changelog[3.0047] =
 {
   { change = drlDbotChangeLogTypeFix,
