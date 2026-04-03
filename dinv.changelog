@@ -2,6 +2,18 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0066] =
+{
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[Rewrote README as README.md with comprehensive documentation:
+           quick start guide, key features with examples, complete command
+           reference, installation guide, aard_inventory upgrade notes,
+           update instructions, backup system, known limitations, technical
+           details, and credits. Updated LICENSE with 2026 copyright.
+           Removed old README file.]]
+  }
+}
+
 dbot.changelog[3.0065] =
 {
   { change = drlDbotChangeLogTypeFix,
