@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0055] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed crash when GMCP config message contains non-alphabetic values.
+           The parsing pattern only matched letters, causing nil dereference
+           on values with digits or underscores (e.g., "1", "prompt_hp").
+           Broadened pattern to match word characters and added nil guard.]]
+  }
+}
+
 dbot.changelog[3.0054] =
 {
   { change = drlDbotChangeLogTypeFix,

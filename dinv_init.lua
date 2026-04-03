@@ -214,10 +214,12 @@ function OnPluginTelnetSubnegotiation (msgType, data)
     local mode, params = string.match (data, "([%a.]+)%s+(.*)")
 
     if (mode == "config") then
-      local configKey, configValue = string.match(params, "{ \"(%a+)\" : \"(%a+)\" }")
+      local configKey, configValue = string.match(params, "{ \"([%w_]+)\" : \"([%w_]+)\" }")
 
-      dbot.debug("GMCP config: key=\"" .. configKey .. "\", value=\"" .. configValue .. "\"")
-      dbot.gmcp.currentState[configKey] = configValue
+      if (configKey ~= nil) and (configValue ~= nil) then
+        dbot.debug("GMCP config: key=\"" .. configKey .. "\", value=\"" .. configValue .. "\"")
+        dbot.gmcp.currentState[configKey] = configValue
+      end -- if
     end -- if
   end -- if
 
