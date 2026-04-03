@@ -2857,7 +2857,7 @@ function dbot.execute.queue.dequeueCR()
       -- we handle that case a little differently to reduce the odds of aborting a request.
       local totTime = 0
       local timeout = 20
-      while (timeout < totTime) do
+      while (totTime < timeout) do
         charState = dbot.gmcp.getState()
         if (charState ~= dbot.stateRunning) then
           break

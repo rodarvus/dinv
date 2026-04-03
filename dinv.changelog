@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0052] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed inverted loop condition in safe command queue. The "wait for
+           character to stop running" loop never executed because the condition
+           was backwards (timeout < totTime instead of totTime < timeout).
+           Commands could interfere with mapper speedwalks.]]
+  }
+}
+
 dbot.changelog[3.0051] =
 {
   { change = drlDbotChangeLogTypeFix,
