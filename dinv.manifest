@@ -1,7 +1,7 @@
 {
-  "plugin_version": "3.0055",
+  "plugin_version": "3.0056",
   "files": {
-    "dinv.xml": "3.0055",
+    "dinv.xml": "3.0056",
     "dinv_init.lua": "3.0055",
     "dinv_db.lua": "3.0048",
     "dinv_dbot.lua": "3.0052",
@@ -14,14 +14,14 @@
     "dinv_set.lua": "3.0048",
     "dinv_equipment.lua": "3.0048",
     "dinv_statbonus.lua": "3.0048",
-    "dinv_analyze.lua": "3.0050",
+    "dinv_analyze.lua": "3.0056",
     "dinv_usage.lua": "3.0048",
     "dinv_tags.lua": "3.0048",
     "dinv_consume.lua": "3.0048",
     "dinv_portal.lua": "3.0048",
     "dinv_regen.lua": "3.0048",
     "dinv_report.lua": "3.0048",
-    "dinv.changelog": "3.0055",
-    "dinv.manifest": "3.0055"
+    "dinv.changelog": "3.0056",
+    "dinv.manifest": "3.0056"
   }
 }

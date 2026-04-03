@@ -171,6 +171,7 @@ end -- inv.analyze.setsCR
 
 
 function inv.analyze.delete(priorityName)
+  inv.set.ensureLoaded()
   local retval = DRL_RET_SUCCESS
 
   if (priorityName == nil) or (priorityName == "") then
@@ -192,6 +193,7 @@ end -- inv.analyze.delete
 
 
 function inv.analyze.list()
+  inv.set.ensureLoaded()
   local retval = DRL_RET_SUCCESS
   local numAnalyses = 0
   local sortedNames = {}
@@ -235,6 +237,7 @@ end -- inv.analyze.list
 
 
 function inv.analyze.display(priorityName, wearableLoc, endTag)
+  inv.set.ensureLoaded()
   local currentLevel
   local retval = DRL_RET_SUCCESS
   local lastSet = nil

@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0056] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed analyze list/display/delete not finding saved data if run
+           before any set command in a session. The set table is lazy-loaded
+           but these functions accessed it without triggering the load.]]
+  }
+}
+
 dbot.changelog[3.0055] =
 {
   { change = drlDbotChangeLogTypeFix,
