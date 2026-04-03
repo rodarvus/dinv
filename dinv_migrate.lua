@@ -538,7 +538,7 @@ function inv.migrate.execute()
           tableName = "consumables"
           expected = r.count
         elseif r.desc == "Equip bonuses" or r.desc == "Spell bonuses" then
-          -- Skip individual validation for stat_bonuses (both share same table)
+          -- Tracked separately for combined validation below
           tableName = nil
         elseif r.desc == "Config" then
           tableName = nil  -- Config uses INSERT OR REPLACE, count may not match exactly
@@ -557,6 +557,22 @@ function inv.migrate.execute()
       end
     end
 
+    -- Validate combined stat_bonuses count (equip + spell share the same table)
+    local expectedBonuses = 0
+    for _, r in ipairs(results) do
+      if (r.desc == "Equip bonuses" or r.desc == "Spell bonuses") and r.status == "OK" then
+        expectedBonuses = expectedBonuses + r.count
+      end
+    end
+    if expectedBonuses > 0 then
+      local actual, ok = validateCount("stat_bonuses", expectedBonuses)
+      if not ok then
+        dbot.warn(string.format("Validation failed for stat_bonuses: expected %d rows, found %d",
+                  expectedBonuses, actual))
+        validationPassed = false
+      end
+    end
+
     if not validationPassed then
       migrationFailed = true
       failureMsg = "Count validation failed"
@@ -572,8 +588,8 @@ function inv.migrate.execute()
     dbot.print("@G  Migration completed successfully!@w\n")
   else
     dbot.print("@R  Migration failed: " .. (failureMsg or "unknown error") .. "@w")
-    dbot.print("@R  Database has been rolled back.@w")
-    dbot.print("@W  You can restore your previous data with: @Gdinv backup restore pre-migrate@w\n")
+    dbot.print("@R  The migration was rolled back. Your database is now empty.@w")
+    dbot.print("@W  Restore your previous data with: @Gdinv backup restore pre-migrate@w\n")
   end
 
   -- Results table

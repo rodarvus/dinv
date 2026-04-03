@@ -49,7 +49,3 @@ Old aard_inventory state files are serialized Lua table assignments (e.g., `inv.
 ### Validation
 
 After migrating each data type, row counts are validated against the number of entries parsed from the old state files. If any count mismatches, the entire transaction is rolled back and the pre-migration backup remains available for restoration.
-
-## Remaining
-
-No remaining items. All planned work is complete.
