@@ -343,7 +343,7 @@ end -- inv.snapshot.list
 
 
 function inv.snapshot.display(snapshotName, endTag)
-  retval = DRL_RET_SUCCESS
+  local retval = DRL_RET_SUCCESS
 
   if (snapshotName == nil) or (snapshotName == "") then
     dbot.warn("inv.snapshot.display: Missing snapshot name")
@@ -368,7 +368,7 @@ end -- inv.snapshot.display
 
 inv.snapshot.wearPkg = nil
 function inv.snapshot.wear(snapshotName, endTag)
-  retval = DRL_RET_SUCCESS
+  local retval = DRL_RET_SUCCESS
 
   if (snapshotName == nil) or (snapshotName == "") then
     dbot.warn("inv.snapshot.wear: Missing snapshot name")

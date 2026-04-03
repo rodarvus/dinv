@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0063] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed global variable leaks: added "local" to multiplier in
+           inv.score.extended, retval in inv.snapshot.display and
+           inv.snapshot.wear, and totTime/timeout in
+           dbot.execute.queue.fence.]]
+  }
+}
+
 dbot.changelog[3.0062] =
 {
   { change = drlDbotChangeLogTypeFix,

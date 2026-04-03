@@ -125,6 +125,7 @@ function inv.score.extended(itemOrSet, priorityName, handicap, level, isOffhand)
 
     -- Update the score for individual stats
     elseif (priorityTable[statKey] ~= nil) then
+      local multiplier
       if (priorityTable[statKey] == 0) then
         multiplier = 0
       else

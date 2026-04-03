@@ -2769,8 +2769,8 @@ function dbot.execute.queue.fence()
 
   -- Spin until we have confirmation that the mud received the fence message or until we detect
   -- that we are in a state that will prevent the message from completing
-  totTime = 0
-  timeout = 30 -- wait a while since we there might be a lot of stuff queued up on the server
+  local totTime = 0
+  local timeout = 30 -- wait a while since we there might be a lot of stuff queued up on the server
   while (dbot.execute.fenceIsDetected == false) do
     local charState = dbot.gmcp.getState()
 
