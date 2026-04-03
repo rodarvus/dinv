@@ -3129,6 +3129,12 @@ the lowest-level "@Cheal@W" consumables in your inventory first before moving on
 higher-level items.  If you want to use your three lowest-level items of type "@Cheal@W",
 use this: "@Gdinv consume small heal 3@W".
 
+As a shorthand, "@Gdinv consume <type>@W" (e.g., "@Gdinv consume heal@W") is equivalent
+to "@Gdinv consume big <type>@W".  This is the most common use case -- use the best
+available item for your current level.
+
+The plugin supports Potions (quaff), Pills (eat), Scrolls (recite), and Food (eat).
+
 The plugin will always choose to consume items that are in your main inventory
 before using an equivalent item from a container unless you specify a container.
 

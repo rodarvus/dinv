@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0068] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Updated consume help text. Added documentation for the shorthand
+           syntax ("dinv consume <type>") and Food type support. Listed all
+           supported item types (Potion, Pill, Scroll, Food).]]
+  }
+}
+
 dbot.changelog[3.0067] =
 {
   { change = drlDbotChangeLogTypeFix,
