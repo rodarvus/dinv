@@ -3401,7 +3401,10 @@ function dbot.version.update.releaseCR()
 
   -- Build list of changed files
   local changedFiles = {}
+  local removedFiles = {}
   local localFiles = (localManifest and localManifest.files) or {}
+
+  -- Files that are new or modified in the remote manifest
   for fileName, remoteVer in pairs(remoteManifest.files) do
     local localVer = localFiles[fileName]
     if localVer ~= remoteVer then
@@ -3409,7 +3412,14 @@ function dbot.version.update.releaseCR()
     end -- if
   end -- for
 
-  if (#changedFiles == 0) then
+  -- Files that exist locally but are absent from the remote manifest (removed)
+  for fileName, _ in pairs(localFiles) do
+    if not remoteManifest.files[fileName] then
+      table.insert(removedFiles, fileName)
+    end -- if
+  end -- for
+
+  if (#changedFiles == 0) and (#removedFiles == 0) then
     dbot.info("All files are up to date (v" .. currentVerStr .. ")")
     dbot.version.update.pkg = nil
     return inv.tags.stop(invTagsVersion, endTag, DRL_RET_SUCCESS)
@@ -3417,10 +3427,18 @@ function dbot.version.update.releaseCR()
 
   -- Report changes
   dbot.info("You are running v" .. currentVerStr .. ", latest version is v" .. remoteVerStr)
-  dbot.info(#changedFiles .. " file(s) need updating:")
-  for _, fileName in ipairs(changedFiles) do
-    dbot.print("  @G" .. fileName .. "@W")
-  end -- for
+  if (#changedFiles > 0) then
+    dbot.info(#changedFiles .. " file(s) need updating:")
+    for _, fileName in ipairs(changedFiles) do
+      dbot.print("  @G" .. fileName .. "@W")
+    end -- for
+  end -- if
+  if (#removedFiles > 0) then
+    dbot.info(#removedFiles .. " file(s) will be removed:")
+    for _, fileName in ipairs(removedFiles) do
+      dbot.print("  @R" .. fileName .. "@W")
+    end -- for
+  end -- if
 
   -- Check mode
   if (mode == drlDbotUpdateCheck) then
@@ -3494,6 +3512,17 @@ function dbot.version.update.releaseCR()
     if not ok then
       dbot.error("Failed to install " .. tf.final .. ": " .. (err or "unknown"))
       -- Continue trying other files rather than leaving a partial state
+    end -- if
+  end -- for
+
+  -- Remove files that are no longer in the remote manifest
+  for _, fileName in ipairs(removedFiles) do
+    local removePath = pluginDir .. fileName
+    local ok = os.remove(removePath)
+    if ok then
+      dbot.debug("Removed obsolete file: " .. fileName)
+    else
+      dbot.debug("Could not remove obsolete file: " .. fileName)
     end -- if
   end -- for
 

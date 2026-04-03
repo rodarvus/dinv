@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0065] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Update system now handles file removal. Files that exist locally
+           but are absent from the remote manifest are deleted during update.
+           Previously, removed files would stay on disk as stale leftovers.
+           Removed files are reported to the user before installation.]]
+  }
+}
+
 dbot.changelog[3.0064] =
 {
   { change = drlDbotChangeLogTypeMisc,
