@@ -1992,7 +1992,7 @@ function dbot.ability.isAvailable(ability, level)
     local className = dbot.ability.classes[classNum]
     if (className == nil) then
       dbot.error("dbot.ability.isAvailable: Detected invalid class number \"" .. (classNum or "nil") .. "\"")
-      return abilityIsAvailble, DRL_RET_INTERNAL_ERROR
+      return abilityIsAvailable, DRL_RET_INTERNAL_ERROR
     end -- if
 
     local classLevel = dbot.ability.table[ability][className]

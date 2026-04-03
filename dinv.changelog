@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0058] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed typo "abilityIsAvailble" (missing 'a') in
+           dbot.ability.isAvailable. Returned nil instead of the intended
+           false value on error path.]]
+  }
+}
+
 dbot.changelog[3.0057] =
 {
   { change = drlDbotChangeLogTypeFix,
