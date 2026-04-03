@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0060] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Seed math.random on plugin load so update temp file suffixes are
+           unpredictable. Previously used Lua's fixed default seed, producing
+           the same "random" suffix every session.]]
+  }
+}
+
 dbot.changelog[3.0059] =
 {
   { change = drlDbotChangeLogTypeFix,

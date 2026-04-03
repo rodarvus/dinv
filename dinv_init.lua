@@ -22,6 +22,8 @@ require "json"
 
 dofile(GetInfo(60) .. "aardwolf_colors.lua")
 
+math.randomseed(os.time())
+
 -- Plugin directory for loading additional modules
 dinv_plugin_dir = GetPluginInfo(GetPluginID(), 20)
 
