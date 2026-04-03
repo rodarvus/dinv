@@ -55,6 +55,7 @@ invTagsNotify    = "notify"
 invTagsCache     = "cache"
 invTagsVersion   = "version"
 invTagsHelp      = "help"
+invTagsMigrate   = "migrate"
 
 inv.tags.modules = invTagsBuild     .. " " ..
                    invTagsRefresh   .. " " ..

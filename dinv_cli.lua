@@ -102,6 +102,10 @@
 --   inv.cli.organize.usage()
 --   inv.cli.organize.examples()
 --
+--   inv.cli.migrate.fn(name, line, wildcards)
+--   inv.cli.migrate.usage()
+--   inv.cli.migrate.examples()
+--
 --   inv.cli.version.fn(name, line, wildcards)
 --   inv.cli.version.usage()
 --   inv.cli.version.examples()
@@ -147,6 +151,7 @@ function inv.cli.fullUsage()
   inv.cli.backup.usage()
   inv.cli.forget.usage()
   inv.cli.ignore.usage()
+  inv.cli.migrate.usage()
   inv.cli.notify.usage()
   inv.cli.regen.usage()
   inv.cli.report.usage()
@@ -3530,6 +3535,115 @@ Examples:
 ]])
 
 end -- inv.cli.report.examples
+
+
+inv.cli.migrate = {}
+function inv.cli.migrate.fn(name, line, wildcards)
+  local command = Trim(wildcards[1] or "")
+  local endTag  = inv.tags.new(line)
+
+  dbot.debug("inv.cli.migrate.fn: command=\"" .. command .. "\"")
+
+  if (not inv.init.initializedActive) then
+    dbot.info("Skipping migrate request: plugin is not yet initialized (are you AFK or sleeping?)")
+    inv.tags.stop(invTagsMigrate, endTag, DRL_RET_UNINITIALIZED)
+    return
+  end
+
+  if (command == "") then
+    -- Show detection results
+    local detection = inv.migrate.detect()
+
+    if not detection.found then
+      if not detection.dir then
+        dbot.info("Could not determine old aard_inventory state directory.")
+        dbot.info("Ensure you are logged into a character that had aard_inventory data.")
+      else
+        dbot.info("No old aard_inventory state files found for this character.")
+        dbot.info("Checked directory: " .. detection.dir)
+      end
+      inv.tags.stop(invTagsMigrate, endTag, DRL_RET_MISSING_ENTRY)
+      return
+    end
+
+    dbot.print("\n@C  Old aard_inventory data detected@w")
+    dbot.print("@W  " .. string.rep("-", 50) .. "@w")
+    dbot.print("@W  Directory: @G" .. detection.dir .. "@w\n")
+
+    for _, f in ipairs(detection.files) do
+      if f.exists then
+        dbot.print("@W    " .. string.format("%-16s", f.desc) .. " @GFound@w")
+      else
+        dbot.print("@W    " .. string.format("%-16s", f.desc) .. " @xNot found@w")
+      end
+    end
+
+    dbot.print("")
+    dbot.print("@R  WARNING: @WMigration will replace ALL current dinv data for this character.@w")
+    dbot.print("@W  A backup of the current database will be created automatically.@w")
+    dbot.print("@W  Old aard_inventory state files will NOT be modified.@w\n")
+    dbot.print("@W  To proceed, type: @Gdinv migrate confirm@w\n")
+    inv.tags.stop(invTagsMigrate, endTag, DRL_RET_SUCCESS)
+
+  elseif (command == "confirm") then
+    local retval = inv.migrate.execute()
+    inv.tags.stop(invTagsMigrate, endTag, retval)
+
+  else
+    inv.cli.migrate.usage()
+    inv.tags.stop(invTagsMigrate, endTag, DRL_RET_INVALID_PARAM)
+  end
+
+end -- inv.cli.migrate.fn
+
+
+function inv.cli.migrate.usage()
+  dbot.print("@W    " .. pluginNameCmd .. " migrate @Y[confirm]@w")
+end -- inv.cli.migrate.usage
+
+
+function inv.cli.migrate.examples()
+  dbot.print("@W\nUsage:\n")
+  inv.cli.migrate.usage()
+  dbot.print(
+[[@W
+The @Cmigrate@W command imports data from the old aard_inventory plugin into dinv.
+This is a one-time operation for players switching from aard_inventory to dinv.
+
+Run "@Gdinv migrate@W" by itself to see what old data is available for migration.
+Run "@Gdinv migrate confirm@W" to execute the migration.
+
+@RIMPORTANT:@W Migration @Rreplaces all current dinv data@W for the current character.
+A backup of the current database is created automatically before migration.
+Your old aard_inventory state files are never modified.
+
+@CWhat is migrated:@w
+  Items, priorities, equipment sets, consumables, stat bonuses, and
+  configuration settings. Caches, tags, and wish data are skipped
+  (they rebuild automatically during normal use).
+
+@CMulti-character support:@w
+  Migration operates on the currently logged-in character only. If you
+  have multiple characters with aard_inventory data, log into each one
+  and run "@Gdinv migrate confirm@W" separately.
+
+@CReverting to aard_inventory:@w
+  If you decide to switch back, remove dinv and reinstall aard_inventory.
+  Your old state files are untouched. A migration tool from dinv back to
+  aard_inventory is not provided.
+
+Examples:
+  1) Check what old data is available for the current character.
+     "@Gdinv migrate@W"
+
+  2) Run the migration.
+     "@Gdinv migrate confirm@W"
+
+  3) If something goes wrong, restore from the pre-migration backup.
+     "@Gdinv backup restore pre-migrate@W"
+]])
+
+end -- inv.cli.migrate.examples
 
 
 inv.cli.commlog = {}

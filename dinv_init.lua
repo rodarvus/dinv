@@ -1003,6 +1003,7 @@ dofile(dinv_plugin_dir .. "dinv_tags.lua")
 dofile(dinv_plugin_dir .. "dinv_consume.lua")
 dofile(dinv_plugin_dir .. "dinv_portal.lua")
 dofile(dinv_plugin_dir .. "dinv_regen.lua")
+dofile(dinv_plugin_dir .. "dinv_migrate.lua")
 
 
 ----------------------------------------------------------------------------------------------------

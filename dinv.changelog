@@ -2,6 +2,17 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0070] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Added migration tool ("dinv migrate") to import data from old
+           aard_inventory plugin. Migrates items, priorities, equipment sets,
+           consumables, stat bonuses, and config. Creates a backup before
+           migration, validates row counts after insertion, and rolls back
+           on any failure. Old state files are never modified.]]
+  }
+}
+
 dbot.changelog[3.0069] =
 {
   { change = drlDbotChangeLogTypeMisc,

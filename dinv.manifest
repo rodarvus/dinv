@@ -1,11 +1,11 @@
 {
-  "plugin_version": "3.0069",
+  "plugin_version": "3.0070",
   "files": {
-    "dinv.xml": "3.0069",
-    "dinv_init.lua": "3.0060",
+    "dinv.xml": "3.0070",
+    "dinv_init.lua": "3.0070",
     "dinv_db.lua": "3.0064",
     "dinv_dbot.lua": "3.0065",
-    "dinv_cli.lua": "3.0068",
+    "dinv_cli.lua": "3.0070",
     "dinv_items.lua": "3.0061",
     "dinv_data.lua": "3.0048",
     "dinv_cache.lua": "3.0059",
@@ -16,15 +16,16 @@
     "dinv_statbonus.lua": "3.0048",
     "dinv_analyze.lua": "3.0056",
     "dinv_usage.lua": "3.0048",
-    "dinv_tags.lua": "3.0048",
+    "dinv_tags.lua": "3.0070",
     "dinv_consume.lua": "3.0048",
     "dinv_portal.lua": "3.0048",
     "dinv_regen.lua": "3.0048",
     "dinv_report.lua": "3.0048",
-    "dinv.changelog": "3.0069",
-    "dinv.manifest": "3.0069",
-    "README.md": "3.0069",
+    "dinv_migrate.lua": "3.0070",
+    "dinv.changelog": "3.0070",
+    "dinv.manifest": "3.0070",
+    "README.md": "3.0070",
     "LICENSE": "3.0066",
-    "STATUS.md": "3.0069"
+    "STATUS.md": "3.0070"
   }
 }

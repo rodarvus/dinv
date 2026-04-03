@@ -89,7 +89,7 @@ dbot.version  : Module to track version and changelog information and update the
    save_state="y"
    date_written="2017-08-12 08:45:15"
    requires="4.98"
-   version="3.0069"
+   version="3.0070"
    >
 <description trim="y">
 <![CDATA[
@@ -151,6 +151,7 @@ Usage
     dinv backup [list | create | delete | restore] <backup name>
     dinv forget <query>
     dinv ignore [on | off | list] <keyring | container relative name>
+    dinv migrate [confirm]
     dinv notify [none | light | standard | all]
     dinv regen [on | off]
     dinv reset [list | confirm] <module names | all>
@@ -595,6 +596,16 @@ Release Notes
   <alias
    script="inv.cli.backup.fn"
    match="^[ ]*dinv[ ]+backup[ ]+(list|create|delete|restore)[ ]*([^ ]+)?[ ]*$"
+   enabled="y"
+   regexp="y"
+   send_to="12"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   script="inv.cli.migrate.fn"
+   match="^[ ]*dinv[ ]+migrate[ ]*(confirm)?[ ]*$"
    enabled="y"
    regexp="y"
    send_to="12"

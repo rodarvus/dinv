@@ -105,6 +105,7 @@ dinv consume display                  -- See all consumables and stock levels
 |---------|-------------|
 | `dinv backup [list \| create \| delete \| restore] <name>` | Manage database backups |
 | `dinv forget <query>` | Remove items from tracking (re-identified on next refresh) |
+| `dinv migrate [confirm]` | Import data from old aard_inventory |
 | `dinv notify [none \| light \| standard \| all]` | Set notification verbosity |
 | `dinv regen [on \| off]` | Auto-wear regen ring when sleeping |
 | `dinv reset [list \| confirm] <modules \| all>` | Reset plugin modules |
@@ -150,7 +151,22 @@ dinv is a fork of aard_inventory with a new plugin identity. Your old aard_inven
 - dinv stores data in a separate directory using SQLite
 - Your old aard_inventory state files are never read or modified
 
-After installing dinv, you will need to run `dinv build confirm` to create a fresh inventory database. A migration tool to import old aard_inventory data is planned for a future release.
+### Migration tool
+
+dinv includes a migration tool that imports your old aard_inventory data (items, priorities, equipment sets, consumables, stat bonuses, and config) into dinv's SQLite database. This avoids the need to rebuild your inventory from scratch.
+
+```
+dinv migrate                -- See what old data is available
+dinv migrate confirm        -- Run the migration
+```
+
+**Important notes:**
+- Migration **replaces all current dinv data** for the current character. A backup is created automatically before migration.
+- Old aard_inventory state files are never modified. You can switch back at any time.
+- Migration operates on the currently logged-in character only. If you have multiple characters, log into each one and run `dinv migrate confirm` separately.
+- A tool to migrate from dinv back to aard_inventory is not provided. To revert, remove dinv and reinstall aard_inventory.
+
+If you prefer to start fresh instead, run `dinv build confirm` to create a new inventory database from scratch.
 
 ## Updating
 
