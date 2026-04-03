@@ -74,11 +74,13 @@ function inv.analyze.setsCR()
   -- If we hit a problem either with the current state or with the level range, abort the request
   -- and let the caller know what happened by updating the callback parameter.
   if (retval ~= DRL_RET_SUCCESS) then
+    -- Save callback data before clearing the package
+    local resultData = inv.analyze.setsPkg.resultData
     inv.analyze.setsPkg = nil
 
     -- If the user gave us a callback, use it to let the caller know we are done because we failed in some way
-    if (inv.analyze.setsPkg.resultData ~= nil) then
-      dbot.callback.default(inv.analyze.setsPkg.resultData, retval)
+    if (resultData ~= nil) then
+      dbot.callback.default(resultData, retval)
     end -- if
 
     return retval

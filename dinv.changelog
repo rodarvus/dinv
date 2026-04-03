@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0050] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed crash in inv.analyze.setsCR when hitting an error path. The
+           setsPkg was set to nil then immediately accessed for callback data.
+           Now saves callback data to local variable before clearing package.]]
+  }
+}
+
 dbot.changelog[3.0049] =
 {
   { change = drlDbotChangeLogTypeFix,
