@@ -272,8 +272,7 @@ function dinv_db.searchItems(kvArray)
 
     elseif prefix == "min" and valueNum then
       -- Min numeric: column >= value
-      local sqlCol = dinv_db.sqlToLuaStat[key] and key or nil
-      -- Check reverse: maybe the Lua field name maps to a different SQL column
+      local sqlCol = nil
       for sc, lf in pairs(dinv_db.sqlToLuaStat) do
         if lf == key then sqlCol = sc; break end
       end

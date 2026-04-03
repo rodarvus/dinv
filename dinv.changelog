@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0064] =
+{
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[Removed stale function references from GMCP module header comment
+           (functions removed in earlier cleanup). Removed dead code line in
+           searchItems SQL pre-filter.]]
+  }
+}
+
 dbot.changelog[3.0063] =
 {
   { change = drlDbotChangeLogTypeFix,
