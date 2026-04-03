@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0071] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed identify parsing for players with blindmode enabled.
+           Blindmode strips the border lines from identify output, which
+           prevented the start trigger from firing. Added the first content
+           line (Keywords) as an alternative start pattern.]]
+  }
+}
+
 dbot.changelog[3.0070] =
 {
   { change = drlDbotChangeLogTypeNew,

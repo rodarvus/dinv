@@ -152,6 +152,7 @@ function inv.items.init.atInstall()
   check (AddTriggerEx(inv.items.trigger.itemIdStartName,
                       "^(" ..
                          ".-----------------------------------------------------------------.*|" ..
+                         "\\| Keywords.*|" ..                              -- blindmode: no border
                          "Current bid on this item is.*|"              ..
                          "You do not have that item.*|"                ..
                          "You dream about being able to identify.*|"   ..
@@ -4771,6 +4772,12 @@ function inv.items.trigger.itemIdStart(line)
                drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput + trigger_flag.OneShot,
                custom_colour.Custom11,
                0, "", "", sendto.script, 0)
+
+  -- If the start trigger matched a content line (blindmode: no border lines),
+  -- process it as the first stats line so we don't lose the data
+  if string.find(line, "^| ") then
+    inv.items.trigger.itemIdStats(line)
+  end -- if
 end -- inv.items.trigger.itemIdStart
 
 
