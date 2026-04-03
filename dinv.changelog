@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0069] =
+{
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[Added recommendation to enable eager refresh in README Quick Start.
+           Without it, newly acquired items are not identified until a manual
+           refresh, which can confuse new users.]]
+  }
+}
+
 dbot.changelog[3.0068] =
 {
   { change = drlDbotChangeLogTypeFix,

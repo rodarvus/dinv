@@ -34,4 +34,3 @@ All planned work is complete. The plugin has been fully modernized from the orig
 ## Remaining
 
 - **Migration tool** — Import old aard_inventory state files (deferred until needed)
-- **GitHub release** — Create first tagged release for distribution

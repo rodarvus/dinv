@@ -13,6 +13,7 @@ dinv is a modernized fork of Durel's [aard_inventory](https://github.com/Aardure
 5. Connect to Aardwolf, go to a quiet room, and run: `dinv build confirm`
 6. Wait approximately 5 minutes while dinv identifies all your items
 7. You're ready! Type `dinv help` to see all commands.
+8. (Recommended) Enable automatic identification of new items: `dinv refresh eager 5`. This ensures newly acquired items (bought, looted, received) are identified within seconds. Without this, you need to manually run `dinv refresh` after acquiring items.
 
 ## Key Features
 
