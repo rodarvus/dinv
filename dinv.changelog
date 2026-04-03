@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0062] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed eqShield checking the wielded slot instead of the shield slot
+           during set wear incompatibility removal. Could cause an unnecessary
+           extra item swap during equipment changes.]]
+  }
+}
+
 dbot.changelog[3.0061] =
 {
   { change = drlDbotChangeLogTypeFix,

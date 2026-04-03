@@ -951,7 +951,7 @@ function inv.set.wear(equipSet)
           local eqPrimary = equipSet[inv.wearLoc[invWearableLocWielded]]
           local eqSecond  = equipSet[inv.wearLoc[invWearableLocSecond]]
           local eqHold    = equipSet[inv.wearLoc[invWearableLocHold]]
-          local eqShield  = equipSet[inv.wearLoc[invWearableLocWielded]]
+          local eqShield  = equipSet[inv.wearLoc[invWearableLocShield]]
 
           if ((itemLoc == inv.wearLoc[invWearableLocSecond]) and ((eqHold ~= nil) or (eqShield ~= nil))) or
              ((itemLoc == inv.wearLoc[invWearableLocHold]) and (eqSecond ~= nil)) or
