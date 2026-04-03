@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0067] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Updated backup help text. Removed references to on/off/auto commands
+           that no longer exist. Updated to reflect SQLite-based backup system
+           with pre-build auto-backup and manual create/list/delete/restore.]]
+  }
+}
+
 dbot.changelog[3.0066] =
 {
   { change = drlDbotChangeLogTypeMisc,

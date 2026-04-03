@@ -2551,7 +2551,7 @@ end -- inv.cli.backup.fn
 
 function inv.cli.backup.usage()
   dbot.print("@W    " .. pluginNameCmd ..
-             " backup @G[on | off | list | create | delete | restore] <backup name>@w")
+             " backup @G[list | create | delete | restore] <backup name>@w")
 end -- inv.cli.backup.usage
 
 
@@ -2560,55 +2560,34 @@ function inv.cli.backup.examples()
   inv.cli.backup.usage()
   dbot.print(
 [[@W
-The plugin creates automatic backups for all of your plugin data.  It also gives
-you the ability to create manual backups at any time.
+dinv uses SQLite for storage, which provides crash-safe, atomic writes.  Under
+normal operation, backups should not be necessary.  However, the backup system
+is available as a safety net for peace of mind.
 
-By default, the plugin enables automatic backups and maintains backups for the
-three most recent days you used the plugin.  Automatic backups are taken when you
-log out, once every 4 hours you are logged in, and every time you go AFK for at
-least 5 seconds.  You can enable or disable automatic backups by running
-"@Gdinv backup on@W" or "@Gdinv backup off@W".
+A backup is automatically created before "@Gdinv build confirm@W" if you have
+existing inventory data.  You can also create manual backups at any time.
 
-Most automatic backup systems rotate all previous automatic backups when a new 
-backup is created.  In other words, if you have automatic backups 1, 2, 3, and 4
-and then create a new backup, the previous backup #1 would become #2, the old #2
-would become #3, #3 would become #4 and the old backup #4 would be deleted.  That's
-not quite how it works here.  I like the idea of frequently updating the most current
-backup but I also like keeping stable backups from previous days around.  If 
-something does wrong, you might not notice for a couple of days so you don't a
-situation where you overwrite all of the backups in a relatively short amount of
-time.
-
-The compromise solution implemented in this plugin is for automatic backups to only
-overwrite backup #1 and to rotate the backups at most once per day.  This gives you
-frequent backups from "today" (backup #1) and backups from two previous days
-(backups #2 and #3).
-
-You have the option to list existing backups (sorted by creation date), create
-new manual backups, delete a backup (automatic or manual), or restore from an existing
-backup.  These options are cleverly named "@Clist@W", "@Ccreate@W", "@Cdelete@W", and "@Crestore@W".
+Backups are copies of the SQLite database file, stored in the plugin's backup
+directory.  You can list existing backups (sorted by creation date), create new
+backups, delete a backup, or restore from an existing backup.
 
 Examples:
-  1) Create a new manual backup named "dummyBackupToShowItWorksForTheHelpfile".
-     "@Gdinv backup create dummyBackupToShowItWorksForTheHelpfile@W"
+  1) Create a new manual backup named "before-enchanting".
+     "@Gdinv backup create before-enchanting@W"
 
-  2) List all current backups.  The "auto*" backups are the automatic backups and
-     all other backups were created manually.
+  2) List all current backups.
      "@Gdinv backup list@W"
 
-@WDINV@W Detected 5 backups
-@w  @W(@c09/18/17 18:30:57@W) @GdummyBackupToShowItWorksForTheHelpfile
-@w  @W(@c09/18/17 18:06:16@W) @Gauto
-@w  @W(@c09/17/17 22:51:49@W) @Gauto2
-@w  @W(@c09/16/17 23:12:53@W) @Gauto3
-@w  @W(@c09/15/17 23:42:49@W) @Gbaseline@W
+@WDINV@W Detected 2 backups
+@w  @W(@c04/03/26 10:15:30@W) @Gbefore-enchanting
+@w  @W(@c04/03/26 09:00:12@W) @Gpre-build@W
 
-  3) Delete the silly manual backup "dummyBackupToShowItWorksForTheHelpfile".
-     "@Gdinv backup delete dummyBackupToShowItWorksForTheHelpfile@W"
+  3) Delete the "before-enchanting" backup.
+     "@Gdinv backup delete before-enchanting@W"
 
-  4) Restore the first "auto" backup.  This is the most recent automatic backup
-     taken today.
-     "@Gdinv backup restore auto@W"
+  4) Restore from the "pre-build" backup.  This will replace your current
+     inventory database and reload the plugin.
+     "@Gdinv backup restore pre-build@W"
 ]])
 
 end -- inv.cli.backup.examples
