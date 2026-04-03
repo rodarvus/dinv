@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0049] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed inv.priority.new using field description instead of field name
+           as priority key. "dinv priority create" would produce broken
+           priorities with description strings as keys instead of stat names.]]
+  }
+}
+
 dbot.changelog[3.0048] =
 {
   { change = drlDbotChangeLogTypeNew,

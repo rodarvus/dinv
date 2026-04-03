@@ -621,7 +621,7 @@ function inv.priority.new(priorityName)
 
   local priorities = {}
   for _, entry in ipairs(inv.priority.fieldTable) do
-    priorities[entry[2]] = 0
+    priorities[entry[1]] = 0
   end -- if
 
   retval = inv.priority.add(priorityName, { { minLevel = 1, maxLevel = 291, priorities = priorities } })
