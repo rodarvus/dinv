@@ -1981,7 +1981,7 @@ function dbot.ability.isAvailable(ability, level)
   local base = gmcp("char.base")
   if (base == nil) or (base.classes == nil) or (base.classes == "") then
     dbot.error("dbot.ability.isAvailable: Failed to retrieve class information via gmcp")
-    return abilityIsAvailable, DRL_INTERNAL_ERROR
+    return abilityIsAvailable, DRL_RET_INTERNAL_ERROR
   end -- if
   local classList = base.classes
 

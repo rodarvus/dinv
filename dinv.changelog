@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0057] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed undefined error constant DRL_INTERNAL_ERROR in
+           dbot.ability.isAvailable (should be DRL_RET_INTERNAL_ERROR).
+           Same class of bug fixed in v3.0025 but this instance was missed.]]
+  }
+}
+
 dbot.changelog[3.0056] =
 {
   { change = drlDbotChangeLogTypeFix,
