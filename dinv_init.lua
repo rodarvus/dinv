@@ -850,7 +850,7 @@ function inv.config.save()
     end
 
     local fields = {
-      ["config.pluginVer"]       = tostring(t.pluginVer or ""),
+      ["config.pluginVer"]       = verStr(t.pluginVer),
       ["config.tableFormat"]     = verStr(t.tableFormat),
       ["config.cacheFormat"]     = verStr(t.cacheFormat),
       ["config.consumeFormat"]   = verStr(t.consumeFormat),
@@ -920,7 +920,7 @@ function inv.config.load()
   end
 
   inv.config.table = {
-    pluginVer       = vals["config.pluginVer"] or "",
+    pluginVer       = parseVer(vals["config.pluginVer"]),
     tableFormat     = parseVer(vals["config.tableFormat"]),
     cacheFormat     = parseVer(vals["config.cacheFormat"]),
     consumeFormat   = parseVer(vals["config.consumeFormat"]),

@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0054] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed pluginVer config field corruption on save/load. The field is a
+           version table but was serialized via tostring() producing garbage
+           like "table: 0x12345678". Now uses verStr/parseVer like the other
+           version fields.]]
+  }
+}
+
 dbot.changelog[3.0053] =
 {
   { change = drlDbotChangeLogTypeFix,
