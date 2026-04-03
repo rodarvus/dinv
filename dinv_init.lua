@@ -533,7 +533,9 @@ function inv.init.atActiveCR()
 
       -- Open SQLite database
       if not dinv_db.open() then
-        dbot.error("inv.init.atActiveCR: Failed to open SQLite database")
+        dbot.error("inv.init.atActiveCR: Failed to open SQLite database. Plugin cannot initialize.")
+        inv.init.activePending = false
+        return DRL_RET_INTERNAL_ERROR
       end
     end -- if
   end -- if
