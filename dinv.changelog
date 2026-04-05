@@ -2,6 +2,18 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0072] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Added Guardian subclass support. Guardians can now dual wield
+           while wearing a shield. The set builder evaluates three options
+           (dual wield, single weapon + shield + hold, dual wield + shield)
+           and picks the highest-scoring combination. Also fixed the wear
+           conflict handler to not strip shields when a Guardian is dual
+           wielding, and fixed Soldier offhand weight check in wear conflicts.]]
+  }
+}
+
 dbot.changelog[3.0071] =
 {
   { change = drlDbotChangeLogTypeFix,

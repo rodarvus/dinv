@@ -592,6 +592,12 @@ function inv.set.createWithHandicap(priorityName, level, handicap)
     dualWieldAvailable = inv.priority.locIsAllowed(inv.wearLoc[invWearableLocSecond], priorityName, level)
   end -- if
 
+  -- Get subclass for weapon compatibility checks (Soldier: no weight restriction,
+  -- Guardian: can dual wield with shield)
+  local _, subclass = dbot.gmcp.getClass()
+  local subclassLower = string.lower(subclass)
+  local isGuardian = (subclassLower == "guardian")
+
   -- We already know the highest scoring solo weapon (it is in the "wielded" slot).  We now
   -- find the highest scoring combination of compatible weapons ("wielded" + "second") if the
   -- char has access to dual wield.
@@ -603,12 +609,10 @@ function inv.set.createWithHandicap(priorityName, level, handicap)
     table.sort(weaponArray, function (entry1, entry2) return entry1.score > entry2.score end)
     table.sort(offhandArray, function (entry1, entry2) return entry1.offhand > entry2.offhand end)
 
-    local _, subclass = dbot.gmcp.getClass()
-
     for _, primary in ipairs(weaponArray) do
       for _, offhand in ipairs(offhandArray) do
         if (primary.id ~= offhand.id) and
-           ((primary.weight >= offhand.weight * 2) or (string.lower(subclass) == "soldier")) then
+           ((primary.weight >= offhand.weight * 2) or (subclassLower == "soldier")) then
           if (primary.score + offhand.offhand > bestWeaponSet.score) then
             bestWeaponSet.score = primary.score + offhand.offhand
             bestWeaponSet.primary = { id = primary.id, score = primary.score }
@@ -624,7 +628,7 @@ function inv.set.createWithHandicap(priorityName, level, handicap)
 
   local scorePrimary = 0
   local scoreSecond  = 0
-  local scoreShield  = 0 
+  local scoreShield  = 0
   local scoreHold    = 0
 
   if (newSet[inv.wearLoc[invWearableLocWielded]] ~= nil) then
@@ -640,20 +644,51 @@ function inv.set.createWithHandicap(priorityName, level, handicap)
     scoreHold = newSet[inv.wearLoc[invWearableLocHold]].score or 0
   end -- if
 
-  -- Check if we want dual weapons or primary weapon + shield + hold.  If we are using dual weapons,
-  -- whack the shield and hold items in the set because we won't be using them.  Otherwise, stick with
-  -- the highest scoring weapon, shield, and hold items that we found in the initial search.
-  if dualWieldAvailable and (bestWeaponSet.score > scorePrimary + scoreShield + scoreHold) then
-    if inv.priority.locIsAllowed(inv.wearLoc[invWearableLocWielded], priorityName, level) then
-      newSet[inv.wearLoc[invWearableLocWielded]] = bestWeaponSet.primary
-      newSet[inv.wearLoc[invWearableLocSecond]]  = bestWeaponSet.offhand
+  -- Decide between weapon configurations.  Most classes must choose between dual wield (no
+  -- shield or hold) and single weapon + shield + hold.  Guardians can dual wield while wearing
+  -- a shield, so they have a third option: dual wield + shield (no hold).
+  if dualWieldAvailable then
+    local scoreSingleWithExtras = scorePrimary + scoreShield + scoreHold
+    local scoreDualOnly         = bestWeaponSet.score
+    local scoreDualWithShield   = bestWeaponSet.score + scoreShield
+
+    local bestMode = "single"  -- single weapon + shield + hold
+
+    if isGuardian then
+      -- Guardian: compare three options
+      if (scoreDualWithShield > scoreSingleWithExtras) and (scoreDualWithShield >= scoreDualOnly) then
+        bestMode = "dualShield"
+      elseif (scoreDualOnly > scoreSingleWithExtras) then
+        bestMode = "dual"
+      end -- if
     else
-      newSet[inv.wearLoc[invWearableLocWielded]] = nil
-      newSet[inv.wearLoc[invWearableLocSecond]]  = bestWeaponSet.primary
+      -- Non-guardian: compare two options
+      if (scoreDualOnly > scoreSingleWithExtras) then
+        bestMode = "dual"
+      end -- if
     end -- if
 
-    newSet[inv.wearLoc[invWearableLocShield]]  = nil
-    newSet[inv.wearLoc[invWearableLocHold]]    = nil
+    if (bestMode == "dual") or (bestMode == "dualShield") then
+      if inv.priority.locIsAllowed(inv.wearLoc[invWearableLocWielded], priorityName, level) then
+        newSet[inv.wearLoc[invWearableLocWielded]] = bestWeaponSet.primary
+        newSet[inv.wearLoc[invWearableLocSecond]]  = bestWeaponSet.offhand
+      else
+        newSet[inv.wearLoc[invWearableLocWielded]] = nil
+        newSet[inv.wearLoc[invWearableLocSecond]]  = bestWeaponSet.primary
+      end -- if
+
+      if (bestMode == "dualShield") then
+        -- Guardian dual wield + shield: keep shield, clear hold
+        newSet[inv.wearLoc[invWearableLocHold]] = nil
+      else
+        -- Standard dual wield: clear both shield and hold
+        newSet[inv.wearLoc[invWearableLocShield]] = nil
+        newSet[inv.wearLoc[invWearableLocHold]]   = nil
+      end -- if
+    else
+      -- Single weapon mode: clear second weapon
+      newSet[inv.wearLoc[invWearableLocSecond]] = nil
+    end -- if
   else
     newSet[inv.wearLoc[invWearableLocSecond]] = nil
   end -- if
@@ -942,6 +977,14 @@ function inv.set.wear(equipSet)
   -- previously was at the "second" location.  The code below loops through all items to find
   -- all currently equipped items and then stores anything that would be incompatible with the
   -- new set.
+  --
+  -- Guardians can dual wield while wearing a shield, so the shield/second conflict does not
+  -- apply to them.  Soldiers have no weapon weight restriction for dual wield.
+  local _, wearSubclass = dbot.gmcp.getClass()
+  local wearSubclassLower = string.lower(wearSubclass)
+  local wearIsGuardian = (wearSubclassLower == "guardian")
+  local wearIsSoldier  = (wearSubclassLower == "soldier")
+
   for _, v in pairs(inv.wearLoc) do
     itemLoc = v or "none"
     if (equipSet[itemLoc] == nil) then
@@ -953,18 +996,30 @@ function inv.set.wear(equipSet)
           local eqHold    = equipSet[inv.wearLoc[invWearableLocHold]]
           local eqShield  = equipSet[inv.wearLoc[invWearableLocShield]]
 
-          if ((itemLoc == inv.wearLoc[invWearableLocSecond]) and ((eqHold ~= nil) or (eqShield ~= nil))) or
-             ((itemLoc == inv.wearLoc[invWearableLocHold]) and (eqSecond ~= nil)) or
-             ((itemLoc == inv.wearLoc[invWearableLocShield]) and (eqSecond ~= nil)) or
-             ((itemLoc == inv.wearLoc[invWearableLocSecond]) and (eqPrimary ~= nil) and
-              (2 * tonumber(inv.items.getStatField(objId, invStatFieldWeight) or 0) >
-               tonumber(inv.items.getStatField(eqPrimary.id, invStatFieldWeight) or 0))) then
+          -- Second weapon conflicts with hold (always) and with shield (unless Guardian)
+          local secondConflict =
+            ((itemLoc == inv.wearLoc[invWearableLocSecond]) and (eqHold ~= nil)) or
+            ((itemLoc == inv.wearLoc[invWearableLocSecond]) and (eqShield ~= nil) and (not wearIsGuardian))
+
+          -- Hold and shield conflict with second weapon (hold always, shield unless Guardian)
+          local holdShieldConflict =
+            ((itemLoc == inv.wearLoc[invWearableLocHold]) and (eqSecond ~= nil)) or
+            ((itemLoc == inv.wearLoc[invWearableLocShield]) and (eqSecond ~= nil) and (not wearIsGuardian))
+
+          -- Offhand weapon too heavy for primary (unless Soldier, who has no weight restriction)
+          local weightConflict =
+            ((itemLoc == inv.wearLoc[invWearableLocSecond]) and (eqPrimary ~= nil) and
+             (not wearIsSoldier) and
+             (2 * tonumber(inv.items.getStatField(objId, invStatFieldWeight) or 0) >
+              tonumber(inv.items.getStatField(eqPrimary.id, invStatFieldWeight) or 0)))
+
+          if secondConflict or holdShieldConflict or weightConflict then
 
             dbot.debug("Storing incompatible item at location \"" .. itemLoc .. "\"")
 
             retval = inv.items.storeItem(objId, commandArray)
             if (retval ~= DRL_RET_SUCCESS) then
-              dbot.debug("inv.set.wear: Failed to store item " .. objId .. ": " .. 
+              dbot.debug("inv.set.wear: Failed to store item " .. objId .. ": " ..
                          dbot.retval.getString(retval))
             end -- if
           end -- if
