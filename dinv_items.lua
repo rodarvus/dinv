@@ -4164,31 +4164,141 @@ function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
   local worth = dbot.tonumber(inv.items.getStatField(objId, invStatFieldWorth) or "0")
   local keywords = inv.items.getStatField(objId, invStatFieldKeywords) or ""
   local flags = inv.items.getStatField(objId, invStatFieldFlags) or ""
-  local material = inv.items.getStatField(objId, invStatFieldMaterial) or "Unknown"
-  local foundAt = inv.items.getStatField(objId, invStatFieldFoundAt) or "Unknown"
+  local material = inv.items.getStatField(objId, invStatFieldMaterial) or ""
+  local foundAt = inv.items.getStatField(objId, invStatFieldFoundAt) or ""
   local ownedBy = inv.items.getStatField(objId, invStatFieldOwnedBy) or ""
   local clan = inv.items.getStatField(objId, invStatFieldClan) or ""
   local affectMods = inv.items.getStatField(objId, invStatFieldAffectMods) or ""
   local organize = inv.items.getStatField(objId, invQueryKeyOrganize) or ""
+  local inflicts = inv.items.getStatField(objId, invStatFieldInflicts) or ""
 
-  dbot.print("    colorName:\"" .. colorName .. "\" objectID:" .. objId)
-  dbot.print("    keywords:\"" .. keywords .. "\"")
+  -- Helper: format a stat as "+N" or "-N", returns nil if zero
+  local function fmtStat(name, value)
+    if (value == nil) or (value == 0) then return nil end
+    if (value > 0) then return name .. " +" .. value end
+    return name .. " " .. value
+  end -- fmtStat
 
-  if (organize ~= "") then
-    dbot.print("    organize query:\"" .. organize .. "\"")
+  -- Helper: collect non-nil entries into a comma-separated string
+  local function joinParts(parts)
+    local filtered = {}
+    for _, v in ipairs(parts) do
+      if (v ~= nil) then table.insert(filtered, v) end
+    end -- for
+    return table.concat(filtered, ", ")
+  end -- joinParts
+
+  -- 1. Name
+  dbot.print("    @WName@w: " .. colorName .. " @w(" .. objId .. ")")
+
+  -- 2. Keywords
+  dbot.print("    @WKeywords@w: " .. keywords)
+
+  -- 3. Type / Level / Weight / Score
+  local typeDisplay = typeField
+  if (typeField == invmon.typeStr[invmonTypeWeapon]) then
+    typeDisplay = typeField .. " (" .. weaponType .. ")"
+  elseif (typeField == invmon.typeStr[invmonTypeContainer]) then
+    typeDisplay = "Container"
   end -- if
-  dbot.print("    flags:\"" .. flags .. "\"")
-  dbot.print("    score:" .. score .. " worth:" .. worth .. " material:" .. material ..
-             " foundAt:\"" .. foundAt .. "\"")
-  dbot.print("    allphys:" .. allphys .. " allmagic:" .. allmagic .. " slash:" .. slash .. 
-             " pierce:" .. pierce .. " bash:" .. bash .. " acid:" .. acid .. " poison:" .. poison)
-  dbot.print("    disease:" .. disease .. " cold:" .. cold .. " energy:" .. energy .. 
-             " holy:" .. holy .. " electric:" .. electric .. " negative:" .. negative .. 
-             " shadow:" .. shadow)
-  dbot.print("    air:" .. air .. " earth:" .. earth .. " fire:" .. fire .. " water:" .. water .. 
-             " light:" .. light .. " mental:" .. mental .. " sonic:" .. sonic .." magic:" .. magic)
-  dbot.print("    weight:" .. weight .. " ownedBy:\"" .. ownedBy .. "\"")
-  dbot.print("    clan:\"" .. clan .. "\" affectMods:\"" .. affectMods .. "\"")
+  dbot.print("    @WType@w: " .. typeDisplay .. "  @WLevel@w: " .. level ..
+             "  @WWeight@w: " .. weight .. "  @WScore@w: " .. score)
+
+  -- 4. Flags (only if non-empty)
+  if (flags ~= "") then
+    dbot.print("    @WFlags@w: " .. flags)
+  end -- if
+
+  -- 5. Type-specific line
+  if (typeField == invmon.typeStr[invmonTypeWeapon]) then
+    local weaponParts = { "Ave " .. avedam, damtype }
+    if (inflicts ~= "") then
+      table.insert(weaponParts, "Inflicts " .. inflicts)
+    end -- if
+    if (hit ~= 0) then table.insert(weaponParts, "HR " .. string.format("%+d", hit)) end
+    if (dam ~= 0) then table.insert(weaponParts, "DR " .. string.format("%+d", dam)) end
+    if (specials ~= "none") and (specials ~= "") then
+      table.insert(weaponParts, "Specials: " .. specials)
+    end -- if
+    dbot.print("    @WWeapon@w: " .. table.concat(weaponParts, ", "))
+
+  elseif (typeField == invmon.typeStr[invmonTypeContainer]) then
+    dbot.print("    @WContainer@w: Cap " .. capacity .. ", Hold " .. holding ..
+               ", Heaviest " .. heaviestItem .. ", Items " .. itemsInside ..
+               ", Weight " .. totWeight .. ", WgtPct " .. weightReduction .. "%")
+
+  elseif (typeField == invmon.typeStr[invmonTypePortal]) then
+    dbot.print("    @WPortal@w: Leads to " .. leadsTo)
+
+  elseif (typeField == invmon.typeStr[invmonTypePotion]) or
+         (typeField == invmon.typeStr[invmonTypePill]) or
+         (typeField == invmon.typeStr[invmonTypeScroll]) then
+    local spellParts = {}
+    for _, v in ipairs(spells) do
+      table.insert(spellParts, "L" .. v.level .. " x" .. v.count .. " " .. v.name)
+    end -- for
+    if (#spellParts > 0) then
+      dbot.print("    @WSpells@w: " .. table.concat(spellParts, ", "))
+    end -- if
+
+  elseif (typeField == invmon.typeStr[invmonTypeWand]) or
+         (typeField == invmon.typeStr[invmonTypeStaff]) then
+    local spellParts = {}
+    for _, v in ipairs(spells) do
+      table.insert(spellParts, "L" .. v.level .. " " .. v.name)
+    end -- for
+    if (#spellParts > 0) then
+      dbot.print("    @WSpells@w: " .. table.concat(spellParts, ", "))
+    end -- if
+  end -- if
+
+  -- 6. Resist Mods (only non-zero)
+  local resistsLine = joinParts({
+    fmtStat("All Phys", allphys), fmtStat("All Magic", allmagic),
+    fmtStat("Slash", slash), fmtStat("Pierce", pierce), fmtStat("Bash", bash),
+    fmtStat("Acid", acid), fmtStat("Cold", cold), fmtStat("Energy", energy),
+    fmtStat("Holy", holy), fmtStat("Electric", electric), fmtStat("Negative", negative),
+    fmtStat("Shadow", shadow), fmtStat("Magic", magic),
+    fmtStat("Air", air), fmtStat("Earth", earth), fmtStat("Fire", fire),
+    fmtStat("Water", water), fmtStat("Light", light), fmtStat("Mental", mental),
+    fmtStat("Sonic", sonic), fmtStat("Poison", poison), fmtStat("Disease", disease)
+  })
+  if (resistsLine ~= "") then
+    dbot.print("    @WResists@w: " .. resistsLine)
+  end -- if
+
+  -- 7. Metadata (only non-empty fields)
+  local metaParts = {}
+  if (material ~= "") and (material ~= "Unknown") then
+    table.insert(metaParts, "@WMaterial@w: " .. material)
+  end -- if
+  if (worth ~= 0) then
+    table.insert(metaParts, "@WWorth@w: " .. worth)
+  end -- if
+  if (foundAt ~= "") and (foundAt ~= "Unknown") then
+    table.insert(metaParts, "@WFound@w: " .. foundAt)
+  end -- if
+  if (ownedBy ~= "") then
+    table.insert(metaParts, "@WOwner@w: " .. ownedBy)
+  end -- if
+  if (#metaParts > 0) then
+    dbot.print("    " .. table.concat(metaParts, "  "))
+  end -- if
+
+  -- 8. Organize query (only if set)
+  if (organize ~= "") then
+    dbot.print("    @WOrganize@w: " .. organize)
+  end -- if
+
+  -- 9. Affect mods (only if non-empty)
+  if (affectMods ~= "") then
+    dbot.print("    @WAffects@w: " .. affectMods)
+  end -- if
+
+  -- 10. Clan (only if non-empty)
+  if (clan ~= "") then
+    dbot.print("    @WClan@w: " .. clan)
+  end -- if
 
   return DRL_RET_SUCCESS
 end -- inv.items.displayItem

@@ -2,6 +2,17 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0075] =
+{
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[Improved "dinv search full" display. The detailed view now shows
+           clean, grouped output with only non-zero stats and resists instead
+           of dumping every field. Includes type-specific sections for weapons,
+           containers, portals, and spellcasting items. Also added the
+           Inflicts field to the weapon display.]]
+  }
+}
+
 dbot.changelog[3.0074] =
 {
   { change = drlDbotChangeLogTypeFix,

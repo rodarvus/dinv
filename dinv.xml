@@ -89,7 +89,7 @@ dbot.version  : Module to track version and changelog information and update the
    save_state="y"
    date_written="2017-08-12 08:45:15"
    requires="4.98"
-   version="3.0074"
+   version="3.0075"
    >
 <description trim="y">
 <![CDATA[
@@ -160,7 +160,7 @@ Usage
     dinv reload
 
   Using equipment items
-    dinv consume [add | remove | display | buy | small | big] <type> <name or quantity> <container>
+    dinv consume [add | remove | display | buy | autoorganize | small | big] <type> <name or quantity> <container>
     dinv portal [use] <query>
     dinv pass <pass ID> <# of seconds>
 
