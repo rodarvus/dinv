@@ -2599,6 +2599,7 @@ function inv.items.storeCR()
   else
     local commandArray = dbot.execute.new()
     local numItemsMoved = 0
+    local organizeTargets = inv.items.organize.getTargets()
 
     for _,objId in ipairs(idArray) do
 
@@ -2608,7 +2609,7 @@ function inv.items.storeCR()
 
       else
         -- The item isn't already in a container so we can store it
-        retval = inv.items.storeItem(objId, commandArray)
+        retval = inv.items.storeItem(objId, commandArray, organizeTargets)
         if (retval ~= DRL_RET_SUCCESS) then
           dbot.note("Skipping request to store item " .. objId .. ": " .. dbot.retval.getString(retval))
         else
@@ -2648,15 +2649,25 @@ function inv.items.storeCR()
 end -- inv.items.storeCR
 
 
-function inv.items.storeItem(objId, commandArray)
+function inv.items.storeItem(objId, commandArray, organizeTargets)
   local retval
-  local homeLoc = tonumber(inv.items.getField(objId, invFieldHomeContainer) or "none")
+  local targetContainer = nil
 
-  -- If this item doesn't have a home container, put it in the main inventory instead
-  if (homeLoc == nil) then
+  -- Priority 1: Use organize rules if a target container was found
+  if (organizeTargets ~= nil) and (organizeTargets[objId] ~= nil) then
+    targetContainer = organizeTargets[objId]
+  end -- if
+
+  -- Priority 2: Fall back to the item's home container
+  if (targetContainer == nil) then
+    targetContainer = tonumber(inv.items.getField(objId, invFieldHomeContainer) or "none")
+  end -- if
+
+  -- If no target container was found, put the item in the main inventory instead
+  if (targetContainer == nil) then
     retval = inv.items.getItem(objId, commandArray)
   else
-    retval = inv.items.putItem(objId, homeLoc, commandArray, true)
+    retval = inv.items.putItem(objId, targetContainer, commandArray, true)
   end -- if
 
   return retval
@@ -4258,6 +4269,7 @@ end -- inv.items.isInvis
 -- inv.items.organize.clear(containerName, endTag)
 -- inv.items.organize.clearCR()
 -- inv.items.organize.display(endTag)
+-- inv.items.organize.getTargets()
 --
 -- inv.items.organize.cleanup(queryString, endTag)
 -- inv.items.organize.cleanupCR()
@@ -4453,6 +4465,34 @@ function inv.items.organize.display(endTag)
 
   return inv.tags.stop(invTagsOrganize, endTag, retval)
 end -- inv.items.organize.display
+
+
+-- Build a lookup table mapping item objIds to their target container objId
+-- based on organize rules.  For each container with an organize query, run
+-- the query and record the first matching container for each matched item.
+-- Returns: table { [itemObjId] = containerObjId, ... }
+function inv.items.organize.getTargets()
+  local targets = {}
+
+  for objId, _ in pairs(inv.items.table) do
+    local organizeQuery = inv.items.getStatField(objId, invQueryKeyOrganize) or ""
+    if (organizeQuery ~= "") then
+      local matchedIds, retval = inv.items.searchCR(organizeQuery)
+      if (retval == DRL_RET_SUCCESS) and (matchedIds ~= nil) then
+        for _, matchedId in ipairs(matchedIds) do
+          -- Don't assign containers as targets of organize rules
+          if (inv.items.getStatField(matchedId, invStatFieldType) ~= invmon.typeStr[invmonTypeContainer]) then
+            if not targets[matchedId] then
+              targets[matchedId] = objId  -- first match wins
+            end -- if
+          end -- if
+        end -- for
+      end -- if
+    end -- if
+  end -- for
+
+  return targets
+end -- inv.items.organize.getTargets
 
 
 inv.items.organize.cleanupPkg = nil

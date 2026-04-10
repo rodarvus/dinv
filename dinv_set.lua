@@ -985,6 +985,9 @@ function inv.set.wear(equipSet)
   local wearIsGuardian = (wearSubclassLower == "guardian")
   local wearIsSoldier  = (wearSubclassLower == "soldier")
 
+  -- Pre-compute organize targets so storeItem can route items to the correct containers
+  local organizeTargets = inv.items.organize.getTargets()
+
   for _, v in pairs(inv.wearLoc) do
     itemLoc = v or "none"
     if (equipSet[itemLoc] == nil) then
@@ -1017,7 +1020,7 @@ function inv.set.wear(equipSet)
 
             dbot.debug("Storing incompatible item at location \"" .. itemLoc .. "\"")
 
-            retval = inv.items.storeItem(objId, commandArray)
+            retval = inv.items.storeItem(objId, commandArray, organizeTargets)
             if (retval ~= DRL_RET_SUCCESS) then
               dbot.debug("inv.set.wear: Failed to store item " .. objId .. ": " ..
                          dbot.retval.getString(retval))
@@ -1069,9 +1072,9 @@ function inv.set.wear(equipSet)
         else
           dbot.debug("Loc \"" .. itemLoc .. "\": Swapping " .. objId .. " for " .. newObjId)
 
-          retval = inv.items.storeItem(objId, commandArray)
+          retval = inv.items.storeItem(objId, commandArray, organizeTargets)
           if (retval ~= DRL_RET_SUCCESS) then
-            dbot.note("Skipping request to store item " .. objId .. ": " .. 
+            dbot.note("Skipping request to store item " .. objId .. ": " ..
                        dbot.retval.getString(retval))
           end -- if
         end -- if

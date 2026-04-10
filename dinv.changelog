@@ -2,6 +2,18 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0074] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed "dinv set wear" and "dinv store" sometimes leaving removed
+           items in inventory instead of putting them into containers. Items
+           are now routed using organize rules (first priority) before falling
+           back to homeContainer. Items with matching organize queries are sent
+           to the correct container even if they were never manually organized
+           before.]]
+  }
+}
+
 dbot.changelog[3.0073] =
 {
   { change = drlDbotChangeLogTypeNew,
