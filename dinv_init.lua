@@ -869,6 +869,7 @@ function inv.config.save()
       ["config.regenNewObjId"]   = tostring(t.regenNewObjId or 0),
       ["config.refreshPeriod"]   = tostring(t.refreshPeriod or 0),
       ["config.refreshEagerSec"] = tostring(t.refreshEagerSec or 0),
+      ["config.consumeBuyContainer"] = tostring(t.consumeBuyContainer or ""),
     }
 
     for k, v in pairs(fields) do
@@ -939,6 +940,7 @@ function inv.config.load()
     regenNewObjId   = tonumber(vals["config.regenNewObjId"]) or 0,
     refreshPeriod   = tonumber(vals["config.refreshPeriod"]) or 0,
     refreshEagerSec = tonumber(vals["config.refreshEagerSec"]) or 0,
+    consumeBuyContainer = vals["config.consumeBuyContainer"] or "",
   }
 
   return DRL_RET_SUCCESS
@@ -975,7 +977,8 @@ function inv.config.new()
            regenOrigObjId  = 0,
            regenNewObjId   = 0,
            refreshPeriod   = 0,
-           refreshEagerSec = 0
+           refreshEagerSec = 0,
+           consumeBuyContainer = ""
          }
 end -- inv.config.new
 

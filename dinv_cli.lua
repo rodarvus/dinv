@@ -3019,6 +3019,8 @@ function inv.cli.consume.fn(name, line, wildcards)
     inv.consume.buy(itemType, itemNum, container)
   elseif (command == drlConsumeSmall) or (command == drlConsumeBig) then
     inv.consume.use(itemType, command, itemNum, container)
+  elseif (command == "autoorganize") then
+    inv.cli.consume.autoorganize(itemType)
   elseif (command ~= "") and (inv.consume.table ~= nil) and (inv.consume.table[command] ~= nil) then
     -- Shorthand: "dinv consume <type>" defaults to "dinv consume big <type>"
     inv.consume.use(command, drlConsumeBig, tonumber(itemType) or 1, itemName)
@@ -3031,7 +3033,7 @@ end -- inv.cli.consume.fn
 
 function inv.cli.consume.usage()
   dbot.print("@W    " .. pluginNameCmd .. " consume @G[add | remove | display | " ..
-             "buy | small | big | <type>] <type or name or quantity> @Y<container>@w")
+             "buy | autoorganize | small | big | <type>] <type or name or quantity> @Y<container>@w")
 end -- inv.cli.consume.usage
 
 
@@ -3186,9 +3188,49 @@ Examples:
  11) Consume 3 of your highest-level mana items and look in container 2.bag before
      checking for the items in other locations
      "@Gdinv consume big mana 3 2.bag@W"
+
+ 12) Set a default container for purchased consumables.  After this, every
+     "@Gdinv consume buy@W" command will automatically put bought items into 2.bag
+     unless you specify a different container on the command line.
+     "@Gdinv consume autoorganize 2.bag@W"
+
+ 13) Display the current auto-organize container setting
+     "@Gdinv consume autoorganize@W"
+
+ 14) Disable auto-organize for purchased consumables
+     "@Gdinv consume autoorganize off@W"
 ]])
 
 end -- inv.cli.consume.examples
+
+
+function inv.cli.consume.autoorganize(param)
+  param = param or ""
+
+  if (param == "") then
+    -- Display current setting
+    local current = inv.config.table.consumeBuyContainer or ""
+    if (current == "") then
+      dbot.info("Auto-organize for bought consumables is @RDISABLED@W")
+    else
+      dbot.info("Auto-organize for bought consumables is @GENABLED@W: container = \"@C" ..
+                current .. "@W\"")
+    end -- if
+    return DRL_RET_SUCCESS
+
+  elseif (param == "off") or (param == "clear") then
+    -- Disable
+    inv.config.table.consumeBuyContainer = ""
+    dbot.info("Auto-organize for bought consumables is @RDISABLED@W")
+    return inv.config.save()
+
+  else
+    -- Set container
+    inv.config.table.consumeBuyContainer = param
+    dbot.info("Bought consumables will be auto-organized into \"@C" .. param .. "@W\"")
+    return inv.config.save()
+  end -- if
+end -- inv.cli.consume.autoorganize
 
 
 inv.cli.organize = {}

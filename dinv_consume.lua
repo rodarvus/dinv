@@ -511,9 +511,15 @@ function inv.consume.buyCR()
     local commands = {}
     table.insert(commands, "buy " .. inv.consume.buyPkg.numItems .. " " .. inv.consume.buyPkg.itemName)
 
-    if (inv.consume.buyPkg.containerName ~= nil) and (inv.consume.buyPkg.containerName ~= "") then
-      table.insert(commands, 
-                   "put all.\'" .. inv.consume.buyPkg.itemName .. "\' " .. inv.consume.buyPkg.containerName)
+    -- Use explicit container if provided, otherwise fall back to auto-organize config
+    local targetContainer = inv.consume.buyPkg.containerName or ""
+    if (targetContainer == "") then
+      targetContainer = inv.config.table.consumeBuyContainer or ""
+    end -- if
+
+    if (targetContainer ~= "") then
+      table.insert(commands,
+                   "put all.\'" .. inv.consume.buyPkg.itemName .. "\' " .. targetContainer)
     end -- if
 
     dbot.execute.fast.commands(commands)

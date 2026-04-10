@@ -2,6 +2,17 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0073] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Added auto-organize for purchased consumables. Use
+           "dinv consume autoorganize <container>" to set a default container.
+           After this, "dinv consume buy" will automatically put bought items
+           into that container unless an explicit container is specified on the
+           command line. Use "dinv consume autoorganize off" to disable.]]
+  }
+}
+
 dbot.changelog[3.0072] =
 {
   { change = drlDbotChangeLogTypeNew,
