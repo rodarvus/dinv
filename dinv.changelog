@@ -2,6 +2,19 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0077] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fixed "dinv consume display owned" showing stale counts after
+           quaffing or eating consumables. inv.items.remove now deletes the
+           matching SQLite row so the in-memory item table and the database
+           stay in sync; inv.items.add persists entries restored from the
+           recent-item cache back to the database, closing a latent gap in
+           "dinv set compare" that left the database missing a row during
+           the analysis window.]]
+  }
+}
+
 dbot.changelog[3.0076] =
 {
   { change = drlDbotChangeLogTypeNew,

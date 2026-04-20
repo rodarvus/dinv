@@ -625,6 +625,11 @@ function inv.items.add(objId)
                 dbot.retval.getString(retval))
       end -- if
 
+      -- Persist the restored entry back to SQLite. inv.items.remove deletes the DB row
+      -- whenever it drops an item from memory, so without this a compare/re-add cycle
+      -- would leave the in-memory table and the DB out of sync.
+      dinv_db.saveItem(objId, inv.items.table[objId])
+
       -- If the new item is a container, mark it as "dirty" so that we will rescan it on the
       -- next discovery phase of a refresh.  We don't know the current contents of the container
       -- since it left our possession for a while.
@@ -675,6 +680,11 @@ function inv.items.remove(objId)
 
   -- Whack the entry we just removed
   inv.items.setEntry(objId, nil)
+
+  -- Keep the SQLite items table in sync with the in-memory table. Without this,
+  -- callers that query SQLite directly (e.g., inv.consume.displayType) see stale
+  -- rows until a full refresh.
+  dinv_db.deleteItem(objId)
 
   return retval
 end -- inv.items.remove
