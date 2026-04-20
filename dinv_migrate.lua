@@ -30,11 +30,38 @@ local stateFiles = {
   { file = "inv-items.state",        desc = "Items",        root = "inv.items.table" },
   { file = "inv-priorities.state",   desc = "Priorities",   root = "inv.priority.table" },
   { file = "inv-set.state",          desc = "Sets",         root = "inv.set.table" },
+  { file = "inv-snapshot.state",     desc = "Snapshots",    root = "inv.snapshot.table" },
   { file = "inv-consume.state",      desc = "Consumables",  root = "inv.consume.table" },
   { file = "inv-stats-equip.state",  desc = "Equip bonuses",root = "inv.statBonus.equipBonus" },
   { file = "inv-stats-spells.state", desc = "Spell bonuses",root = "inv.statBonus.spellBonus" },
   { file = "inv-config.state",       desc = "Config",       root = "inv.config.table" },
 }
+
+
+----------------------------------------------------------------------------------------------------
+-- Error logging
+--
+-- loadStateFile failures are not fatal (we commit whatever else migrated successfully) so the
+-- original error message from loadstring/pcall is easy to miss in the chat window. Mirror it
+-- to a file next to dinv.db so the user can inspect exactly why a given state file did not load.
+----------------------------------------------------------------------------------------------------
+
+local function getErrorLogPath()
+  return dinv_db.getDir() .. "migrate-errors.log"
+end
+
+local function writeLoadError(filePath, errMsg)
+  local logPath = getErrorLogPath()
+  local f = io.open(logPath, "a")
+  if not f then
+    return  -- best-effort; don't block migration if the log can't be written
+  end
+  f:write(string.format("[%s] %s\n  %s\n\n",
+                        os.date("%Y-%m-%d %H:%M:%S"),
+                        filePath or "?",
+                        errMsg or "unknown error"))
+  f:close()
+end
 
 
 ----------------------------------------------------------------------------------------------------
@@ -297,6 +324,34 @@ end
 
 
 ----------------------------------------------------------------------------------------------------
+-- Migration: Snapshots
+----------------------------------------------------------------------------------------------------
+
+local function migrateSnapshots(data)
+  local db = dinv_db.handle
+  local count = 0
+
+  for snapName, equipSet in pairs(data) do
+    for wearLoc, itemData in pairs(equipSet) do
+      local query = string.format(
+        "INSERT INTO snapshots (snapshot_name, wear_loc, obj_id, score) VALUES (%s, %s, %s, %s)",
+        dinv_db.fixsql(snapName),
+        dinv_db.fixsql(wearLoc),
+        dinv_db.fixnum(itemData.id),
+        dinv_db.fixnum(itemData.score))
+      db:exec(query)
+      if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
+        return nil, "Failed to insert snapshot " .. snapName .. "[" .. wearLoc .. "]"
+      end
+      count = count + 1
+    end
+  end
+
+  return count
+end
+
+
+----------------------------------------------------------------------------------------------------
 -- Migration: Consumables
 ----------------------------------------------------------------------------------------------------
 
@@ -473,6 +528,7 @@ function inv.migrate.execute()
   -- Run migration inside a single transaction
   local results = {}
   local migrationFailed = false
+  local anyLoadFailed = false
   local failureMsg = nil
 
   local retval = dinv_db.transaction(function()
@@ -486,6 +542,8 @@ function inv.migrate.execute()
         if not data then
           dbot.warn("Failed to load " .. fileInfo.desc .. ": " .. (loadErr or "unknown"))
           table.insert(results, { desc = fileInfo.desc, status = "FAILED", detail = loadErr })
+          writeLoadError(fileInfo.path, loadErr)
+          anyLoadFailed = true
 
         else
           local count, migrateErr
@@ -496,6 +554,8 @@ function inv.migrate.execute()
             count, migrateErr = migratePriorities(data)
           elseif fileInfo.file == "inv-set.state" then
             count, migrateErr = migrateSets(data)
+          elseif fileInfo.file == "inv-snapshot.state" then
+            count, migrateErr = migrateSnapshots(data)
           elseif fileInfo.file == "inv-consume.state" then
             count, migrateErr = migrateConsumables(data)
           elseif fileInfo.file == "inv-stats-equip.state" then
@@ -533,6 +593,9 @@ function inv.migrate.execute()
           expected = r.count
         elseif r.desc == "Sets" then
           tableName = "sets"
+          expected = r.count
+        elseif r.desc == "Snapshots" then
+          tableName = "snapshots"
           expected = r.count
         elseif r.desc == "Consumables" then
           tableName = "consumables"
@@ -585,7 +648,15 @@ function inv.migrate.execute()
   -- Display results
   dbot.print("")
   if retval == DRL_RET_SUCCESS then
-    dbot.print("@G  Migration completed successfully!@w\n")
+    if anyLoadFailed then
+      dbot.print("@Y  Migration completed with failures.@w")
+      dbot.print("@W  One or more state files could not be read. The categories marked FAILED")
+      dbot.print("@W  below were skipped; everything else was imported. Details were written to:")
+      dbot.print("@C    " .. getErrorLogPath() .. "@w")
+      dbot.print("@W  Restore your previous data with: @Gdinv backup restore pre-migrate@w\n")
+    else
+      dbot.print("@G  Migration completed successfully!@w\n")
+    end
   else
     dbot.print("@R  Migration failed: " .. (failureMsg or "unknown error") .. "@w")
     dbot.print("@R  The migration was rolled back. Your database is now empty.@w")

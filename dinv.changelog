@@ -2,6 +2,21 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0078] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Migration improvements. "dinv migrate" now also migrates
+           snapshots (previously silently skipped, leaving snapshots
+           empty after import). Load failures on individual state files
+           no longer hide behind a green "completed successfully" banner;
+           the summary now shows a yellow "completed with failures" note
+           when any category was skipped, and the original loadstring or
+           pcall error is written to migrate-errors.log alongside the
+           database so users (and future bug reports) can see exactly
+           why a file refused to load.]]
+  }
+}
+
 dbot.changelog[3.0077] =
 {
   { change = drlDbotChangeLogTypeFix,
