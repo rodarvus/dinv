@@ -46,6 +46,7 @@ invTagsSnapshot  = "snapshot"
 invTagsPriority  = "priority"
 invTagsAnalyze   = "analyze"
 invTagsUsage     = "usage"
+invTagsUnused    = "unused"
 invTagsCompare   = "compare"
 invTagsCovet     = "covet"
 invTagsBackup    = "backup"
@@ -70,6 +71,7 @@ inv.tags.modules = invTagsBuild     .. " " ..
                    invTagsPriority  .. " " ..
                    invTagsAnalyze   .. " " ..
                    invTagsUsage     .. " " ..
+                   invTagsUnused    .. " " ..
                    invTagsCompare   .. " " ..
                    invTagsCovet     .. " " ..
                    invTagsBackup    .. " " ..

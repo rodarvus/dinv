@@ -2,6 +2,21 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0076] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[New command "dinv unused <priority name | all> [nokeep]" lists owned
+           wearable items that do not appear in any analyzed equipment set.
+           Useful for identifying gear to sell, donate, or junk.  Non-equipment
+           types, snapshot-referenced items, and items outside of inventory or
+           vault or keyring or worn or auction are excluded.  Specify "nokeep"
+           to also exclude items flagged KEEP.  The "all" form lists items not
+           part of any analyzed priority and reports which priorities are
+           considered.  A specific priority requires analyze data and otherwise
+           refuses with a pointer to "dinv analyze create".]]
+  }
+}
+
 dbot.changelog[3.0075] =
 {
   { change = drlDbotChangeLogTypeMisc,

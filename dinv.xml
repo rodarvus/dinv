@@ -48,6 +48,7 @@ inv.snapshot  : Snapshots of specific equipment sets
 inv.statBonus : Calculation and storage of character bonuses due to spells and equipment
 inv.analyze   : Calculation and storage of a priority's "optimal" equipment sets at each level
 inv.usage     : Calculate and display for which levels and priorities an item is used
+inv.unused    : List owned wearable items that are not part of any analyzed equipment set
 inv.tags      : Module to manage displaying terminating tags when a command completes
 inv.consume   : Module to manage buying, storing, and using consumable items (e.g., potions, pills)
 inv.portal    : Module to manage using portals from your inventory
@@ -89,7 +90,7 @@ dbot.version  : Module to track version and changelog information and update the
    save_state="y"
    date_written="2017-08-12 08:45:15"
    requires="4.98"
-   version="3.0075"
+   version="3.0076"
    >
 <description trim="y">
 <![CDATA[
@@ -144,6 +145,7 @@ Usage
   Equipment analysis
     dinv analyze [list | create | delete | display] <priority name> <positions | skip #>
     dinv usage <priority name | all | allUsed> <query>
+    dinv unused <priority name | all> [nokeep]
     dinv compare <priority name> <relative name> <skip #>
     dinv covet <priority name> <auction #> <skip #>
 
@@ -365,6 +367,16 @@ Release Notes
    match="^[ ]*dinv[ ]+usage[ ]+(allUsed|all|[^ ]+)[ ]*(.*?)?$"
    enabled="y"
    expand_variables="y"
+   regexp="y"
+   send_to="12"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   script="inv.cli.unused.fn"
+   match="^[ ]*dinv[ ]+unused[ ]+(all|[^ ]+)[ ]*(.*?)?$"
+   enabled="y"
    regexp="y"
    send_to="12"
    sequence="100"

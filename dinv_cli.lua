@@ -60,6 +60,9 @@
 --   inv.cli.usage.fn(name, line, wildcards)
 --   inv.cli.usage.usage()
 --   inv.cli.usage.examples()
+--   inv.cli.unused.fn(name, line, wildcards)
+--   inv.cli.unused.usage()
+--   inv.cli.unused.examples()
 --   inv.cli.compare.fn(name, line, wildcards)
 --   inv.cli.compare.usage()
 --   inv.cli.compare.examples()
@@ -144,6 +147,7 @@ function inv.cli.fullUsage()
   dbot.print("\n@C  Equipment analysis@w")
   inv.cli.analyze.usage()
   inv.cli.usage.usage()
+  inv.cli.unused.usage()
   inv.cli.compare.usage()
   inv.cli.covet.usage()
 
@@ -1967,6 +1971,93 @@ Examples:
 ]])
 
 end -- inv.cli.usage.examples
+
+
+inv.cli.unused = {}
+function inv.cli.unused.fn(name, line, wildcards)
+  local priorityName = wildcards[1] or ""
+  local options      = Trim(wildcards[2] or "")
+  local endTag       = inv.tags.new(line)
+
+  dbot.debug("inv.cli.unused.fn: priority=\"" .. priorityName .. "\", options=\"" .. options .. "\"")
+
+  if (not inv.init.initializedActive) then
+    dbot.info("Skipping unused request: plugin is not yet initialized (are you AFK or sleeping?)")
+    return inv.tags.stop(invTagsUnused, endTag, DRL_RET_UNINITIALIZED)
+  elseif dbot.gmcp.statePreventsActions() then
+    dbot.info("Skipping unused request: character's state does not allow actions")
+    return inv.tags.stop(invTagsUnused, endTag, DRL_RET_NOT_ACTIVE)
+  end -- if
+
+  if (priorityName == "") then
+    inv.cli.unused.usage()
+    return inv.tags.stop(invTagsUnused, endTag, DRL_RET_INVALID_PARAM)
+  end -- if
+
+  local nokeep = false
+  if (options == "nokeep") then
+    nokeep = true
+  elseif (options ~= "") then
+    dbot.info("Unknown unused option: \"" .. options .. "\"")
+    inv.cli.unused.usage()
+    return inv.tags.stop(invTagsUnused, endTag, DRL_RET_INVALID_PARAM)
+  end -- if
+
+  inv.unused.display(priorityName, nokeep, endTag)
+end -- inv.cli.unused.fn
+
+
+function inv.cli.unused.usage()
+  dbot.print("@W    " .. pluginNameCmd .. " unused @G<priority name | all> @Y[nokeep]@w")
+end -- inv.cli.unused.usage
+
+
+function inv.cli.unused.examples()
+  dbot.print("@W\nUsage:\n")
+  inv.cli.unused.usage()
+
+  dbot.print(
+[[@W
+Lists owned wearable items that do not appear in any analyzed equipment set for the
+specified priority.  This is useful for identifying gear you can sell, donate, or junk.
+
+An item is "part of a priority" if it appears in that priority's analyzed sets at any
+level (see "@Gdinv help analyze@W").  All other owned wearables are reported here.
+
+The report excludes items that are not equipment candidates:
+  - Consumables (potions, pills, food, scrolls, wands, staves, drinks, fountains)
+  - Non-gear (portals, keys, beacons, giftcards, containers, furniture, trash,
+    boats, corpses, campfires, forges, runestones, raw materials)
+  - Items referenced by any snapshot (see "@Gdinv help snapshot@W")
+  - Items located anywhere other than inventory, vault, keyring, worn, or auction
+
+Specify "@Gall@W" to consider every priority that has analyze data.  Priorities without
+analyze data are skipped (the list is reported so you can see which).  Items shown for
+"@Gall@W" are items that aren't in any analyzed priority's sets -- strong candidates for
+disposal.
+
+Specifying a single priority name strictly requires that priority to have analyze data;
+otherwise the command refuses and tells you to run "@Gdinv analyze create <priority>@W"
+first.  This avoids misleading results from a missing analysis.
+
+The optional "@Ynokeep@W" argument excludes items flagged KEEP.  By default, KEEP-flagged
+items are included so characters that flag every item as KEEP still see useful output.
+
+Examples:
+  1) List items not part of the "@Cpsi-melee@W" priority's analyzed sets.
+     "@Gdinv unused psi-melee@W"
+
+  2) Same, but exclude items flagged KEEP.
+     "@Gdinv unused psi-melee nokeep@W"
+
+  3) List items not part of any analyzed priority -- strong sell/donate candidates.
+     "@Gdinv unused all@W"
+
+Output columns: required level, color-coded object ID and name, item type, object
+location (inventory, vault, keyring, worn, auction).
+]])
+
+end -- inv.cli.unused.examples
 
 
 inv.cli.compare = {}
