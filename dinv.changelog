@@ -2,6 +2,25 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0083] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fix "dinv priority edit" silently wiping every priority's
+           analyzed sets on disk.  Sets are lazy-loaded into memory, but
+           inv.priority.update mutated inv.set.table and saved without
+           first triggering the load.  When the in-memory table was
+           still its default empty state, the save did "DELETE FROM
+           sets" followed by inserting nothing, leaving the SQLite
+           sets table empty.  The user-visible symptom: after editing
+           any priority on a fresh plugin reload (without first running
+           a "dinv analyze", "dinv set", "dinv unused", or similar
+           command that touches sets), every analyzed equipment set
+           was gone and "dinv analyze create" had to be re-run for
+           every priority.  Add an ensureLoaded call before the
+           invalidation so the save round-trips real data.]]
+  }
+}
+
 dbot.changelog[3.0082] =
 {
   { change = drlDbotChangeLogTypeNew,

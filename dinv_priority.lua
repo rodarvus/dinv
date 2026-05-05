@@ -474,7 +474,11 @@ function inv.priority.update(priorityName, priorityString, isQuiet)
     end -- if
     inv.priority.save()
 
-    -- Invalidate any previous equipment set analyzis based on this priority
+    -- Invalidate any previous equipment set analyzis based on this priority.  Sets are
+    -- lazy-loaded; without ensureLoaded the in-memory table is the default {} and the
+    -- save() below would do a "DELETE FROM sets" followed by inserting nothing, wiping
+    -- every priority's analyze data on disk.
+    inv.set.ensureLoaded()
     inv.set.table[priorityName] = nil
     inv.set.save()
 
