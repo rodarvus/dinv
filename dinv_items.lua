@@ -631,10 +631,35 @@ function inv.items.add(objId)
       dinv_db.saveItem(objId, inv.items.table[objId])
 
       -- If the new item is a container, mark it as "dirty" so that we will rescan it on the
-      -- next discovery phase of a refresh.  We don't know the current contents of the container
-      -- since it left our possession for a while.
+      -- next discovery phase of a refresh, and re-add any items that were inside the
+      -- container at remove time.  When a container leaves the player's inventory (e.g.,
+      -- dropped on death), inv.items.remove cascades recursively and caches every item
+      -- inside in the recent-items cache.  When the container comes back, Aardwolf only
+      -- emits an invmon event for the container itself -- items inside stay inside
+      -- server-side and never re-emit.  Walking the recent cache here restores them
+      -- immediately, without depending on a refresh (most players run with refresh off).
       if (inv.items.getStatField(objId, invStatFieldType) == invmon.typeStr[invmonTypeContainer]) then
         inv.items.keyword(invItemsRefreshClean, invKeywordOpRemove, "id " .. objId, true)
+
+        local nestedIds = {}
+        if (inv.cache.recent.table ~= nil) and (inv.cache.recent.table.entries ~= nil) then
+          for cachedId, cachedRecord in pairs(inv.cache.recent.table.entries) do
+            if (cachedRecord ~= nil) and (cachedRecord.entry ~= nil) and
+               (cachedRecord.entry[invFieldObjLoc] == objId) then
+              table.insert(nestedIds, cachedId)
+            end -- if
+          end -- for
+        end -- if
+        for _, nestedId in ipairs(nestedIds) do
+          inv.items.add(nestedId)  -- recurses into this logic if nestedId is a container
+        end -- for
+
+        -- Backstop: schedule an eager refresh in case any item was pruned from the recent
+        -- cache (1000-entry LRU) before we got here.  No-op for players with refresh off.
+        local eagerRefreshSec = tonumber(inv.config.table.refreshEagerSec or 0)
+        if (inv.state == invStateIdle) and (eagerRefreshSec > 0) then
+          inv.items.refreshAtTime(0, eagerRefreshSec)
+        end -- if
       end -- if
     end -- if
   end -- if
@@ -3826,7 +3851,7 @@ function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
   end -- if
 
   local entry = inv.items.getEntry(objId)
-  if (objId == nil) then
+  if (entry == nil) then
     dbot.warn("inv.items.displayItem: Item " .. objId .. " is not in the inventory table")
     return DRL_RET_INVALID_ENTRY
   end -- if

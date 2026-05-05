@@ -2,6 +2,32 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0081] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fix items inside containers staying unlinked after death
+           until a manual "dinv refresh all".  When a container leaves
+           the player's inventory (e.g., dropped to a corpse on death)
+           inv.items.remove recursively cascades and removes every item
+           inside the container too, caching each one in the recent-
+           items cache.  On retrieval Aardwolf only emits an invmon
+           event for the container itself; items inside stay inside
+           server-side and never re-emit, so dinv had no record of
+           them in inv.items.table or in SQLite.  Symptoms: "dinv
+           search", "dinv consume display", "dinv analyze display",
+           and "dinv usage" all reported stale or missing data after a
+           death-retrieval cycle.  When a container is restored from
+           the recent cache, dinv now walks the recent cache and re-
+           adds any item whose stored objectLocation pointed at the
+           container, recursing through nested containers.  Works
+           independently of the refresh timer, so it fixes the case
+           even for players who run with automatic refresh disabled
+           (a common configuration).  Also fixes a wrong-condition
+           typo in inv.items.displayItem that made a "missing entry"
+           warning misreport itself as "no known location".]]
+  }
+}
+
 dbot.changelog[3.0080] =
 {
   { change = drlDbotChangeLogTypeFix,
