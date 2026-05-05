@@ -2,6 +2,24 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0080] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fix "dinv unused" omitting items inside containers and items
+           worn on the character.  The owned-location filter only matched
+           four named slots (inventory, vault, keyring, auction); items
+           inside a container have their location set to the container's
+           object id, and worn items have their location set to the wear
+           slot name (head, body, light, etc.), so neither shape passed
+           the filter.  The check now also accepts wear-loc names and
+           recursively follows container references through the chain
+           until it resolves to a named slot.  The reported case: a
+           level-210 light sitting in a Bag of Aardwolf could not be
+           reported as unused even when it was not part of any analyzed
+           equipment set.]]
+  }
+}
+
 dbot.changelog[3.0079] =
 {
   { change = drlDbotChangeLogTypeFix,

@@ -16,6 +16,7 @@
 -- inv.unused.isSnapshotItem(objId)
 -- inv.unused.priorityHasSets(priorityName)
 -- inv.unused.partitionPriorities()
+-- inv.unused.isOwnedLocation(objLoc)
 -- inv.unused.isCandidate(objId, usedIds, nokeep)
 --
 ----------------------------------------------------------------------------------------------------
@@ -55,13 +56,15 @@ inv.unused.excludedTypes =
   ["Container"]    = true,
 }
 
--- Object locations that indicate the character owns the item (vs. tracked shop templates)
+-- Named object locations that indicate the character owns the item (vs. tracked shop templates).
+-- Worn items use a wear-loc name (e.g., "head", "body", "light") rather than a single "worn"
+-- string, and items inside a container use the container's numeric objId; both are handled
+-- separately in inv.unused.isOwnedLocation below.
 inv.unused.ownedLocations =
 {
   [invItemLocInventory] = true,
   [invItemLocVault]     = true,
   [invItemLocKeyring]   = true,
-  [invItemLocWorn]      = true,
   [invItemLocAuction]   = true,
 }
 
@@ -253,6 +256,49 @@ function inv.unused.partitionPriorities()
 end -- inv.unused.partitionPriorities
 
 
+-- Returns true if objLoc (a string name or numeric container objId) resolves to one of the
+-- character's owned locations.  Walks the container chain in case the item sits inside a
+-- container that itself sits inside another container, etc.  Returns false for "uninitialized",
+-- "shopkeeper", chains that terminate at either, and chains where a container is missing
+-- from inv.items.table.
+function inv.unused.isOwnedLocation(objLoc)
+  -- Lazy-init the wear-loc name set: dinv_data.lua loads after this file, so inv.wearLoc
+  -- isn't available at module-load time.
+  if (inv.unused.wearLocNames == nil) then
+    inv.unused.wearLocNames = {}
+    if (inv.wearLoc ~= nil) then
+      for _, name in pairs(inv.wearLoc) do
+        inv.unused.wearLocNames[name] = true
+      end -- for
+    end -- if
+  end -- if
+
+  local visited = {}
+  while (objLoc ~= nil) do
+    if (inv.unused.ownedLocations[objLoc] == true) or
+       (inv.unused.wearLocNames[objLoc] == true) then
+      return true
+    end -- if
+
+    -- Anything non-numeric that didn't match above (e.g., "uninitialized", "shopkeeper",
+    -- or any unknown string) is not owned.
+    if (type(objLoc) ~= "number") then return false end
+
+    -- Numeric: treat as a container objId and chase the chain.  Visited set guards against
+    -- pathological cycles.
+    if (visited[objLoc]) then return false end
+    visited[objLoc] = true
+
+    local container = inv.items.table[objLoc]
+    if (container == nil) then return false end
+
+    objLoc = container[invFieldObjLoc]
+  end -- while
+
+  return false
+end -- inv.unused.isOwnedLocation
+
+
 -- Apply the full set of exclusion filters for the "sell/donate/junk" use case
 function inv.unused.isCandidate(objId, usedIds, nokeep)
   -- Must have a wearable location (filters consumables, keys, portals, etc. without a slot)
@@ -263,9 +309,12 @@ function inv.unused.isCandidate(objId, usedIds, nokeep)
   local itemType = inv.items.getStatField(objId, invStatFieldType)
   if (itemType == nil) or (inv.unused.excludedTypes[itemType] == true) then return false end
 
-  -- Must be owned by the character (not a tracked shop template)
-  local objLoc = inv.items.getField(objId, invFieldObjLoc)
-  if (objLoc == nil) or (inv.unused.ownedLocations[objLoc] ~= true) then return false end
+  -- Must be owned by the character (not a tracked shop template).  An item is owned if its
+  -- location is a named owned slot, a wear-loc name (worn items), or it sits in a container
+  -- whose own location resolves through the chain to one of the above.
+  if not inv.unused.isOwnedLocation(inv.items.getField(objId, invFieldObjLoc)) then
+    return false
+  end -- if
 
   -- Exclude items referenced by any snapshot
   if inv.unused.isSnapshotItem(objId) then return false end
