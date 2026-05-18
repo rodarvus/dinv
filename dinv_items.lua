@@ -1808,9 +1808,14 @@ function inv.items.refreshCR()
   -- Re-enable the prompt
   dbot.prompt.show()
 
-  -- Save everything we just discovered and identified
+  -- Save everything we just discovered and identified.  Items get a wholesale
+  -- rewrite (which also implicitly cleans up the disk rows for the orphans
+  -- pruned above and catches any itemDataStats field updates on already-
+  -- identified items that didn't go through identifyCR's per-item save).
+  -- inv.config doesn't need a save here -- the only config mutation that
+  -- ever flows through this path is inv.items.build's isBuildExecuted flag,
+  -- which is now persisted at its mutation site instead.
   inv.items.save()
-  inv.config.save()
 
   if (retval == DRL_RET_SUCCESS) then
     resultString = "SUCCESS! (Entire inventory is identified)"
@@ -1992,6 +1997,11 @@ function inv.items.build(endTag)
 
   inv.config.table.isBuildExecuted = true
   inv.state = invStateIdle
+
+  -- Persist the just-set isBuildExecuted flag here at its mutation site so
+  -- inv.items.refreshCR doesn't have to issue a save on every refresh just
+  -- to cover this one build-time write.
+  inv.config.save()
 
   -- The call to refresh is a little unusual in that we pass the build endTag to the refresh
   -- code.  When the refresh code completes, it will output the endTag it received from build

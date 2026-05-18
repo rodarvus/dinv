@@ -2,6 +2,22 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0093] =
+{
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[Stop "dinv refresh" from doing a redundant config save
+           on every run.  inv.items.refreshCR called both inv.items.
+           save() (load-bearing for the orphan-prune cleanup and any
+           itemDataStats updates on already-identified items) and
+           inv.config.save() (not load-bearing -- nothing in the
+           refresh path mutates config).  The config save existed
+           only to flush inv.items.build's isBuildExecuted flag,
+           which is now persisted at its mutation site in build
+           itself.  No behavioural change; one fewer DB write per
+           refresh.]]
+  }
+}
+
 dbot.changelog[3.0092] =
 {
   { change = drlDbotChangeLogTypeFix,
