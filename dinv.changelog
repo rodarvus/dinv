@@ -2,6 +2,30 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0097] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Stop inv.statBonus.get from writing the estimate-table
+           fallback into inv.statBonus.spellBonus[level].  Earlier
+           code seeded the entry with ave=estimate, max=zeros on the
+           first get(level); when inv.statBonus.setCR later observed
+           a real bonus at that level the weighted-average path
+           treated the estimate as a prior measurement and the
+           recorded average drifted away from truth over many
+           sessions.  get() now returns the estimate (for ave) or
+           zeros (for max) as a local value without touching the
+           persisted table; only setCR's real-measurement path ever
+           writes to spellBonus[level], so the first real
+           observation lands cleanly without prior pollution.  Also
+           drops the equipBonus persistence -- it's a deterministic
+           per-session cache of (levelBonus - spellBonus) that get()
+           recomputes on demand, so writing it to disk only carried
+           forward stale estimate-derived values across reloads.
+           Existing pre-fix data is left in place; players who want
+           a clean slate can run "dinv reset statBonus".  Audit H5.]]
+  }
+}
+
 dbot.changelog[3.0096] =
 {
   { change = drlDbotChangeLogTypeMisc,

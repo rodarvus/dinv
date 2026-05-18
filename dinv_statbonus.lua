@@ -123,24 +123,13 @@ function inv.statBonus.save()
       end
     end
 
-    -- Save equipment bonuses (single value per level per stat)
-    if inv.statBonus.equipBonus then
-      for level, data in pairs(inv.statBonus.equipBonus) do
-        for _, stat in ipairs(stats) do
-          local val = data[stat]
-          if val then
-            local query = string.format(
-              "INSERT INTO stat_bonuses (bonus_type, level, stat_name, current_val) VALUES ('equip', %d, %s, %s)",
-              level, dinv_db.fixsql(stat), dinv_db.fixnum(val))
-            db:exec(query)
-            if dinv_db.dbcheck(db:errcode(), db:errmsg(), query) then
-              dbot.warn("inv.statBonus.save: Failed to save equip bonus")
-              return DRL_RET_INTERNAL_ERROR
-            end
-          end
-        end
-      end
-    end
+    -- equipBonus is intentionally NOT persisted.  It is a deterministic per-
+    -- session cache of levelBonus minus spellBonus (with clamping) and is
+    -- recomputed inside inv.statBonus.get on demand.  Persisting it would
+    -- carry forward equipBonus rows derived from old estimate-seeded
+    -- spellBonus values; dropping the column from save() also lets the
+    -- DELETE FROM above clean up any legacy 'equip' rows from earlier
+    -- versions on first save.
 
     return DRL_RET_SUCCESS
   end)
@@ -173,15 +162,12 @@ function inv.statBonus.load()
         if row.max_val then inv.statBonus.spellBonus[level].max[row.stat_name] = row.max_val end
       end
 
-      -- Load equipment bonuses
+      -- equipBonus is a per-session derived cache populated lazily by
+      -- inv.statBonus.get; we don't load any 'equip' rows from disk (they
+      -- are stale derivatives of past estimate-seeded spellBonus values and
+      -- the next inv.statBonus.save will drop them when it does the DELETE
+      -- FROM stat_bonuses up front).  Start empty.
       inv.statBonus.equipBonus = {}
-      for row in db:nrows("SELECT level, stat_name, current_val FROM stat_bonuses WHERE bonus_type = 'equip'") do
-        local level = row.level
-        if not inv.statBonus.equipBonus[level] then
-          inv.statBonus.equipBonus[level] = {}
-        end
-        inv.statBonus.equipBonus[level][row.stat_name] = row.current_val
-      end
     end
   end
 
@@ -482,27 +468,39 @@ function inv.statBonus.get(level, bonusType)
     return nil, DRL_RET_INVALID_PARAM
   end -- if
 
-  -- Generate very crude default values if we don't have info for this level in the table yet.
-  -- This will get more accurate as someone uses this package and actual bonuses are available.
-  if (inv.statBonus.spellBonus[level] == nil) then
-    inv.statBonus.spellBonus[level] = {}
-    inv.statBonus.spellBonus[level].ave, retval = inv.statBonus.estimate(level)
-    if (retval ~= DRL_RET_SUCCESS) then
-      dbot.warn("inv.statBonus.get: Failed to get estimate for level " .. level .. ": " ..
-                dbot.retval.getString(retval))
-      return nil, retval
-    end -- if
-
-    -- Only update the max for values we have seen in real situations; don't use default values
-    inv.statBonus.spellBonus[level].max = { int = 0, luck = 0, wis = 0, str = 0, dex = 0, con = 0 }
-  end -- if
-
+  -- Resolve the spell bonus for this (level, bonusType).  When we have a real
+  -- prior measurement for this level use it directly; otherwise fall back to
+  -- an estimate (for ave) or zeros (for max) computed locally without writing
+  -- back to inv.statBonus.spellBonus.  Earlier versions of this code seeded
+  -- spellBonus[level] from the estimate table and then setCR's weighted-
+  -- average treated that estimate as a prior real sample, slowly drifting the
+  -- recorded average away from the truth over many sessions.  See audit H5.
   if (bonusType == invStatBonusTypeCurrent) then
     spellBonus = inv.statBonus.currentBonus
+
   elseif (bonusType == invStatBonusTypeAve) then
-    spellBonus = inv.statBonus.spellBonus[level].ave
+    if (inv.statBonus.spellBonus[level] ~= nil) and
+       (inv.statBonus.spellBonus[level].ave ~= nil) then
+      spellBonus = inv.statBonus.spellBonus[level].ave
+    else
+      local estimate, retval = inv.statBonus.estimate(level)
+      if (retval ~= DRL_RET_SUCCESS) then
+        dbot.warn("inv.statBonus.get: Failed to get estimate for level " .. level .. ": " ..
+                  dbot.retval.getString(retval))
+        return nil, retval
+      end -- if
+      spellBonus = estimate
+    end -- if
+
   elseif (bonusType == invStatBonusTypeMax) then
-    spellBonus = inv.statBonus.spellBonus[level].max
+    if (inv.statBonus.spellBonus[level] ~= nil) and
+       (inv.statBonus.spellBonus[level].max ~= nil) then
+      spellBonus = inv.statBonus.spellBonus[level].max
+    else
+      -- No prior measurement; report zeros so caller doesn't over-credit
+      -- equipment against an unseen spellup.
+      spellBonus = { int = 0, luck = 0, wis = 0, str = 0, dex = 0, con = 0 }
+    end -- if
   end -- if
 
   -- Now that we know the spell bonus, calculate how many bonus stats are available to equipment
