@@ -6181,11 +6181,15 @@ function inv.items.trigger.invmon(action, objId, containerId, wearLoc)
   end -- if
 
   -- Persist any in-memory changes from this invmon event to SQLite.  inv.items.remove
-  -- already deleted the row for actions that drop the item (3, 7, 9), so we save only
-  -- when the entry still exists.  We also skip brand-new stubs (identifyLevel=None on
-  -- cache miss) because the eager refresh will fill them in and save with full data.
+  -- already deleted the row for actions that drop the item (3, 7, 9), so getEntry
+  -- returns nil there and we skip.  Save brand-new stubs too: an earlier version of
+  -- this code skipped them under the assumption an eager refresh would shortly fill
+  -- them in, but most players run with refreshEagerSec=0 so the row would never land
+  -- on disk -- the item exists in memory only until the next clean restart and then
+  -- vanishes.  v3.0085's invitem fallback also populates name/level/type on the stub
+  -- so the persisted row is immediately useful to "dinv consume display" and friends.
   local itemEntry = inv.items.getEntry(objId)
-  if (itemEntry ~= nil) and (itemEntry[invFieldIdentifyLevel] ~= invIdLevelNone) then
+  if (itemEntry ~= nil) then
     dinv_db.saveItem(objId, itemEntry)
   end -- if
 

@@ -2,6 +2,28 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0086] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Persist invmon stubs to SQLite even when their identifyLevel
+           is still "none".  The previous gate ("save only when the row
+           is identified") relied on an eager refresh promptly filling
+           the stub in -- but most players (including the maintainer)
+           run with refreshEagerSec=0, so the eager refresh never fires
+           and the stub stayed memory-only until the next clean restart,
+           at which point it vanished.  The container side of the same
+           event was already persisted (holding/itemsInside/totWeight),
+           so containers would "know" about an item that had no items
+           row.  v3.0085 also populates name/level/type on stubs so the
+           saved row is immediately useful to "dinv consume display"
+           and the inv.consume.get scan -- without this fix that data
+           lived only in memory.  Drop the identifyLevel guard from
+           the invmon save site; the (itemEntry ~= nil) check still
+           correctly skips actions 3/7/9 where inv.items.remove already
+           nilled the entry.]]
+  }
+}
+
 dbot.changelog[3.0085] =
 {
   { change = drlDbotChangeLogTypeFix,
