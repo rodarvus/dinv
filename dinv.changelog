@@ -2,6 +2,20 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0094] =
+{
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[Make dinv_db.transaction crash-safe.  The inner callback
+           is now wrapped in pcall so a Lua error (assert, runtime
+           failure inside the closure) rolls back the open
+           transaction and re-raises the error -- the previous code
+           would leak the BEGIN, leaving SQLite in autocommit-
+           suspended state until the next explicit COMMIT or
+           ROLLBACK.  No current caller throws, so this is purely
+           defensive.  Audit M4.]]
+  }
+}
+
 dbot.changelog[3.0093] =
 {
   { change = drlDbotChangeLogTypeMisc,

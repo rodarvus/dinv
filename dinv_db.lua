@@ -50,13 +50,18 @@ end
 
 -- Execute a function inside a BEGIN/COMMIT transaction.
 -- If fn returns a non-success error code, ROLLBACK instead of COMMIT.
--- Returns whatever fn returns.
+-- If fn raises a Lua error, ROLLBACK and re-raise so the DB doesn't get
+-- stuck in autocommit-suspended state.  Returns whatever fn returns.
 function dinv_db.transaction(fn)
    local db = dinv_db.handle
    if not db then return fn() end
 
    db:exec("BEGIN")
-   local retval = fn()
+   local ok, retval = pcall(fn)
+   if not ok then
+      db:exec("ROLLBACK")
+      error(retval, 0)
+   end
    if retval ~= DRL_RET_SUCCESS and retval ~= DRL_RET_UNINITIALIZED then
       db:exec("ROLLBACK")
    else
