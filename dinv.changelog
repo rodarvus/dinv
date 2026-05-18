@@ -2,6 +2,17 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0096] =
+{
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[Print a confirmation note when "dinv consume remove
+           <type>" succeeds with no itemName.  The single-item remove
+           branch already printed a "Removed X from Y consumable
+           table" note; the bulk-delete branch (fixed in v3.0087 to
+           actually persist) silently succeeded.  UX parity only.]]
+  }
+}
+
 dbot.changelog[3.0095] =
 {
   { change = drlDbotChangeLogTypeFix,
