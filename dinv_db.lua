@@ -897,6 +897,40 @@ local function run_migrations()
       record_migration(2, "Add organize column to items and cache_recent")
    end
 
+   -- Migration 3: Backfill the affectMod pseudo-stat columns to items and
+   -- cache_recent.  These were added directly to init_tables in v3.0016
+   -- without an ALTER TABLE migration, so any database first created between
+   -- v3.0006 and v3.0015 is missing them and silently fails identify-time
+   -- INSERTs that reference them.  Column existence is checked per-table so
+   -- the migration is safe on databases that already have the columns
+   -- (CREATE TABLE IF NOT EXISTS in init_tables created them on every fresh
+   -- install post-v3.0016).
+   if not migration_applied(3) then
+      local function columnExists(tableName, columnName)
+         for row in db:nrows(string.format("PRAGMA table_info(%s)", tableName)) do
+            if row.name == columnName then return true end
+         end
+         return false
+      end
+
+      local affectModColumns = {
+         "sanctuary", "haste", "flying", "invis", "regeneration",
+         "detectinvis", "detecthidden", "detectevil", "detectgood", "detectmagic",
+      }
+
+      for _, tableName in ipairs({ "items", "cache_recent" }) do
+         for _, columnName in ipairs(affectModColumns) do
+            if not columnExists(tableName, columnName) then
+               db:exec(string.format(
+                  "ALTER TABLE %s ADD COLUMN %s INTEGER DEFAULT 0",
+                  tableName, columnName))
+            end
+         end
+      end
+
+      record_migration(3, "Backfill affectMod columns on items and cache_recent")
+   end
+
    -- Future migrations go here following this pattern:
    --
    -- if not migration_applied(N) then

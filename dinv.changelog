@@ -2,6 +2,27 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0092] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Add the missing migration 3 that backfills 10 affectMod
+           pseudo-stat columns (sanctuary, haste, flying, invis,
+           regeneration, detectinvis, detecthidden, detectevil,
+           detectgood, detectmagic) on items and cache_recent.  These
+           were added directly to the init_tables CREATE TABLE in
+           v3.0016 without an ALTER TABLE migration, so any database
+           first created between v3.0006 and v3.0015 was permanently
+           missing them -- "CREATE TABLE IF NOT EXISTS" is a no-op for
+           existing tables, and every identify-time INSERT that
+           referenced these columns silently failed via dinv_db.dbcheck.
+           Equipment scoring against affected items was effectively
+           random.  The migration checks column existence per-table
+           via PRAGMA table_info before each ALTER, so post-v3.0016
+           fresh installs (which already have the columns) record the
+           migration without touching the schema.]]
+  }
+}
+
 dbot.changelog[3.0091] =
 {
   { change = drlDbotChangeLogTypeFix,
