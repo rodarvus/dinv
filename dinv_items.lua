@@ -598,7 +598,32 @@ function inv.items.setStatField(objId, field, value)
 end -- inv.items.setStatField
 
 
-function inv.items.add(objId) 
+-- Look up an item template by basic name (no commas) in the SQLite items table.
+-- Returns a fresh item entry suitable for adoption by a new objId, or nil if no
+-- matching row exists.  Used as a fallback when the in-memory frequent cache
+-- misses (e.g., the user just acquired the first instance of an item whose
+-- template predates the frequent cache being populated this session).  Both
+-- sides of the comparison are normalized because invitem/invdata strip commas
+-- from names while items.name preserves them from the full identify output.
+function inv.items.lookupTemplateBySql(basicName)
+  local db = dinv_db.handle
+  if (db == nil) or (basicName == nil) or (basicName == "") then
+    return nil
+  end -- if
+
+  local query = string.format(
+    "SELECT * FROM items WHERE REPLACE(name, ',', '') = %s LIMIT 1",
+    dinv_db.fixsql(basicName))
+
+  for row in db:nrows(query) do
+    return dinv_db.rowToItemEntry(row)
+  end -- for
+
+  return nil
+end -- inv.items.lookupTemplateBySql
+
+
+function inv.items.add(objId)
   local retval = DRL_RET_SUCCESS
   local objIdNum = tonumber(objId)
 
@@ -5836,11 +5861,25 @@ function inv.items.trigger.itemDataStats(objId, flags, itemName, level, typeFiel
       -- Check if the item is in the frequent item cache.  If it is, there's no need to identify it :)
 
       local cachedEntry = inv.cache.get(inv.cache.frequent.table, itemName)
+
+      -- Fallback when the in-memory frequent cache misses: look the template up
+      -- in the items table by basic name.  This catches the case where dinv has
+      -- previously identified an instance of this item type (so its row is in
+      -- items) but the in-memory frequent cache doesn't currently know about it
+      -- (e.g., the cache was pruned, or the lookup key happens to differ from
+      -- what's been added this session).
+      local fromSql = false
+      if (cachedEntry == nil) then
+        cachedEntry = inv.items.lookupTemplateBySql(itemName)
+        fromSql = (cachedEntry ~= nil)
+      end -- if
+
       if (cachedEntry ~= nil) then
         cachedEntry.stats.id = objId
         retval = inv.items.setEntry(objId, cachedEntry)
         dbot.note("Identified \"" .. (inv.items.getField(objId, invFieldColorName) or "Unidentified") ..
-                  "@W" .. DRL_ANSI_WHITE .. "\" (" .. objId .. ") from frequent cache")
+                  "@W" .. DRL_ANSI_WHITE .. "\" (" .. objId .. ") from " ..
+                  (fromSql and "items table" or "frequent cache"))
 
         -- This item instance probably wasn't in the recent item cache because we don't cache
         -- items that are duplicated in the frequent item cache.  However, it's possible that
@@ -5849,14 +5888,30 @@ function inv.items.trigger.itemDataStats(objId, flags, itemName, level, typeFiel
         -- scenario, we want to ensure that we remove the instance from the recent cache to
         -- help keep that cache uncluttered.
         inv.cache.remove(inv.cache.recent.table, objId)
+
+        -- Seed the in-memory frequent cache so the rest of this batch (e.g., the
+        -- remaining items in a "dinv consume buy N") skips the SQL round-trip.
+        if fromSql then
+          inv.cache.add(inv.cache.frequent.table, objId)
+        end -- if
       else
-        -- Create an entry for this item.  We don't know much yet, but fill in the little we know
-        -- about the item.  We don't know the full colorized name yet, but we can use the basic name
-        -- for now and this is sufficient to support the frequent item cache.  We will fill in the 
-        -- full colorized name once we know it.
+        -- True cache miss.  Create a stub; populate the minimum fields that
+        -- invitem already gave us (name, level, type) so SQL counts in
+        -- inv.consume.displayType and Lua scans in inv.consume.get can at least
+        -- find the item before a full identify lands.  Without this the row
+        -- holds only colorName and SQL queries WHERE level=N AND name=fullName
+        -- silently skip it.
         retval = inv.items.add(objId)
         -- Use a basic name for the colorized name if necessary
         inv.items.setField(objId, invFieldColorName, itemName)
+        -- inv.items.add may have restored a fully identified entry from
+        -- cache_recent; only seed name/level/type when we got a true stub so we
+        -- don't overwrite real data with the truncated invitem version.
+        if (inv.items.getField(objId, invFieldIdentifyLevel) == invIdLevelNone) then
+          inv.items.setStatField(objId, invStatFieldName, itemName)
+          inv.items.setStatField(objId, invStatFieldLevel, level)
+          inv.items.setStatField(objId, invStatFieldType, typeName)
+        end -- if
       end -- if
     end -- if
 

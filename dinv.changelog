@@ -2,6 +2,29 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0085] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fall back to the SQLite items table when the in-memory
+           frequent cache misses on an invitem trigger, and populate
+           name/level/type on a true cache miss instead of leaving the
+           new row stubbed with only colorName.  v3.0084 keeps the
+           frequent cache hot across reloads but the cache can still
+           miss (pruned entry, unusual name form, never-cached item),
+           in which case the previous code wrote a near-empty row that
+           "dinv consume display" and inv.consume.get both silently
+           skipped.  Now: if the frequent cache misses we look the
+           template up by basic name in items (commas normalized on
+           both sides), clone the row onto the new objId, and seed the
+           frequent cache so the rest of a buy batch is free.  If even
+           the SQL lookup misses, we still set the three fields that
+           invitem already gave us so consume display/get can find the
+           item before the next full identify lands.  The stub seeding
+           is gated on identifyLevel=none so it doesn't overwrite an
+           entry that inv.items.add restored from cache_recent.]]
+  }
+}
+
 dbot.changelog[3.0084] =
 {
   { change = drlDbotChangeLogTypeFix,
