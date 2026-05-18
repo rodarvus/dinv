@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0000] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fix "dinv migrate" losing migrated data on reload.
+           OnPluginSaveState was saving pre-migrate in-memory state
+           back over the just-migrated database during the post-migration
+           plugin reload.]]
+  }
+}
+
 dbot.changelog[3.0100] =
 {
   { change = drlDbotChangeLogTypeFix,

@@ -1,7 +1,7 @@
 {
-  "plugin_version": "3.0100",
+  "plugin_version": "3.0000",
   "files": {
-    "dinv.xml": "3.0100",
+    "dinv.xml": "3.0000",
     "dinv_init.lua": "3.0090",
     "dinv_db.lua": "3.0094",
     "dinv_dbot.lua": "3.0090",
@@ -22,9 +22,9 @@
     "dinv_portal.lua": "3.0048",
     "dinv_regen.lua": "3.0048",
     "dinv_report.lua": "3.0048",
-    "dinv_migrate.lua": "3.0100",
-    "dinv.changelog": "3.0100",
-    "dinv.manifest": "3.0100",
+    "dinv_migrate.lua": "3.0000",
+    "dinv.changelog": "3.0000",
+    "dinv.manifest": "3.0000",
     "README.md": "3.0070",
     "LICENSE": "3.0066",
     "STATUS.md": "3.0070"

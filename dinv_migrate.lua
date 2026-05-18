@@ -758,6 +758,9 @@ function inv.migrate.execute()
 
   if retval == DRL_RET_SUCCESS then
     dbot.info("Reloading plugin to apply migrated data...")
+    -- Prevent OnPluginSaveState from overwriting the migrated database with the
+    -- current (stale) in-memory tables during the reload sequence.
+    dbot.init.initializedActive = false
     dbot.reload()
   end
 
