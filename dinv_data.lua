@@ -383,3 +383,17 @@ invItemEffectsDualWield    = "dualwield"
 invItemEffectsShield       = "shield"
 invItemEffectsHammerswing  = "hammerswing"
 
+
+----------------------------------------------------------------------------------------------------
+-- Materials that a blacksmith can work with.  Used by the metalweapon priority scoring field.
+----------------------------------------------------------------------------------------------------
+
+inv.metalMaterials = {
+  adamantite = true, adamantium = true, aluminum  = true,
+  brass      = true, bronze     = true, copper    = true,
+  gold       = true, iron       = true, lead      = true,
+  metal      = true, mithril    = true, platinum  = true,
+  silver     = true, steel      = true, tin       = true,
+  titanium   = true,
+}
+
