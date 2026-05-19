@@ -254,7 +254,7 @@ inv.stats.specials        = { name = "specials",
                               desc = "See \"@Ghelp weapon flags@W\" for an explanation of special behaviors" }
 
 inv.stats.location        = { name = "location",
-                              desc = "Item ID for the container holding this item" }
+                              desc = "Container item ID holding this item or \"inventory\" or a wear slot name (e.g. \"head\")." }
 inv.stats.rlocation       = { name = "rlocation",
                               desc = "Relative name (e.g., \"3.bag\") for the container holding this item" }
 inv.stats.rname           = { name = "rname",
