@@ -936,6 +936,17 @@ local function run_migrations()
       record_migration(3, "Backfill affectMod columns on items and cache_recent")
    end
 
+   -- Migration 4: Purge unidentified (stub) rows from the frequent cache.
+   -- The items-table template fallback (v3.0085) could return a none-level
+   -- invmon stub and seed it into cache_frequent, where it served as a useless
+   -- "template" that double-identified the item on every refresh and was never
+   -- overwritten.  v3.0101 stops new stubs from entering the cache; this sweeps
+   -- out any that an older build already persisted.
+   if not migration_applied(4) then
+      db:exec("DELETE FROM cache_frequent WHERE identify_level = 'none'")
+      record_migration(4, "Purge none-level stub rows from cache_frequent")
+   end
+
    -- Future migrations go here following this pattern:
    --
    -- if not migration_applied(N) then

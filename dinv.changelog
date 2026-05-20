@@ -2,6 +2,31 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0101] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Stop consumables (and other frequently-acquired items)
+           from being identified twice on every refresh.  invmon
+           stubs are persisted to the items table with
+           identify_level='none' so "dinv consume display"/get can
+           find consumables before a full ID lands.  The items-table
+           template fallback (v3.0085) did not exclude those stubs,
+           so it could adopt one as a "template" -- leaving the item
+           unidentified -- and then seed it into the frequent cache.
+           A frequent-cache hit on that none-level entry then left
+           the item unidentified, so the refresh ran a full manual ID
+           anyway (the "from frequent cache" line immediately
+           followed by a second identify of the same object), and the
+           stale entry was never overwritten, so it recurred forever.
+           For in-bag consumables the redundant manual IDs are slow
+           and partly fail, making a refresh appear to hang.  Three
+           defences: lookupTemplateBySql now excludes none-level
+           rows; inv.cache.add refuses to store a none-level entry in
+           the frequent cache; and migration 4 purges any none-level
+           rows an older build already wrote to cache_frequent.]]
+  }
+}
+
 dbot.changelog[3.0100] =
 {
   { change = drlDbotChangeLogTypeFix,

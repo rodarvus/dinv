@@ -418,7 +418,11 @@ function inv.cache.add(cache, objId)
       dinv_db.saveCacheRecent(objId, copy)
     elseif (cache.name == inv.cache.frequent.name) then
       local name = inv.items.getStatField(objId, invStatFieldName)
-      if (name ~= nil) and (name ~= "") then
+      -- Never cache an unidentified (stub) entry by name.  A none-level entry
+      -- carries no real stats, so a frequent-cache hit on it leaves the item
+      -- unidentified and the refresh re-IDs it on every pass.  Stubs reach this
+      -- path via the items-table template fallback in invitem handling.
+      if (name ~= nil) and (name ~= "") and (idLevel ~= invIdLevelNone) then
         -- invdata strips out commas in the names of items.  As a result, we won't find items in
         -- the cache unless we also store them in a form without commas.
         name = string.gsub(name, ",", "")

@@ -611,9 +611,14 @@ function inv.items.lookupTemplateBySql(basicName)
     return nil
   end -- if
 
+  -- Exclude unidentified stub rows.  invmon stubs are persisted to the items
+  -- table (identify_level='none') so consume display/get can find consumables
+  -- before a full ID lands, but a stub carries no real stats -- adopting one as
+  -- a "template" leaves the item unidentified and (worse) seeds the frequent
+  -- cache with a none-level entry that double-identifies forever.
   local query = string.format(
-    "SELECT * FROM items WHERE REPLACE(name, ',', '') = %s LIMIT 1",
-    dinv_db.fixsql(basicName))
+    "SELECT * FROM items WHERE REPLACE(name, ',', '') = %s AND identify_level <> %s LIMIT 1",
+    dinv_db.fixsql(basicName), dinv_db.fixsql(invIdLevelNone))
 
   for row in db:nrows(query) do
     return dinv_db.rowToItemEntry(row)
