@@ -3384,8 +3384,9 @@ function inv.items.search(arrayOfQueryArrays, allowIgnored)
           -- explicitly check for a location query and handle it as a one-off.  Yes, I should probably
           -- fix this at some point...
           if (key == invQueryKeyLocation) or (key == invQueryKeyLoc) then
-            if ((invert == false) and ((valueNum ~= nil) and (valueNum ~= objLoc))) or
-               ((invert == true)  and ((valueNum ~= nil) and (valueNum == objLoc))) then
+            -- make everything string as objLoc can be numeric or string
+            if ((invert == false) and (value ~= tostring(objLoc))) or
+               ((invert == true)  and (value == tostring(objLoc))) then
               itemMatches = false
               break
             end -- if

@@ -568,6 +568,9 @@ Examples:
      "@Gdinv search wearable head unused mage@W"
      "@Gdinv search type weapon ~unused mage@W"
      "@Gdinv put 2.bag unused all@W"
+
+ 11) Find all items in your main inventory (not worn, not in a container)
+     "@Gdinv search loc inventory@W"
 ]])
 
 end -- inv.cli.search.examples

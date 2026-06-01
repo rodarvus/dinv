@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0103] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fix loc/location search query to accept string location names
+           (e.g. "loc inventory", "loc head").
+           Previously only numeric container IDs were matched; string values
+           silently matched everything.]]
+  }
+}
+
 dbot.changelog[3.0102] =
 {
   { change = drlDbotChangeLogTypeFix,
