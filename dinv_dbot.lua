@@ -1920,6 +1920,23 @@ invmon.typeStr[invmonTypeForge]          = "Forge"
 invmon.typeStr[invmonTypeRunestone]      = "Runestone"
 
 
+-- Returns true if an item type is one the frequent item cache may hold.  These
+-- are the only types for which cloning a template by name is safe: every
+-- instance of the same name is effectively interchangeable (e.g. bulk-bought
+-- potions).  Uniquely-enchanted gear that shares a base name -- several
+-- differently-enchanted "Aardwolf Bracers of Iron Grip", say -- must NOT be
+-- cloned, so it is excluded here.  Both the items-table template fallback in
+-- invitem handling and inv.cache.add gate on this.
+function invmon.isFrequentCacheType(typeName)
+  return (typeName == invmon.typeStr[invmonTypePotion]) or
+         (typeName == invmon.typeStr[invmonTypePill])   or
+         (typeName == invmon.typeStr[invmonTypeFood])   or
+         (typeName == invmon.typeStr[invmonTypeWand])   or
+         (typeName == invmon.typeStr[invmonTypeStaff])  or
+         (typeName == invmon.typeStr[invmonTypeScroll])
+end
+
+
 ----------------------------------------------------------------------------------------------------
 --
 -- dbot.ability: Module to check if a character has access to a specific skill or spell

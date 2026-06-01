@@ -2,6 +2,21 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0108] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Stop corrupting uniquely-enchanted gear that shares a base name.
+           When an item entered your inventory, dinv could clone a same-named
+           item's stats from the database (the invitem template fallback),
+           assuming every instance was identical.  That holds for consumables
+           but not for gear like four differently-enchanted "Aardwolf Bracers
+           of Iron Grip" -- all four ended up showing one bracer's level and
+           stats, and a refresh never fixed it.  The template clone is now
+           restricted to interchangeable consumable types (potion, pill, food,
+           wand, staff, scroll); gear is identified individually instead.]]
+  }
+}
+
 dbot.changelog[3.0107] =
 {
   { change = drlDbotChangeLogTypeMisc,

@@ -5925,8 +5925,16 @@ function inv.items.trigger.itemDataStats(objId, flags, itemName, level, typeFiel
       -- items) but the in-memory frequent cache doesn't currently know about it
       -- (e.g., the cache was pruned, or the lookup key happens to differ from
       -- what's been added this session).
+      --
+      -- Gate on the item type: cloning a template by name is only safe for
+      -- interchangeable consumables (potions, pills, etc.).  For uniquely-
+      -- enchanted gear that shares a base name -- e.g. several differently-
+      -- enchanted "Aardwolf Bracers of Iron Grip" -- adopting one instance's
+      -- stats for another silently corrupts the row (wrong level/stats, and it
+      -- gets marked fully identified so a refresh never fixes it).  Such items
+      -- fall through to the stub branch below and get individually identified.
       local fromSql = false
-      if (cachedEntry == nil) then
+      if (cachedEntry == nil) and invmon.isFrequentCacheType(typeName) then
         cachedEntry = inv.items.lookupTemplateBySql(itemName)
         fromSql = (cachedEntry ~= nil)
       end -- if
