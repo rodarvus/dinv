@@ -2,6 +2,23 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0109] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Keep the frequent item cache consumable-only, and purge entries
+           that don't belong.  The cache is keyed by item name and a hit clones
+           the cached stats onto every same-named item, so it must hold only
+           interchangeable consumables.  A stray seed had let gear, keys, and
+           treasure in (e.g. "Aardwolf Bracers of Iron Grip"), and that polluted
+           entry re-cloned one instance's stats onto all of them on every
+           refresh -- which "dinv forget" + "dinv refresh all" could not heal,
+           since forget never touched the cache.  inv.cache.add now refuses
+           non-consumable types, and a one-time migration sweeps out any such
+           rows already stored.  To repair items still showing wrong data, run
+           "dinv forget <name>" then "dinv refresh all" once after updating.]]
+  }
+}
+
 dbot.changelog[3.0108] =
 {
   { change = drlDbotChangeLogTypeFix,

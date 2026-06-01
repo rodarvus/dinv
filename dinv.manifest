@@ -1,14 +1,14 @@
 {
-  "plugin_version": "3.0108",
+  "plugin_version": "3.0109",
   "files": {
-    "dinv.xml": "3.0108",
+    "dinv.xml": "3.0109",
     "dinv_init.lua": "3.0090",
-    "dinv_db.lua": "3.0104",
+    "dinv_db.lua": "3.0109",
     "dinv_dbot.lua": "3.0108",
     "dinv_cli.lua": "3.0105",
     "dinv_items.lua": "3.0108",
     "dinv_data.lua": "3.0104",
-    "dinv_cache.lua": "3.0101",
+    "dinv_cache.lua": "3.0109",
     "dinv_priority.lua": "3.0104",
     "dinv_score.lua": "3.0104",
     "dinv_set.lua": "3.0089",
