@@ -768,6 +768,7 @@ local function init_tables()
          detectmagic REAL DEFAULT 0,
          dualwield REAL DEFAULT 0, irongrip REAL DEFAULT 0,
          shield REAL DEFAULT 0, hammerswing REAL DEFAULT 0,
+         metalweapon REAL DEFAULT 0,
          maxstr REAL DEFAULT 0, maxint REAL DEFAULT 0, maxwis REAL DEFAULT 0,
          maxdex REAL DEFAULT 0, maxcon REAL DEFAULT 0, maxluck REAL DEFAULT 0,
          allmagic REAL DEFAULT 0, allphys REAL DEFAULT 0,
@@ -945,6 +946,12 @@ local function run_migrations()
    if not migration_applied(4) then
       db:exec("DELETE FROM cache_frequent WHERE identify_level = 'none'")
       record_migration(4, "Purge none-level stub rows from cache_frequent")
+   end
+
+   -- Migration 5: Add metalweapon scoring column to priority_blocks
+   if not migration_applied(5) then
+      db:exec("ALTER TABLE priority_blocks ADD COLUMN metalweapon REAL DEFAULT 0")
+      record_migration(5, "Add metalweapon column for metal weapon scoring")
    end
 
    -- Future migrations go here following this pattern:

@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0104] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Add metalweapon priority scoring field.  Set to a positive
+           weight to favor metal weapons in a priority (e.g. for blacksmith
+           builds).  Non-weapon items and weapons with unknown material are
+           unaffected.]]
+  }
+}
+
 dbot.changelog[3.0103] =
 {
   { change = drlDbotChangeLogTypeFix,
