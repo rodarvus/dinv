@@ -45,9 +45,9 @@ function inv.usage.displayCR()
   if (inv.usage.displayPkg == nil) then
     dbot.error("inv.usage.displayCR: inv.usage.displayPkg is nil!")
     return DRL_RET_INTERNAL_ERROR
-  end -- if    
+  end -- if
 
-  local retval  
+  local retval
   local idArray
   local priorityName = inv.usage.displayPkg.priorityName or ""
   local query        = inv.usage.displayPkg.query or ""
@@ -76,11 +76,11 @@ function inv.usage.displayCR()
 
       -- Only consider an item available to be used if it has a wearable location,
       -- is not a potion, pill, or food, and if it is not both a treasure and hold item.
-      if (wearableField ~= nil) and 
-         (typeField ~= invmon.typeStr[invmonTypePotion]) and 
-         (typeField ~= invmon.typeStr[invmonTypePill]) and 
+      if (wearableField ~= nil) and
+         (typeField ~= invmon.typeStr[invmonTypePotion]) and
+         (typeField ~= invmon.typeStr[invmonTypePill]) and
          (typeField ~= invmon.typeStr[invmonTypeFood]) and
-         ((typeField ~= invmon.typeStr[invmonTypeTreasure]) or 
+         ((typeField ~= invmon.typeStr[invmonTypeTreasure]) or
           (wearableField ~= inv.wearLoc[invWearableLocHold])) then
 
         if (priorityName == "all") then
@@ -154,7 +154,7 @@ function inv.usage.displayItem(priorityName, objId, doDisplayUnused)
   end -- if
   -- The trimmed name could end on an "@" which messes up color codes and spacing
   formattedName = string.gsub(formattedName, "@$", " ") .. " " .. DRL_XTERM_GREY
-  formattedName = formattedName .. colorizedId 
+  formattedName = formattedName .. colorizedId
 
   local levelUsage  = inv.usage.get(priorityName, objId)
   local itemLevel   = inv.items.getStatField(objId, invStatFieldLevel) or "N/A"
@@ -172,7 +172,7 @@ function inv.usage.displayItem(priorityName, objId, doDisplayUnused)
     -- Convert the list of levels into a string with ranges
     for i = 1, #levelUsage do
       -- If we have consecutive numbers on either side, we are in a range and can whack this item
-      if (levelUsage[i - 1] ~= nil) and 
+      if (levelUsage[i - 1] ~= nil) and
          ((levelUsage[i] == levelUsage[i - 1] + 1) or (levelUsage[i - 1] == 0 )) and
          (levelUsage[i + 1] ~= nil) and (levelUsage[i] == levelUsage[i + 1] - 1) then
         levelUsage[i] = 0
@@ -237,7 +237,7 @@ function inv.usage.get(priorityName, objId)
       for _, wearLoc in ipairs(inv.wearables[wearType]) do
         if (wearLoc ~= nil) and (startLevel ~= nil) and (inv.set.table[priorityName] ~= nil) then
           for level = startLevel, endLevel do
-            if (inv.set.table[priorityName][level] ~= nil) and 
+            if (inv.set.table[priorityName][level] ~= nil) and
                (inv.set.table[priorityName][level][wearLoc] ~= nil) and
                (inv.set.table[priorityName][level][wearLoc].id == objId) then
               table.insert(levelArray, level)
