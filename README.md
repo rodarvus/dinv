@@ -227,6 +227,7 @@ The plugin is modularized into 19 Lua files loaded by a single XML bootstrap (`d
 
 - **Durel** (Aardurel) -- Original author of aard_inventory
 - **Rodarvus** -- Fork maintainer, SQLite migration, modularization, bug fixes, and improvements
+- **OneToedSloth** -- metalweapon priority scoring field, loc/location and organize search fixes, single-file distribution build, and the migrate-reload data-loss fix ([#2](https://github.com/rodarvus/dinv/pull/2), [#3](https://github.com/rodarvus/dinv/pull/3), [#4](https://github.com/rodarvus/dinv/pull/4), [#5](https://github.com/rodarvus/dinv/pull/5), [#6](https://github.com/rodarvus/dinv/pull/6))
 - **Arcidayne** -- Original plugin update system
 - **jontsai** -- getItemIds external API ([PR #4](https://github.com/Aardurel/aard-plugins/pull/4))
 - **Yajanofaard** -- Hammerswing feature proposal ([PR #10](https://github.com/Aardurel/aard-plugins/pull/10))
