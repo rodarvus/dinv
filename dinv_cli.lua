@@ -3408,7 +3408,7 @@ end -- inv.cli.organize.fn3
 
 function inv.cli.organize.usage()
   dbot.print("@W    " .. pluginNameCmd .. " organize @G[add | clear | display] " ..
-             "@Y<container relative name> <query>@w") 
+             "@Y<container relative name or ID> <query>@w")
 end -- inv.cli.organize.usage
 
 

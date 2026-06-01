@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0105] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fix "dinv organize add/clear" to accept a numeric object ID
+           in addition to a relative name, report distinct errors for
+           zero vs. multiple matches, and allow containers in containers
+           following mud rules for such things.]]
+  }
+}
+
 dbot.changelog[3.0104] =
 {
   { change = drlDbotChangeLogTypeNew,
