@@ -2,6 +2,17 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0106] =
+{
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[Single-file distribution: a self-contained dinv_single.xml
+           (all modules embedded) is now built by build.py and attached to
+           each GitHub release as a download, for one-file installs.  Note:
+           single-file installs are not self-updating -- re-download the file
+           from the latest release to update.]]
+  }
+}
+
 dbot.changelog[3.0105] =
 {
   { change = drlDbotChangeLogTypeFix,
