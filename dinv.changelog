@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0111] =
+{
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[Add RELEASE.md documenting the full release process (version
+           metadata rules, pre-release checks, tagging, and the automated
+           single-file asset build) so contributors can cut their own releases.]]
+  }
+}
+
 dbot.changelog[3.0110] =
 {
   { change = drlDbotChangeLogTypeNew,
