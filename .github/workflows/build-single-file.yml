@@ -27,7 +27,9 @@ jobs:
       - name: Build dinv_single.xml
         run: python build.py
 
-      - name: Attach dinv_single.xml to the release
+      - name: Attach dinv_single.xml (and dinv.manifest) to the release
+        # dinv.manifest is uploaded too so single-file installs can check the
+        # latest released version via .../releases/latest/download/dinv.manifest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "${{ github.event.release.tag_name }}" dinv_single.xml --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" dinv_single.xml dinv.manifest --clobber

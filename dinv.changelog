@@ -2,6 +2,17 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0110] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Single-file installs (dinv_single.xml) can now self-update.
+           "dinv version update" detects single-file installs and downloads the
+           latest release's dinv_single.xml, swapping it over the running plugin
+           and reloading.  The updater's downloader now follows HTTP redirects,
+           which release-asset URLs require.]]
+  }
+}
+
 dbot.changelog[3.0109] =
 {
   { change = drlDbotChangeLogTypeFix,
