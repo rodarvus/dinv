@@ -223,6 +223,11 @@ The plugin is modularized into 19 Lua files loaded by a single XML bootstrap (`d
 - All bulk save operations use explicit SQLite transactions
 - Individual item changes use incremental saves (INSERT OR REPLACE)
 
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) to get
+started. If you're cutting a release, follow [RELEASE.md](RELEASE.md).
+
 ## Credits
 
 - **Durel** (Aardurel) -- Original author of aard_inventory

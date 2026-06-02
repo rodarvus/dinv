@@ -2,6 +2,15 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0112] =
+{
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[Add CONTRIBUTING.md and link it (plus RELEASE.md) from the
+           README so contributors can find the contribution and release
+           process.]]
+  }
+}
+
 dbot.changelog[3.0111] =
 {
   { change = drlDbotChangeLogTypeMisc,
