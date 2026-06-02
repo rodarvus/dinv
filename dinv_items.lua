@@ -52,17 +52,17 @@
 --   inv.items.get
 --   inv.items.getCR
 --   inv.items.getItem
--- 
+--
 --   inv.items.put
 --   inv.items.putCR
 --   inv.items.putItem
--- 
+--
 --   inv.items.store
 --   inv.items.storeCR
 --   inv.items.storeItem
--- 
+--
 --   inv.items.wearItem(objId, objLoc, commandArray, doCheckLocation)
---   inv.items.wearSetupFn()   
+--   inv.items.wearSetupFn()
 --   inv.items.wearResultFn()
 --
 --   inv.items.isWorn(objId)
@@ -71,12 +71,12 @@
 --   inv.items.wearableTypeToLocs(wearableType)
 --
 --   inv.items.removeItem(objId, commandArray)
---   inv.items.removeSetupFn()   
+--   inv.items.removeSetupFn()
 --   inv.items.removeResultFn()
 --
 --   inv.items.keyword
 --   inv.items.keywordCR
--- 
+--
 --   inv.items.search
 --   inv.items.searchCR
 --   inv.items.sort
@@ -97,7 +97,7 @@
 ----------------------------------------------------------------------------------------------------
 
 
--- We don't want to scan worn equipment, the main inventory, and all containers each time that we 
+-- We don't want to scan worn equipment, the main inventory, and all containers each time that we
 -- do a refresh because that can take 5-10 seconds depending on how many containers you have.
 -- Instead, we maintain "clean" or "dirty" flags for each possible place to scan.  At startup, we
 -- consider everything to be "dirty" and we require a full scan.  After that, we mark locations as
@@ -212,7 +212,7 @@ function inv.items.init.atInstall()
   -- Trigger on the stats for an eqdata, invdata, or keyring data item
   check (AddTriggerEx(inv.items.trigger.itemDataStatsName,
                       "^([0-9]+?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?)$",
-                      "inv.items.trigger.itemDataStats" .. 
+                      "inv.items.trigger.itemDataStats" ..
                       "(\"%1\",\"%2\",\"%3\",\"%4\", \"%5\",\"%6\",\"%7\",\"%8\",false)",
                       drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput,
                       custom_colour.Custom11, 0, "", "", sendto.script, 0))
@@ -220,7 +220,7 @@ function inv.items.init.atInstall()
 
   -- Trigger on an identify command to capture the item's object ID
   check (AddTriggerEx(inv.items.trigger.idItemName,
-                      "^(" .. 
+                      "^(" ..
                          ".------.*|"                                   ..
                          "\\|.*|"                                       ..
                          "You do not have that item.*|"                 ..
@@ -303,7 +303,7 @@ function inv.items.init.atInstall()
 
   -- Trigger on the output of the "put" command
   check (AddTriggerEx(inv.items.trigger.putName,
-                      "^(" .. 
+                      "^(" ..
                          "You don't have that.*"                 ..
                          "|You do not see.*"                     ..
                          "|You dream about putting items away.*" ..
@@ -367,7 +367,7 @@ function inv.items.init.atActive()
     end -- if
   end -- for
 
-  -- If automatic refreshes are enabled (i.e., the period is > 0 minutes), kick off the 
+  -- If automatic refreshes are enabled (i.e., the period is > 0 minutes), kick off the
   -- refresh timer to periodically scan our inventory and update the inventory table
   local refreshPeriod = inv.items.refreshGetPeriods() or inv.items.timer.refreshMin
   if (refreshPeriod > 0) then
@@ -521,7 +521,7 @@ function inv.items.getField(objId, field)
 
   local entry = inv.items.getEntry(objId)
   if (entry == nil) then
-    dbot.debug("inv.items.getField: Failed to get field \"" .. field .. "\", entry " .. objId .. 
+    dbot.debug("inv.items.getField: Failed to get field \"" .. field .. "\", entry " .. objId ..
                " does not exist")
     return nil,DRL_RET_MISSING_ENTRY
   end -- if
@@ -533,12 +533,12 @@ end -- inv.items.getField
 function inv.items.setField(objId, field, value)
   -- Check the params
   assert((objId ~= nil) and (field ~= nil) and (value ~= nil), "inv.items.setField: nil parameters")
-  objId = tonumber(objId) 
+  objId = tonumber(objId)
   assert((objId ~= nil), "Invalid non-numeric objId detected")
 
   local entry = inv.items.getEntry(objId)
   if (entry == nil) then
-    dbot.warn("inv.items.setField: Failed to set field \"" .. field .. "\", entry " .. objId .. 
+    dbot.warn("inv.items.setField: Failed to set field \"" .. field .. "\", entry " .. objId ..
               " does not exist")
     return DRL_RET_MISSING_ENTRY
   end -- if
@@ -564,7 +564,7 @@ function inv.items.getStatField(objId, field)
 
   local entry = inv.items.table[objId]
   if (entry == nil) then
-    dbot.debug("inv.items.getStatField failed: no inventory entry found for objectID " .. objId .. 
+    dbot.debug("inv.items.getStatField failed: no inventory entry found for objectID " .. objId ..
                " for field " .. (field or "nil"))
     return nil, DRL_RET_MISSING_ENTRY
   end -- if
@@ -578,7 +578,7 @@ function inv.items.getStatField(objId, field)
 end -- inv.items.getStatField
 
 
-function inv.items.setStatField(objId, field, value) 
+function inv.items.setStatField(objId, field, value)
 
   assert(objId ~= nil, "inv.items.setStatField: nil objId parameter")
   assert(field ~= nil, "inv.items.setStatField: nil field parameter for item " .. objId)
@@ -645,7 +645,7 @@ function inv.items.add(objId)
   else
     retval = inv.items.setEntry(objId, dbot.table.getCopy(entry))
     if (retval == DRL_RET_SUCCESS) then
-      dbot.debug("Added \"" .. (inv.items.getField(objId, invFieldColorName) or "Unidentified") .. 
+      dbot.debug("Added \"" .. (inv.items.getField(objId, invFieldColorName) or "Unidentified") ..
                DRL_ANSI_WHITE .. "\" (" .. objId .. ") from recent item cache")
 
       -- The item is now in our inventory table so we can remove it from the recent item cache
@@ -871,7 +871,7 @@ function inv.items.ignoreCR()
       dbot.warn("inv.items.ignoreCR: Failed to save inv.config module data: " ..
                 dbot.retval.getString(retval))
     else
-      dbot.info("Ignore mode for keyring \"" .. inv.items.ignorePkg.container .. "\" is " .. modeStr)    
+      dbot.info("Ignore mode for keyring \"" .. inv.items.ignorePkg.container .. "\" is " .. modeStr)
     end -- if
 
   -- We are targeting a container, not the keyring
@@ -981,7 +981,7 @@ function inv.items.listIgnored()
   if (numIgnored == 1) then
     suffix = ""
   end -- if
-  
+
   dbot.info("Currently ignoring " .. numIgnored .. " location" .. suffix)
 
   return DRL_RET_SUCCESS
@@ -1041,12 +1041,12 @@ function inv.items.discoverCR(maxNumItems, refreshLocations)
   end -- if
 
   -- Discover items in the main inventory
-  if (refreshLocation == invItemsRefreshLocAll) or 
+  if (refreshLocation == invItemsRefreshLocAll) or
      (refreshLocation == invItemsRefreshLocMain) or
      ((refreshLocation == invItemsRefreshLocDirty) and (inv.items.mainState == invItemsRefreshDirty)) then
     retval = inv.items.discoverLocation(invItemLocInventory)
     if (retval ~= DRL_RET_SUCCESS) then
-      dbot.debug("inv.items.discoverCR: Failed to discover main inventory contents: " .. 
+      dbot.debug("inv.items.discoverCR: Failed to discover main inventory contents: " ..
                  dbot.retval.getString(retval))
       return retval
     else
@@ -1055,12 +1055,12 @@ function inv.items.discoverCR(maxNumItems, refreshLocations)
   end -- if
 
   -- Discover items in the keyring
-  if (refreshLocation == invItemsRefreshLocAll) or 
+  if (refreshLocation == invItemsRefreshLocAll) or
      (refreshLocation == invItemsRefreshLocKey) or
      ((refreshLocation == invItemsRefreshLocDirty) and (inv.items.keyringState == invItemsRefreshDirty)) then
     retval = inv.items.discoverLocation(invItemLocKeyring)
     if (retval ~= DRL_RET_SUCCESS) then
-      dbot.debug("inv.items.discoverCR: Failed to discover keyring contents: " .. 
+      dbot.debug("inv.items.discoverCR: Failed to discover keyring contents: " ..
                  dbot.retval.getString(retval))
       return retval
     else
@@ -1072,7 +1072,7 @@ function inv.items.discoverCR(maxNumItems, refreshLocations)
   -- their contents next)
   retval = inv.items.identifyCR(maxNumItems, refreshLocations)
   if (retval ~= DRL_RET_SUCCESS) then
-    dbot.debug("inv.items.discoverCR: Inventory identification did not complete: " .. 
+    dbot.debug("inv.items.discoverCR: Inventory identification did not complete: " ..
                dbot.retval.getString(retval))
     return retval
   end -- if
@@ -1091,18 +1091,18 @@ function inv.items.discoverCR(maxNumItems, refreshLocations)
          ((ownedBy == nil) or (ownedBy == "") or (ownedBy == itemOwner)) then
 
         -- Scan this container if the caller asked us to scan everything or if we need to scan all
-        -- dirty containers and this container is dirty (i.e., it hasn't been verified to be clean 
+        -- dirty containers and this container is dirty (i.e., it hasn't been verified to be clean
         -- in a previous scan)
         local keywordField = inv.items.getStatField(objId, invStatFieldKeywords) or ""
         if (refreshLocation == invItemsRefreshLocAll) or
-           ((refreshLocation == invItemsRefreshLocDirty) and 
+           ((refreshLocation == invItemsRefreshLocDirty) and
             (not dbot.isWordInString(invItemsRefreshClean, keywordField))) then
           dbot.debug("Discovering contents of container " .. objId .. ": " .. v[invFieldColorName])
 
           -- Discover items in the container
           retval = inv.items.discoverLocation(objId)
           if (retval ~= DRL_RET_SUCCESS) then
-            dbot.debug("inv.items.discoverCR: Failed to discover container " .. objId .. 
+            dbot.debug("inv.items.discoverCR: Failed to discover container " .. objId ..
                        ": " .. dbot.retval.getString(retval))
           else
             inv.items.keyword(invItemsRefreshClean, invKeywordOpAdd, "id " .. objId, true)
@@ -1125,7 +1125,7 @@ function inv.items.discoverLocation(location)
   if (location ~= nil) then
     containerId = tonumber(location)
   end -- if
-  assert((location == invItemLocWorn) or (location == invItemLocInventory) or 
+  assert((location == invItemLocWorn) or (location == invItemLocInventory) or
          (location == invItemLocKeyring) or (containerId ~= nil),
          "inv.items.discoverLocation: invalid location parameter")
 
@@ -1245,7 +1245,7 @@ function inv.items.identifyCR(maxNumItems, refreshLocations)
     -- Attempt to get both the colorized name and the regular name for the item.  If we have
     -- the colorized name, we can get the regular name by stripping the colors from the colorized
     -- version of the name.
-    local colorName = inv.items.getField(objId, invFieldColorName) 
+    local colorName = inv.items.getField(objId, invFieldColorName)
     if (colorName == "") then
       colorName = nil
     end -- if
@@ -1277,12 +1277,12 @@ function inv.items.identifyCR(maxNumItems, refreshLocations)
 
         retval = inv.items.setEntry(objId, (cachedEntry))
         if (retval ~= DRL_RET_SUCCESS) then
-          dbot.warn("inv.items.identifyCR: Failed to set \"" .. name .. DRL_ANSI_WHITE .. 
+          dbot.warn("inv.items.identifyCR: Failed to set \"" .. name .. DRL_ANSI_WHITE ..
                     "\" from frequent cache entry: " .. dbot.retval.getString(retval))
         else
-          numItemsIdentified = numItemsIdentified + 1        
+          numItemsIdentified = numItemsIdentified + 1
           dbot.note("Identify (" .. numItemsIdentified .. " / " .. numItemsToIdentify ..
-                    "): \"" .. (colorName or name or "Unidentified") .. "@W" .. DRL_ANSI_WHITE .. 
+                    "): \"" .. (colorName or name or "Unidentified") .. "@W" .. DRL_ANSI_WHITE ..
                     "\" (" .. objId .. ") from frequent cache")
         end -- if
       end -- if
@@ -1294,10 +1294,10 @@ function inv.items.identifyCR(maxNumItems, refreshLocations)
       local resultData = dbot.callback.new()
       numItemsIdentified = numItemsIdentified + 1
       dbot.note(string.format("Identify (%d / %d)", numItemsIdentified, numItemsToIdentify) ..
-                ": \"" .. (colorName or name or "Unidentified") .. "@W" .. DRL_ANSI_WHITE .. 
+                ": \"" .. (colorName or name or "Unidentified") .. "@W" .. DRL_ANSI_WHITE ..
                 "\" (" .. objId .. ")")
       local commandArray = dbot.execute.new()
-      retval = inv.items.identifyItem(objId, idCommandBasic, resultData, commandArray)      
+      retval = inv.items.identifyItem(objId, idCommandBasic, resultData, commandArray)
 
       -- Wait until we have confirmation the identification completed
       if (retval == DRL_RET_SUCCESS) then
@@ -1314,7 +1314,7 @@ function inv.items.identifyCR(maxNumItems, refreshLocations)
             wait.time(inv.items.timer.idTimeoutPeriodSec)
             timeout = timeout + inv.items.timer.idTimeoutPeriodSec
             if (timeout > inv.items.timer.idTimeoutThresholdSec) then
-              dbot.warn("inv.items.identifyCR: Basic identification timed out for item " .. objId  .. 
+              dbot.warn("inv.items.identifyCR: Basic identification timed out for item " .. objId  ..
                         ": \"" .. (colorName or name or "Unidentified") .. DRL_ANSI_WHITE .. "\"")
               break
             end -- if
@@ -1326,7 +1326,7 @@ function inv.items.identifyCR(maxNumItems, refreshLocations)
     -- If the item is an instance of a frequently acquired item (potion, pill, etc.) add it
     -- to the "frequently acquired item" cache if it is not already in the cache.
     -- Grab the latest name because it may have been filled in during the ID
-    name = inv.items.getStatField(objId, invStatFieldName) 
+    name = inv.items.getStatField(objId, invStatFieldName)
     if (name ~= nil) then
 
       -- invdata strips out commas in the names of items.  As a result, we won't find items in
@@ -1342,11 +1342,11 @@ function inv.items.identifyCR(maxNumItems, refreshLocations)
         --       outweigh the disadvantages.  If you buy 100 starburst staves, you really don't want
         --       to manually identify each one :p
         itemType = inv.items.getStatField(objId, invStatFieldType)
-        if (itemType == invmon.typeStr[invmonTypePotion]) or 
-           (itemType == invmon.typeStr[invmonTypePill])   or 
-           (itemType == invmon.typeStr[invmonTypeFood])   or 
-           (itemType == invmon.typeStr[invmonTypeWand])   or 
-           (itemType == invmon.typeStr[invmonTypeStaff])  or 
+        if (itemType == invmon.typeStr[invmonTypePotion]) or
+           (itemType == invmon.typeStr[invmonTypePill])   or
+           (itemType == invmon.typeStr[invmonTypeFood])   or
+           (itemType == invmon.typeStr[invmonTypeWand])   or
+           (itemType == invmon.typeStr[invmonTypeStaff])  or
            (itemType == invmon.typeStr[invmonTypeScroll]) then
 
           colorName = inv.items.getField(objId, invFieldColorName)
@@ -1406,8 +1406,8 @@ function inv.items.identifyItem(objId, idCommand, resultData, commandArray)
   assert((objId ~= nil) and (idCommand ~= nil), "inv.items.identifyItem: nil parameters detected")
 
   local item = inv.items.getEntry(objId)
-  if (item == nil) then 
-    dbot.warn("inv.items.identifyItem: Failed to identify item " .. objId .. 
+  if (item == nil) then
+    dbot.warn("inv.items.identifyItem: Failed to identify item " .. objId ..
               " in inventory table because it is not in the table")
     return DRL_RET_MISSING_ENTRY
   end -- if
@@ -1416,7 +1416,7 @@ function inv.items.identifyItem(objId, idCommand, resultData, commandArray)
   -- put the item back to its original location once we finish identifying it.
   local objLoc = inv.items.getField(objId, invFieldObjLoc)
   if (objLoc == nil) or (objLoc == invItemLocUninitialized) then
-    dbot.debug("inv.items.identifyItem: Failed to identify item " .. objId .. 
+    dbot.debug("inv.items.identifyItem: Failed to identify item " .. objId ..
                ": item's location could not be determined")
     inv.items.table[objId] = nil
     return DRL_RET_MISSING_ENTRY
@@ -1424,7 +1424,7 @@ function inv.items.identifyItem(objId, idCommand, resultData, commandArray)
 
   -- Check if another id is in progress before we proceed
   if (inv.items.identifyPkg ~= nil) then
-    dbot.info("inv.items.identifyItem: Skipping identification of " .. objId .. 
+    dbot.info("inv.items.identifyItem: Skipping identification of " .. objId ..
               ": another identification is in progress")
     return DRL_RET_BUSY
   end -- if
@@ -1527,7 +1527,7 @@ function inv.items.identifyItem(objId, idCommand, resultData, commandArray)
 
   -- Auction (we may temporarily add an auction item to examine it)
   elseif (objLoc == invItemLocAuction) then
-    command = idCommand .. " " .. objId 
+    command = idCommand .. " " .. objId
     if (commandArray ~= nil) then
       table.insert(commandArray, command)
     else
@@ -1700,9 +1700,9 @@ function inv.items.refresh(maxNumItems, refreshLocations, endTag, tagProxy)
 [[@W
   You must perform at least one manual inventory build before we allow inventory refresh
   requests to proceed.  Otherwise, a user's first automatic refresh could clog up the system
-  for several minutes as the entire inventory is scanned.  We don't want the user to be 
+  for several minutes as the entire inventory is scanned.  We don't want the user to be
   surprised by that behavior.
-]]) 
+]])
     dbot.print("@W  Please see \"@G" .. pluginNameCmd .. " help build@W\" for more details.")
     dbot.print("@W\nUsage:")
     inv.cli.build.usage()
@@ -1728,7 +1728,7 @@ function inv.items.refresh(maxNumItems, refreshLocations, endTag, tagProxy)
   -- then we wait a bit and try again
   elseif (charState ~= dbot.stateActive) then
     dbot.debug("Skipping refresh request: char is in state \"" .. dbot.gmcp.getStateString(charState) .. "\"")
-    retval = DRL_RET_NOT_ACTIVE    
+    retval = DRL_RET_NOT_ACTIVE
 
   -- If the char is in the active state (e.g., not AFK, in a note, in combat, etc.) refresh now
   -- and schedule the next refresh after the default period
@@ -1759,7 +1759,7 @@ function inv.items.refresh(maxNumItems, refreshLocations, endTag, tagProxy)
     inv.items.refreshAtTime(refreshMin, 0)
   end -- if
 
-  -- If everything went as planned, we have a co-routine doing a refresh and that co-routine will 
+  -- If everything went as planned, we have a co-routine doing a refresh and that co-routine will
   -- terminate any end tags that were specified.  Otherwise, we hit an error and we should terminate
   -- the tag now and return what we know to the caller.
   if (retval == DRL_RET_SUCCESS) then
@@ -1773,7 +1773,7 @@ end -- inv.items.refresh
 function inv.items.refreshCR()
   local retval = DRL_RET_SUCCESS
 
-  -- We can skip the refresh if we've already done a full scan, there are no known "dirty" 
+  -- We can skip the refresh if we've already done a full scan, there are no known "dirty"
   -- locations or containers, and the user didn't explicitly request a full scan
   if inv.items.fullScanCompleted and
      (inv.items.refreshPkg.refreshLocations ~= invItemsRefreshLocAll) and
@@ -1789,7 +1789,7 @@ function inv.items.refreshCR()
   dbot.prompt.hide()
 
   -- On each refresh request we track all items discovered and match that against the contents
-  -- of the inventory table.  If something is in the inventory table and we didn't find it 
+  -- of the inventory table.  If something is in the inventory table and we didn't find it
   -- during refresh, remove it from the inventory table because the table is out of sync.
   inv.items.currentItems = {}
 
@@ -1809,13 +1809,13 @@ function inv.items.refreshCR()
   -- refresh.  It's possible that things are out of sync (e.g., the table wasn't saved after
   -- a change to the inventory).  Of course, if the user halted the current search then we
   -- may not have found items that actually are present so we only remove orphans if we
-  -- fully completed the discovery and identification steps above.  Also, if we are only 
+  -- fully completed the discovery and identification steps above.  Also, if we are only
   -- scanning some locations, then we don't want to remove orphans because the items could
   -- be at a location we didn't scan this time.
   if (retval == DRL_RET_SUCCESS) and (inv.items.refreshPkg.refreshLocations == invItemsRefreshLocAll) then
     for k,v in pairs(inv.items.table) do
       if (inv.items.currentItems[k] == nil) then
-        dbot.note("Removed orphan: \"" .. (inv.items.getField(k, invFieldColorName) or "Unidentified") .. 
+        dbot.note("Removed orphan: \"" .. (inv.items.getField(k, invFieldColorName) or "Unidentified") ..
                   DRL_ANSI_WHITE .. "\" (" .. k .. ")")
         inv.items.table[k] = nil
       end -- if
@@ -2029,7 +2029,7 @@ function inv.items.build(endTag)
   retval = inv.items.refresh(0, invItemsRefreshLocAll, endTag, invTagsBuild)
   if (retval ~= DRL_RET_SUCCESS) then
     dbot.warn("inv.items.build: refresh did not complete: " .. dbot.retval.getString(retval))
-  end -- if  
+  end -- if
 
   return retval
 
@@ -2049,7 +2049,7 @@ end -- inv.items.build()
 --
 -- Move item(s) to main inventory
 --
--- Suppress get verbage: 
+-- Suppress get verbage:
 --   "You remove ..."                 -- remove item
 --   "You stop wielding ..."          -- remove weapon
 --   "You stop using ..."             -- remove portal
@@ -2238,7 +2238,7 @@ function inv.items.getItem(objId, commandArray)
 
       -- If we pulled the item out of a worn container, we must remember to re-wear the container
       -- now that we took the item out of it
-      if (containerLoc ~= nil) then 
+      if (containerLoc ~= nil) then
         local containerRetval = inv.items.wearItem(itemLocNum, nil, commandArray, false)
         if (containerRetval ~= DRL_RET_SUCCESS) then
           dbot.warn("inv.items.getItem: Failed to wear item " .. (objId or "nil") .. ": " ..
@@ -2289,7 +2289,7 @@ function inv.items.getItem(objId, commandArray)
       -- Remove the item and wait for confirmation that it moved
       retval = inv.items.removeItem(objId, commandArray)
       if (retval ~= DRL_RET_SUCCESS) then
-        dbot.debug("Skipping removal of \"" .. itemName .. "\" worn at location " .. 
+        dbot.debug("Skipping removal of \"" .. itemName .. "\" worn at location " ..
                    itemLoc .. ": " .. dbot.retval.getString(retval))
       end -- if
     end -- if
@@ -2382,7 +2382,7 @@ function inv.items.putCR()
   local containerId
 
   -- Be paranoid!
-  if (inv.items.putPkg == nil) or (inv.items.putPkg.container == nil) or 
+  if (inv.items.putPkg == nil) or (inv.items.putPkg.container == nil) or
      (inv.items.putPkg.queryString == nil) then
     dbot.error("inv.items.putCR: Aborting put request -- put package, container or query is nil!")
     inv.items.putPkg = nil
@@ -2406,7 +2406,7 @@ function inv.items.putCR()
 
     containerId = tonumber(containerId)
     if (containerId == nil) then
-      dbot.warn("inv.items.putCR: Container \"" .. inv.items.putPkg.container .. 
+      dbot.warn("inv.items.putCR: Container \"" .. inv.items.putPkg.container ..
                 "\" resolved to a non-numeric object ID -- aborting put request")
       inv.items.putPkg = nil
       return inv.tags.stop(invTagsPut, endTag, DRL_RET_INTERNAL_ERROR)
@@ -2434,7 +2434,7 @@ function inv.items.putCR()
     for _,objId in ipairs(idArray) do
       retval = inv.items.putItem(objId, containerId, commandArray, true)
       if (retval ~= DRL_RET_SUCCESS) then
-        dbot.debug("Skipping request to put item " .. objId .. " in container \"" .. 
+        dbot.debug("Skipping request to put item " .. objId .. " in container \"" ..
                    containerName .. "\" (" .. containerId .. "): " .. dbot.retval.getString(retval))
         break
       else
@@ -2492,7 +2492,7 @@ function inv.items.putItem(objId, containerId, commandArray, doCheckLocation)
                    "@W" .. DRL_ANSI_WHITE
 
   -- The target container may not be in our inventory (it might be on the floor or might
-  -- be furniture in a room).  
+  -- be furniture in a room).
   local containerName = (inv.items.getField(containerId, invFieldColorName) or "Room container") ..
                         "@W" .. DRL_ANSI_WHITE
   local isRoomContainer = false
@@ -2534,7 +2534,7 @@ function inv.items.putItem(objId, containerId, commandArray, doCheckLocation)
 
     retval = inv.items.getItem(objId, commandArray)
     if (retval ~= DRL_RET_SUCCESS) then
-      dbot.note("Skipping request to move item " .. objId .. " to main inventory: " .. 
+      dbot.note("Skipping request to move item " .. objId .. " to main inventory: " ..
                 dbot.retval.getString(retval))
       return retval
     end -- if
@@ -2644,7 +2644,7 @@ function inv.items.store(queryString, endTag)
   end -- if
 
   if (inv.items.storePkg ~= nil) then
-    dbot.info("Skipping store request for query \"" .. queryString .. 
+    dbot.info("Skipping store request for query \"" .. queryString ..
               "\", another store request is in progress")
     inv.tags.stop(invTagsStore, endTag, DRL_RET_BUSY)
   end -- if
@@ -2767,7 +2767,7 @@ end -- inv.items.storeItem
 -- Routines to handle wearing items
 --
 -- inv.items.wearItem(objId, objLoc, commandArray, doCheckLocation) -- must be called from a co-routine
--- inv.items.wearSetupFn()   
+-- inv.items.wearSetupFn()
 -- inv.items.wearResultFn()
 --
 -- Verbage:
@@ -2808,7 +2808,7 @@ function inv.items.wearItem(objId, targetLoc, commandArray, doCheckLocation)
     retval = inv.items.getItem(objId, commandArray)
     if (retval ~= DRL_RET_SUCCESS) then
       if (retval ~= DRL_RET_MISSING_ENTRY) then
-        dbot.warn("inv.items.wearItem: Failed to get item \"" .. itemName .. "\": " .. 
+        dbot.warn("inv.items.wearItem: Failed to get item \"" .. itemName .. "\": " ..
                   dbot.retval.getString(retval))
       end -- if
 
@@ -2860,7 +2860,7 @@ function inv.items.wearItem(objId, targetLoc, commandArray, doCheckLocation)
         if inv.items.isInvis(objId) then
           dbot.info("Failed to wear invisible item \"" .. itemName .. "\": can you detect invis?")
         else
-          dbot.warn("inv.items.wearItem: Timed out waiting for invmon to confirm we are wearing \"" .. 
+          dbot.warn("inv.items.wearItem: Timed out waiting for invmon to confirm we are wearing \"" ..
                     itemName .. "\"")
         end -- if
         retval = DRL_RET_MISSING_ENTRY
@@ -2953,7 +2953,7 @@ end -- inv.items.wearableTypeToLocs
 -- Routines to handle removing items
 --
 -- inv.items.removeItem(objId, commandArray) -- must be called from a co-routine
--- inv.items.removeSetupFn()   
+-- inv.items.removeSetupFn()
 -- inv.items.removeResultFn()
 --
 -- Verbage:
@@ -3011,7 +3011,7 @@ function inv.items.removeItem(objId, commandArray)
           if inv.items.isInvis(objId) then
             dbot.info("Failed to remove invisible item \"" .. itemName .. "\": can you detect invis?")
           else
-            dbot.warn("inv.items.removeItem: Timed out waiting for invmon to confirm we removed \"" .. 
+            dbot.warn("inv.items.removeItem: Timed out waiting for invmon to confirm we removed \"" ..
                       itemName .. "\"")
           end -- if
           retval = DRL_RET_MISSING_ENTRY
@@ -3056,7 +3056,7 @@ function inv.items.keyword(keyword, keywordOperation, queryString, useQuietMode,
     return inv.tags.stop(invTagsKeyword, endTag, DRL_RET_INVALID_PARAM)
   end -- if
 
-  if (keywordOperation == nil) or 
+  if (keywordOperation == nil) or
      ((keywordOperation ~= invKeywordOpAdd) and (keywordOperation ~= invKeywordOpRemove)) then
     dbot.warn("inv.items.keyword: Invalid keywordOperation")
     return inv.tags.stop(invTagsKeyword, endTag, DRL_RET_INVALID_PARAM)
@@ -3140,10 +3140,10 @@ function inv.items.keywordCR()
         if (keywordField == nil) or (keywordField == "") then
           inv.items.setStatField(objId, invStatFieldKeywords, inv.items.keywordPkg.keyword)
         elseif dbot.isWordInString(inv.items.keywordPkg.keyword, keywordField) then
-          dbot.debug("Skipping keyword of item " .. objId .. ": item is already tagged with " .. 
+          dbot.debug("Skipping keyword of item " .. objId .. ": item is already tagged with " ..
                      inv.items.keywordPkg.keyword)
         else
-          inv.items.setStatField(objId, invStatFieldKeywords, keywordField .. " " .. 
+          inv.items.setStatField(objId, invStatFieldKeywords, keywordField .. " " ..
                                  inv.items.keywordPkg.keyword)
         end -- if
 
@@ -3187,7 +3187,7 @@ function inv.items.keywordCR()
   end -- if
 
   if (not inv.items.keywordPkg.useQuietMode) then
-    dbot.info("Updated keyword \"" .. (inv.items.keywordPkg.keyword or "Unknown")  .. "\" for " .. 
+    dbot.info("Updated keyword \"" .. (inv.items.keywordPkg.keyword or "Unknown")  .. "\" for " ..
               numUpdatedKeywords .. " out of " .. numQueryItems .. " items matching query")
   end -- if
 
@@ -3406,11 +3406,11 @@ function inv.items.search(arrayOfQueryArrays, allowIgnored)
           -- If we are searching for an element in a string of elements (e.g., a keyword in a keyword list
           -- or a flag in a list of flags) check if the queried string is present.  We use a case-insensitive
           -- search by making everything in the strings lower case.  We also temporarily replace special
-          -- characters in the search strings with their escaped equivalents (e.g., "-" becomes "%-") so 
+          -- characters in the search strings with their escaped equivalents (e.g., "-" becomes "%-") so
           -- that we can search for things like "anti-evil" without the hyphen being interpreted as a
           -- special character.
           --
-          -- Some string fields (name and leadsTo) support a partial match.  For example, searching for 
+          -- Some string fields (name and leadsTo) support a partial match.  For example, searching for
           -- "Nation" in the "leadsTo" field would match for both "Imperial Nation" and "The Amazon Nation".
           -- Other string fields (keywords and flags) require an exact match so searching for the
           -- "evil" flag won't match on "anti-evil".
@@ -3488,7 +3488,7 @@ function inv.items.search(arrayOfQueryArrays, allowIgnored)
 
         end -- for
       end -- if
-      
+
       if (itemMatches == true) then
         table.insert(idArray, tonumber(itemId))
       end -- if
@@ -3511,7 +3511,7 @@ end -- inv.items.search
 --   name bob
 --   keyword shardblade
 -- Note: This must be called from within a co-routine because inv.items.convertRelative() can block
-function inv.items.searchCR(rawQueryString, allowIgnored) 
+function inv.items.searchCR(rawQueryString, allowIgnored)
   local retval = DRL_RET_SUCCESS
   local arrayOfKvArrays = {}
   local kvArray = {}
@@ -3584,7 +3584,7 @@ function inv.items.searchCR(rawQueryString, allowIgnored)
         end -- if
 
         -- If a query has a relative name or loc in it, convert the name or loc to an object ID here
-        if (key == invQueryKeyRelativeName) or (key == invQueryKeyRelativeLoc) or 
+        if (key == invQueryKeyRelativeName) or (key == invQueryKeyRelativeLoc) or
            (key == invQueryKeyRelativeLocation) then
           key, value, retval = inv.items.convertRelative(key, value) -- new value is ID of relative item
           if (retval ~= DRL_RET_SUCCESS) then
@@ -3716,7 +3716,7 @@ function inv.items.compare(item1, item2)
     -- If we have two numbers, compare the two numbers.  If they are equal, move to the next sorting element.
     -- Otherwise, return with a boolean indicating which one is first.
     if (fieldNum1 ~= nil) and (fieldNum2 ~= nil) and (fieldNum1 ~= fieldNum2) then
-      if (isAscending) then 
+      if (isAscending) then
          return fieldNum1 < fieldNum2
       else
          return fieldNum1 > fieldNum2
@@ -3725,7 +3725,7 @@ function inv.items.compare(item1, item2)
 
    -- If we have two non-numerical strings, compare them!
    if (fieldNum == nil) and (fieldNum2 == nil) and (field1 ~= field2) then
-     if (isAscending) then 
+     if (isAscending) then
        return field1 < field2
      else
        return field1 > field2
@@ -3765,7 +3765,7 @@ function inv.items.convertRelative(relativeName, value)
   table.insert(commandArray, "identify " .. value)
   table.insert(commandArray, "echo " .. inv.items.identifyFence)
   retval = dbot.execute.safe.commands(commandArray, inv.items.convertSetupFn, nil,
-                                      dbot.callback.default, resultData) 
+                                      dbot.callback.default, resultData)
   if (retval ~= DRL_RET_SUCCESS) then
     dbot.warn("inv.items.convertRelative: Failed to submit safe identification call: " ..
               dbot.retval.getString(retval))
@@ -3792,7 +3792,7 @@ function inv.items.convertRelative(relativeName, value)
   end -- if
 
   inv.lastIdentifiedObjectId = nil
-  
+
   return key, id, retval
 end -- inv.items.convertRelative
 
@@ -3908,7 +3908,7 @@ function inv.items.reportItem(channel, name, level, itemType, itemTable)
 --                        { light = "@x144", dark = "@x136" },
 --                        { light = "@R", dark = "@r" },
                       }
-  
+
   local reportStr = (name or "Unidentified") .. "@c [@WL" .. level .. " " ..
                     Trim(itemType) .. "@c] @W: "
 
@@ -4041,7 +4041,7 @@ function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
   -- because there are 3 physical resist types.  Similarly, one specific magical resist is worth 1/17 of
   -- one "all" magical resist value because there are 17 magical resistance types.
   local physResists = allphys + (slash + pierce + bash) / 3
-  local magicResists = allmagic + (acid + cold + energy + holy + electric + negative + shadow + magic + 
+  local magicResists = allmagic + (acid + cold + energy + holy + electric + negative + shadow + magic +
                        air + earth + fire + light + mental + sonic + water + poison + disease) / 17
   local totResists = physResists + magicResists
 
@@ -4107,7 +4107,7 @@ function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
 
   -- The trimmed name could end on an "@" which messes up color codes and spacing
   formattedName = string.gsub(formattedName, "@$", " ") .. " " .. DRL_XTERM_GREY
-  formattedName = formattedName .. colorizedId 
+  formattedName = formattedName .. colorizedId
 
   -- If we have a wearable location, use it in the display.  Otherwise, use the item's type.
   local typeExtended
@@ -4130,7 +4130,7 @@ function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
   else
     typeExtended = wearable
   end -- if
-  typeExtended = string.format("%-8s", typeExtended) 
+  typeExtended = string.format("%-8s", typeExtended)
 
   -- Make the item's type show up in bright green if the item is currently worn
   if (isCurrentlyWorn == true) then
@@ -4146,8 +4146,8 @@ function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
   local header
   local statLine
   local reportLine = ""
-  if (typeField == invmon.typeStr[invmonTypePotion]) or 
-     (typeField == invmon.typeStr[invmonTypePill]) or 
+  if (typeField == invmon.typeStr[invmonTypePotion]) or
+     (typeField == invmon.typeStr[invmonTypePill]) or
      (typeField == invmon.typeStr[invmonTypeScroll]) then
     header = "@WLvl Name of " .. formattedType .. "Type    Lvl  # Spell name@w"
     local spellDetails = ""
@@ -4173,7 +4173,7 @@ function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
   -- we'd need to ID each item -- which defeats the purpose of caching the info in the first place.
   -- Trust me, if you buy 100 starburst staves, you'd rather have them in the frequent cache even if
   -- it means your inventory table doesn't know how many charges are on each instance.
-  elseif (typeField == invmon.typeStr[invmonTypeWand]) or 
+  elseif (typeField == invmon.typeStr[invmonTypeWand]) or
          (typeField == invmon.typeStr[invmonTypeStaff]) then
     header = "@WLvl Name of " .. formattedType .. "Type    Lvl  Spell name@w"
     local spellDetails = ""
@@ -4194,15 +4194,15 @@ function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
              "Type     Leads to            HR  DR Int Wis Lck Str Dex Con@w"
     statLine = string.format("@W%3d@w %s%s %-18s %s %s %s %s %s %s %s %s",
                              level, formattedName, typeExtended, formattedLeadsTo,
-                             inv.items.colorizeStat(hit, 3), inv.items.colorizeStat(dam, 3), 
-                             inv.items.colorizeStat(int, 3), inv.items.colorizeStat(wis, 3), 
+                             inv.items.colorizeStat(hit, 3), inv.items.colorizeStat(dam, 3),
+                             inv.items.colorizeStat(int, 3), inv.items.colorizeStat(wis, 3),
                              inv.items.colorizeStat(luck, 3), inv.items.colorizeStat(str, 3),
-                             inv.items.colorizeStat(dex, 3), inv.items.colorizeStat(con, 3)) 
+                             inv.items.colorizeStat(dex, 3), inv.items.colorizeStat(con, 3))
     if (channel ~= nil) then
       inv.items.reportItem(channel,
                            colorName, level, typeExtended,
                            { { To = formattedLeadsTo },
-                             { DR = dam }, { HR = hit }, 
+                             { DR = dam }, { HR = hit },
                              { Wgt = weight },
                              { Str = str }, { Int = int }, { Wis = wis },
                              { Dex = dex }, { Con = con }, { Lck = luck }
@@ -4210,15 +4210,15 @@ function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
     end -- if
 
   elseif (typeField == invmon.typeStr[invmonTypeContainer]) then
-    header = "@WLvl Name of " .. formattedType .. 
+    header = "@WLvl Name of " .. formattedType ..
              "Type       HR   DR Int Wis Lck Str Dex Con Wght  Cap Hold Hvy #In Wgt%@w"
 
     statLine = string.format("@W%3d@w %s%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s",
                              level, formattedName, typeExtended,
-                             inv.items.colorizeStat(hit, 4), inv.items.colorizeStat(dam, 4), 
+                             inv.items.colorizeStat(hit, 4), inv.items.colorizeStat(dam, 4),
                              inv.items.colorizeStat(int, 3), inv.items.colorizeStat(wis, 3),
                              inv.items.colorizeStat(luck, 3), inv.items.colorizeStat(str, 3),
-                             inv.items.colorizeStat(dex, 3), inv.items.colorizeStat(con, 3), 
+                             inv.items.colorizeStat(dex, 3), inv.items.colorizeStat(con, 3),
                              inv.items.colorizeStat(totWeight, 4, true), inv.items.colorizeStat(capacity, 4),
                              inv.items.colorizeStat(holding, 4), inv.items.colorizeStat(heaviestItem, 3),
                              inv.items.colorizeStat(itemsInside, 3), inv.items.colorizeStat(weightReduction, 4))
@@ -4227,7 +4227,7 @@ function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
       inv.items.reportItem(channel,
                            colorName, level, typeExtended,
                            { { Capacity = capacity }, { WgtPct = weightReduction },
-                             { DR = dam }, { HR = hit }, 
+                             { DR = dam }, { HR = hit },
                              { Str = str }, { Int = int }, { Wis = wis },
                              { Dex = dex }, { Con = con }, { Lck = luck }
                            })
@@ -4240,7 +4240,7 @@ function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
     statLine = string.format("@W%3d@w %s%s %s %s %s %s %-8s %-8s %s %s %s %s %s %s",
                              level, formattedName, typeExtended,
                              inv.items.colorizeStat(avedam, 3), inv.items.colorizeStat(weight, 3),
-                             inv.items.colorizeStat(hit, 4), inv.items.colorizeStat(dam, 4), 
+                             inv.items.colorizeStat(hit, 4), inv.items.colorizeStat(dam, 4),
                              damtype, specials,
                              inv.items.colorizeStat(int, 3), inv.items.colorizeStat(wis, 3),
                              inv.items.colorizeStat(luck, 3), inv.items.colorizeStat(str, 3),
@@ -4249,8 +4249,8 @@ function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
     if (channel ~= nil) then
       inv.items.reportItem(channel,
                            colorName, level, typeExtended,
-                           { { Ave = avedam }, { DR = dam }, { HR = hit }, 
-                             { Wgt = weight }, 
+                           { { Ave = avedam }, { DR = dam }, { HR = hit },
+                             { Wgt = weight },
                              { Str = str }, { Int = int }, { Wis = wis },
                              { Dex = dex }, { Con = con }, { Lck = luck },
                              { Dam = damtype }, { Special = specials },
@@ -4262,23 +4262,23 @@ function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
     statLine = string.format("@WN/A@w %sItem has not yet been identified", formattedName)
 
   else
-    header = "@WLvl Name of " .. formattedType .. 
+    header = "@WLvl Name of " .. formattedType ..
              "Type       HR   DR Int Wis Lck Str Dex Con Res HitP Mana Move@w"
 
     statLine = string.format("@W%3d@w %s%s %s %s %s %s %s %s %s %s %s %s %s %s",
                              level, formattedName, typeExtended,
-                             inv.items.colorizeStat(hit, 4), inv.items.colorizeStat(dam, 4), 
+                             inv.items.colorizeStat(hit, 4), inv.items.colorizeStat(dam, 4),
                              inv.items.colorizeStat(int, 3), inv.items.colorizeStat(wis, 3),
                              inv.items.colorizeStat(luck, 3), inv.items.colorizeStat(str, 3),
-                             inv.items.colorizeStat(dex, 3), inv.items.colorizeStat(con, 3), 
+                             inv.items.colorizeStat(dex, 3), inv.items.colorizeStat(con, 3),
                              inv.items.colorizeStat(totResists, 3),
                              inv.items.colorizeStat(hp, 4), inv.items.colorizeStat(mana, 4),
-                             inv.items.colorizeStat(moves, 4)) 
+                             inv.items.colorizeStat(moves, 4))
 
     if (channel ~= nil) then
       inv.items.reportItem(channel,
                            colorName, level, typeExtended,
-                           { { DR = dam }, { HR = hit }, 
+                           { { DR = dam }, { HR = hit },
                              { Str = str }, { Int = int }, { Wis = wis },
                              { Dex = dex }, { Con = con }, { Lck = luck },
                              { Res = totResists }, { HP = hp }, { MN = mana }, { MV = moves }
@@ -4463,7 +4463,7 @@ function inv.items.colorizeStat(value, numDigits, invertColors)
   numDigits = tonumber(numDigits)
 
   if (value == nil) or (numDigits == nil) then
-    dbot.warn("inv.items.colorizeStat: non-numeric parameter detected: value=\"" .. (value or "nil") .. 
+    dbot.warn("inv.items.colorizeStat: non-numeric parameter detected: value=\"" .. (value or "nil") ..
             "\", numDigits=\"" .. (numDigits or "nil") .. "\"")
     return nil
   end -- if
@@ -4508,7 +4508,7 @@ end -- inv.items.isInvis
 --       container priorities and the item could end up in any matching container.  For now, it is
 --       up to the user to not create conflicting container queries.
 -- TODO: Check if there is any overlap in the item arrays returned from container queries and
---       warn the user.  We could also implement a priority scheme for containers too, but that 
+--       warn the user.  We could also implement a priority scheme for containers too, but that
 --       seems like overkill...
 --
 -- dinv organize [add | clear] <container relative name or ID> <query>
@@ -4533,7 +4533,7 @@ inv.items.organize = {}
 
 
 inv.items.organize.addPkg = nil
-function inv.items.organize.add(containerName, queryString, endTag) 
+function inv.items.organize.add(containerName, queryString, endTag)
   if (containerName == nil) or (containerName == "") then
     dbot.warn("inv.items.organize.add: Missing container relative name or ID")
     return inv.tags.stop(invTagsOrganize, endTag, DRL_RET_INVALID_PARAM)
@@ -4549,14 +4549,14 @@ function inv.items.organize.add(containerName, queryString, endTag)
 
   if (inv.items.organize.addPkg ~= nil) then
     dbot.info("Skipping add request in organize package: another add request is in progress")
-    return inv.tags.stop(invTagsOrganize, endTag, DRL_RET_BUSY)    
+    return inv.tags.stop(invTagsOrganize, endTag, DRL_RET_BUSY)
   end -- if
 
   inv.items.organize.addPkg           = {}
   inv.items.organize.addPkg.container = containerName
   inv.items.organize.addPkg.query     = queryString
   inv.items.organize.addPkg.endTag    = endTag
-  
+
   wait.make(inv.items.organize.addCR)
 
   return DRL_RET_SUCCESS
@@ -4615,13 +4615,13 @@ function inv.items.organize.clear(containerName, endTag)
 
   if (inv.items.organize.clearPkg ~= nil) then
     dbot.info("Skipping clear request in organize package: another clear request is in progress")
-    return inv.tags.stop(invTagsOrganize, endTag, DRL_RET_BUSY)    
+    return inv.tags.stop(invTagsOrganize, endTag, DRL_RET_BUSY)
   end -- if
 
   inv.items.organize.clearPkg           = {}
   inv.items.organize.clearPkg.container = containerName
   inv.items.organize.clearPkg.endTag    = endTag
-  
+
   wait.make(inv.items.organize.clearCR)
 
   return DRL_RET_SUCCESS
@@ -4799,7 +4799,7 @@ function inv.items.organize.cleanupCR()
   -- Find all items that match the given inventory query
   invIdArray, retval = inv.items.searchCR(inv.items.organize.cleanupPkg.query)
   if (retval ~= DRL_RET_SUCCESS) then
-    dbot.warn("inv.items.organize.cleanupCR: failed to search inventory table: " .. 
+    dbot.warn("inv.items.organize.cleanupCR: failed to search inventory table: " ..
               dbot.retval.getString(retval))
     inv.items.organize.cleanupPkg = nil
     return inv.tags.stop(invTagsOrganize, endTag, retval)
@@ -4849,7 +4849,7 @@ function inv.items.organize.cleanupCR()
     if (organizeQuery ~= "") then
       local containerIdArray, retval = inv.items.searchCR(organizeQuery)
       if (retval ~= DRL_RET_SUCCESS) then
-        dbot.warn("inv.items.organize.cleanupCR: failed to search inventory table: " .. 
+        dbot.warn("inv.items.organize.cleanupCR: failed to search inventory table: " ..
                   dbot.retval.getString(retval))
         inv.items.organize.cleanupPkg = nil
         return inv.tags.stop(invTagsOrganize, endTag, retval)
@@ -4861,7 +4861,7 @@ function inv.items.organize.cleanupCR()
       for _, invId in ipairs(invIdArray) do
         for _, containerId in ipairs(containerIdArray) do
           if (invId == containerId) and inv.items.organize.canGoInContainer(invId) then
-            dbot.debug("Found item to organize: \"" .. 
+            dbot.debug("Found item to organize: \"" ..
                        (inv.items.getField(invId, invFieldColorName) or "Unidentified") ..
                        DRL_ANSI_WHITE .. "@W\"")
 
@@ -4871,7 +4871,7 @@ function inv.items.organize.cleanupCR()
               retval = inv.items.putItem(invId, objId, commandArray, true)
               if (retval ~= DRL_RET_SUCCESS) then
                 dbot.debug("inv.items.organize.cleanupCR: failed to put item \"" ..
-                           (inv.items.getField(invId, invFieldColorName) or "Unidentified") .. 
+                           (inv.items.getField(invId, invFieldColorName) or "Unidentified") ..
                            "\" in container \"" ..
                            (inv.items.getField(objId, invFieldColorName) or "Unidentified") .. "\": " ..
                            dbot.retval.getString(retval))
@@ -4889,7 +4889,7 @@ function inv.items.organize.cleanupCR()
                 commandArray = dbot.execute.new()
               end -- if
 
-            end -- if          
+            end -- if
           end -- if
         end -- for
       end -- for
@@ -5317,7 +5317,7 @@ function inv.items.trigger.itemIdStats(line)
     elseif (inv.items.trigger.affectModsContinuation) then
       -- Add the continuation to the existing affectMods
       inv.items.setStatField(inv.items.identifyPkg.objId, invStatFieldAffectMods,
-                            (inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldAffectMods) 
+                            (inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldAffectMods)
                              or "") .. " " .. continuation)
 
       -- If the continued affectMods end in a comma, keep the continuation going; otherwise stop it
@@ -5328,13 +5328,13 @@ function inv.items.trigger.itemIdStats(line)
     elseif (inv.items.trigger.keywordsContinuation) then
       -- Add the continuation to the existing keywords
       inv.items.setStatField(inv.items.identifyPkg.objId, invStatFieldKeywords,
-                            (inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldKeywords) 
+                            (inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldKeywords)
                              or "") .. " " .. continuation)
 
     elseif (inv.items.trigger.nameContinuation) then
       -- Add the continuation to the existing name
       inv.items.setStatField(inv.items.identifyPkg.objId, invStatFieldName,
-                            (inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldName) 
+                            (inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldName)
                              or "") .. " " .. continuation)
 
     else
@@ -5377,9 +5377,9 @@ function inv.items.trigger.itemIdStats(line)
       end -- if
     end -- if
 
-    -- If we don't have an entry yet for this spell, add one 
+    -- If we don't have an entry yet for this spell, add one
     if (foundSpellMatch == false) then
-      table.insert(spellArray, { level=spellLevel, name=spellName, count=spellUses }) 
+      table.insert(spellArray, { level=spellLevel, name=spellName, count=spellUses })
     end -- if
 
     inv.items.setStatField(inv.items.identifyPkg.objId, invStatFieldSpells, spellArray)
@@ -5708,16 +5708,16 @@ function inv.items.trigger.itemIdEnd()
   end -- if
 
   -- Check if something interferred with the identification.  The "dbot.execute" package
-  -- guarantees that the user can't manually try to ID something at the same moment we 
+  -- guarantees that the user can't manually try to ID something at the same moment we
   -- are doing our background identification.  In theory, there shouldn't be any potential
   -- conflict here (i.e., we get back ID results for a different item).  However, it's
-  -- probably still helpful to check if the ID we get back matches what we expect.  I'd 
+  -- probably still helpful to check if the ID we get back matches what we expect.  I'd
   -- rather find out what is happening the easy way than the hard way...
   -- Note: Auctions and shop items are not ID'ed with their objId (we don't know the objID
   --       until identification completes) so we don't worry about this check for those cases.
   local objId = inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldId)
   local objLoc = inv.items.getField(inv.items.identifyPkg.objId, invFieldObjLoc)
-  if (objId ~= inv.items.identifyPkg.objId) and (objLoc ~= invItemLocAuction) and 
+  if (objId ~= inv.items.identifyPkg.objId) and (objLoc ~= invItemLocAuction) and
      (objLoc ~= invItemLocShopkeeper) then
     dbot.debug("Identification wasn't successful for item " .. inv.items.identifyPkg.objId ..
                ": Try again later...")
@@ -5744,7 +5744,7 @@ function inv.items.trigger.itemIdEnd()
 
   local itemType = inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldType) or ""
   local itemName = inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldName) or ""
-  local itemWearable = inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldWearable) or "" 
+  local itemWearable = inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldWearable) or ""
   local affectMods = inv.items.getStatField(inv.items.identifyPkg.objId, invStatFieldAffectMods) or ""
 
   -- Add "pseudo-stats" based on item effects (aard terminology is "affect mods") and on
@@ -5886,7 +5886,7 @@ function inv.items.trigger.itemDataStats(objId, flags, itemName, level, typeFiel
   unique = tonumber(unique)
   wearLoc = tonumber(wearLoc)
   timer = tonumber(timer)
-  if (objId == nil) or (level == nil) or (typeField == nil) or (unique == nil) or 
+  if (objId == nil) or (level == nil) or (typeField == nil) or (unique == nil) or
      (wearLoc == nil) or (timer == nil) then
     dbot.warn("inv.items.trigger.itemDataStats: Detected malformed invitem trigger: " ..
               "numeric parameters are not numbers")
@@ -5894,7 +5894,7 @@ function inv.items.trigger.itemDataStats(objId, flags, itemName, level, typeFiel
   end -- if
 
   -- Get a text name for the item type
-  assert((invmon.typeStr ~= nil) and (invmon.typeStr[typeField] ~= nil), 
+  assert((invmon.typeStr ~= nil) and (invmon.typeStr[typeField] ~= nil),
          "Invalid invdata item type " .. typeField)
   local typeName = invmon.typeStr[typeField]
 
@@ -5993,10 +5993,10 @@ function inv.items.trigger.itemDataStats(objId, flags, itemName, level, typeFiel
     if (item == nil) and (inv.items.discoverPkg ~= nil) then
       retval = inv.items.add(objId)
       if (retval ~= DRL_RET_SUCCESS) then
-        dbot.warn("inv.items.trigger.itemDataStats: Failed to add item " .. objId .. 
+        dbot.warn("inv.items.trigger.itemDataStats: Failed to add item " .. objId ..
                   ": error " .. dbot.retval.getString(retval))
         return retval
-      end -- if 
+      end -- if
     end -- if
 
     -- Set the item's location: worn equipment slot, main inventory, keyring, or a container
@@ -6027,8 +6027,8 @@ function inv.items.trigger.itemDataStats(objId, flags, itemName, level, typeFiel
     inv.items.setStatField(objId, invStatFieldType, typeName)
   end -- if
 
-  dbot.debug("inv.items.trigger.itemDataStats: object " .. objId .. ", flags=\"" .. flags .. 
-             "\", itemName=\"" .. itemName .. "@W\", level=" .. level .. ", type=" .. typeName .. 
+  dbot.debug("inv.items.trigger.itemDataStats: object " .. objId .. ", flags=\"" .. flags ..
+             "\", itemName=\"" .. itemName .. "@W\", level=" .. level .. ", type=" .. typeName ..
              ", unique=" .. unique .. ", wearLoc=\"" .. wearLocText .. "\", timer=" .. timer)
 
   -- We're done!
@@ -6104,7 +6104,7 @@ function inv.items.trigger.invmon(action, objId, containerId, wearLoc)
     return DRL_RET_INTERNAL_ERROR
   end -- if
 
-  dbot.debug("Invmon trigger: " .. invmon.action[action] .. " object " .. objId .. 
+  dbot.debug("Invmon trigger: " .. invmon.action[action] .. " object " .. objId ..
              ", container=" .. containerText .. ", wearLoc=" .. wearLocText)
 
   -- Add the current item to the inventory table if it doesn't exist yet
@@ -6115,7 +6115,7 @@ function inv.items.trigger.invmon(action, objId, containerId, wearLoc)
       dbot.warn("inv.items.trigger.invmon: Failed to add item " .. objId .. ": error " ..
                 dbot.retval.getString(retval))
       return retval
-    end -- if 
+    end -- if
   end -- if
 
   -- If the item isn't identified and we aren't already in the middle of a refresh, schedule an
@@ -6149,7 +6149,7 @@ function inv.items.trigger.invmon(action, objId, containerId, wearLoc)
       dbot.warn("inv.items.trigger.invmon: Failed to set location for " .. objId .. ": error "
                 .. dbot.retval.getString(retval))
       return retval
-    end -- if 
+    end -- if
 
   elseif (action == invmonActionTakenOutOfContainer) then
     if (idLevel == invIdLevelNone) then
@@ -6163,7 +6163,7 @@ function inv.items.trigger.invmon(action, objId, containerId, wearLoc)
       inv.items.setField(containerId, invFieldIdentifyLevel, invIdLevelNone)
     else
       -- Update the container's stats based on this item's removal
-      if (holding == nil) or (itemsInside == nil) or (totWeight == nil) or 
+      if (holding == nil) or (itemsInside == nil) or (totWeight == nil) or
          (weightReduction == nil) or (weightReduction == 0) or (itemWeight == nil) then
         -- If we don't have all of the container's stats, force a full re-identification
         inv.items.setField(containerId, invFieldIdentifyLevel, invIdLevelNone)
@@ -6190,7 +6190,7 @@ function inv.items.trigger.invmon(action, objId, containerId, wearLoc)
       inv.items.setField(containerId, invFieldIdentifyLevel, invIdLevelNone)
     else
       -- Update the container's stats based on this item's addition
-      if (holding == nil) or (itemsInside == nil) or (totWeight == nil) or 
+      if (holding == nil) or (itemsInside == nil) or (totWeight == nil) or
          (weightReduction == nil) or (weightReduction == 0) or (itemWeight == nil) then
         -- If we don't have all of the container's stats, force a full re-identification
         inv.items.setField(containerId, invFieldIdentifyLevel, invIdLevelNone)
@@ -6209,7 +6209,7 @@ function inv.items.trigger.invmon(action, objId, containerId, wearLoc)
 
   elseif (action == invmonActionPutIntoVault) then
     -- If the item is a container, this will remove any items in the container too
-    retval = inv.items.remove(objId) 
+    retval = inv.items.remove(objId)
 
   elseif (action == invmonActionRemovedFromVault) then
     inv.items.mainState = invItemsRefreshDirty -- we want to rescan main inventory now

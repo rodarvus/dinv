@@ -112,7 +112,7 @@ inv.wearables = { light    = { "light" },
                   above    = { "above" },
                   portal   = { "portal" },
                   sleeping = { "sleeping" },
-                  ready    = { "ready" } }              
+                  ready    = { "ready" } }
 
 
 ----------------------------------------------------------------------------------------------------

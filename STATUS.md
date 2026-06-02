@@ -1,7 +1,7 @@
 # dinv - Development Status
 
-**Version:** 3.0070  
-**Authors:** Durel, Rodarvus  
+**Version:** 3.0070
+**Authors:** Durel, Rodarvus
 **Repository:** https://github.com/rodarvus/dinv
 
 ## Current State
