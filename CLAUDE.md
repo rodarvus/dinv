@@ -73,7 +73,8 @@
 ### Version Numbering
 
 - **3.x series** (forked from Durel's 2.x)
-- Increment by 1 from the previous version (e.g., 3.0073 → 3.0074)
+- **`plugin_version`** is incremented by 1 from the previous release (e.g., 3.0073 → 3.0074)
+- **`dinv.manifest`** records, for each file, the `plugin_version` in which it was last changed.
 
 ### Git Commits
 
