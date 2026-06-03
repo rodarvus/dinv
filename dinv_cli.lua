@@ -176,6 +176,31 @@ function inv.cli.fullUsage()
 end -- inv.cli.fullUsage
 
 
+-- Returns nil if ready, or a DRL_RET_* failure code the caller should
+-- propagate (typically via inv.tags.stop for tracked commands).
+function inv.cli.requireReadyStateFor(noun)
+  if (not inv.init.initializedActive) then
+    dbot.info("Skipping " .. noun .. " request: plugin is not yet initialized (are you AFK or sleeping?)")
+    return DRL_RET_UNINITIALIZED
+  elseif dbot.gmcp.statePreventsActions() then
+    dbot.info("Skipping " .. noun .. " request: character's state does not allow actions")
+    return DRL_RET_NOT_ACTIVE
+  end -- if
+end -- inv.cli.requireReadyStateFor
+
+
+-- Like requireReadyStateFor, but rejects the combat state too.
+function inv.cli.requireActiveStateFor(noun)
+  if (not inv.init.initializedActive) then
+    dbot.info("Skipping " .. noun .. " request: plugin is not yet initialized (are you AFK or sleeping?)")
+    return DRL_RET_UNINITIALIZED
+  elseif (not dbot.gmcp.stateIsActive()) then
+    dbot.info("Skipping " .. noun .. " request: character is not in the active state")
+    return DRL_RET_NOT_ACTIVE
+  end -- if
+end -- inv.cli.requireActiveStateFor
+
+
 inv.cli.build = {}
 function inv.cli.build.fn(name, line, wildcards)
   local confirmation = Trim(wildcards[1] or "")
@@ -674,13 +699,8 @@ function inv.cli.get.fn(name, line, wildcards)
 
   dbot.debug("CLI: " .. pluginNameCmd .. " get \"" .. query .. "\"")
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping get request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return inv.tags.stop(invTagsGet, endTag, DRL_RET_UNINITIALIZED)
-  elseif dbot.gmcp.statePreventsActions() then
-    dbot.info("Skipping get request: character's state does not allow actions")
-    return inv.tags.stop(invTagsGet, endTag, DRL_RET_NOT_ACTIVE)
-  end -- if
+  local guardFail = inv.cli.requireReadyStateFor("get")
+  if guardFail then return inv.tags.stop(invTagsGet, endTag, guardFail) end
 
   inv.items.get(query, endTag)
 end -- inv.cli.get.fn
@@ -740,13 +760,8 @@ function inv.cli.put.fn(name, line, wildcards)
 
   dbot.debug("CLI: " .. pluginNameCmd .. " put \"" .. container .. "\", \"" .. query .. "\"")
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping put request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return inv.tags.stop(invTagsPut, endTag, DRL_RET_UNINITIALIZED)
-  elseif dbot.gmcp.statePreventsActions() then
-    dbot.info("Skipping put request: character's state does not allow actions")
-    return inv.tags.stop(invTagsPut, endTag, DRL_RET_NOT_ACTIVE)
-  end -- if
+  local guardFail = inv.cli.requireReadyStateFor("put")
+  if guardFail then return inv.tags.stop(invTagsPut, endTag, guardFail) end
 
   inv.items.put(container, query, endTag)
 end -- inv.cli.put.fn
@@ -801,13 +816,8 @@ function inv.cli.store.fn(name, line, wildcards)
 
   dbot.debug("CLI: " .. pluginNameCmd .. " store \"" .. query .. "\"")
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping store request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return inv.tags.stop(invTagsStore, endTag, DRL_RET_UNINITIALIZED)
-  elseif dbot.gmcp.statePreventsActions() then
-    dbot.info("Skipping store request: character's state does not allow actions")
-    return inv.tags.stop(invTagsStore, endTag, DRL_RET_NOT_ACTIVE)
-  end -- if
+  local guardFail = inv.cli.requireReadyStateFor("store")
+  if guardFail then return inv.tags.stop(invTagsStore, endTag, guardFail) end
 
   inv.items.store(query, endTag)
 end -- inv.cli.store.fn
@@ -902,13 +912,8 @@ function inv.cli.set.fn(name, line, wildcards)
   local level = wildcards[3] or ""
   local endTag = inv.tags.new(line)
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping set request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return inv.tags.stop(invTagsSet, endTag, DRL_RET_UNINITIALIZED)
-  elseif dbot.gmcp.statePreventsActions() then
-    dbot.info("Skipping set request: character's state does not allow actions")
-    return inv.tags.stop(invTagsSet, endTag, DRL_RET_NOT_ACTIVE)
-  end -- if
+  local guardFail = inv.cli.requireReadyStateFor("set")
+  if guardFail then return inv.tags.stop(invTagsSet, endTag, guardFail) end
 
   -- If the user doesn't provide a level, use the current level
   level = tonumber(level) or dbot.gmcp.getLevel()
@@ -1092,13 +1097,8 @@ function inv.cli.weapon.fn(name, line, wildcards)
   local damTypes = wildcards[2] or ""
   local endTag = inv.tags.new(line)
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping weapon request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return inv.tags.stop(invTagsSet, endTag, DRL_RET_UNINITIALIZED)
-  elseif dbot.gmcp.statePreventsActions() then
-    dbot.info("Skipping weapon request: character's state does not allow actions")
-    return inv.tags.stop(invTagsSet, endTag, DRL_RET_NOT_ACTIVE)
-  end -- if
+  local guardFail = inv.cli.requireReadyStateFor("weapon")
+  if guardFail then return inv.tags.stop(invTagsSet, endTag, guardFail) end
 
   if (priority == "next") then
     inv.weapon.next(endTag)
@@ -1598,13 +1598,8 @@ function inv.cli.analyze.fn(name, line, wildcards)
 
   dbot.debug("inv.cli.analyze.fn: priority=\"" .. priorityName .. "\", loc=\"" .. wearableLocs .. "\"")
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping analyze request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return inv.tags.stop(invTagsAnalyze, endTag, DRL_RET_UNINITIALIZED)
-  elseif (not dbot.gmcp.stateIsActive()) then
-    dbot.info("Skipping analyze request: character is not in the active state")
-    return inv.tags.stop(invTagsAnalyze, endTag, DRL_RET_NOT_ACTIVE)
-  end -- if
+  local guardFail = inv.cli.requireActiveStateFor("analyze")
+  if guardFail then return inv.tags.stop(invTagsAnalyze, endTag, guardFail) end
 
   -- If the user gave a wearable location, check if it is actually valid.  We also support the
   -- user giving us wearable types (e.g., "neck") in addition to wearable locations (e.g., "neck1 neck2").
@@ -1879,13 +1874,8 @@ function inv.cli.usage.fn(name, line, wildcards)
 
   dbot.debug("inv.cli.usage.fn: priority=\"" .. priorityName .. "\", query=\"" .. query .. "\"")
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping usage request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return inv.tags.stop(invTagsUsage, endTag, DRL_RET_UNINITIALIZED)
-  elseif dbot.gmcp.statePreventsActions() then
-    dbot.info("Skipping usage request: character's state does not allow actions")
-    return inv.tags.stop(invTagsUsage, endTag, DRL_RET_NOT_ACTIVE)
-  end -- if
+  local guardFail = inv.cli.requireReadyStateFor("usage")
+  if guardFail then return inv.tags.stop(invTagsUsage, endTag, guardFail) end
 
   if (priorityName == "") then
     inv.cli.usage.usage()
@@ -1991,13 +1981,8 @@ function inv.cli.unused.fn(name, line, wildcards)
 
   dbot.debug("inv.cli.unused.fn: priority=\"" .. priorityName .. "\", options=\"" .. options .. "\"")
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping unused request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return inv.tags.stop(invTagsUnused, endTag, DRL_RET_UNINITIALIZED)
-  elseif dbot.gmcp.statePreventsActions() then
-    dbot.info("Skipping unused request: character's state does not allow actions")
-    return inv.tags.stop(invTagsUnused, endTag, DRL_RET_NOT_ACTIVE)
-  end -- if
+  local guardFail = inv.cli.requireReadyStateFor("unused")
+  if guardFail then return inv.tags.stop(invTagsUnused, endTag, guardFail) end
 
   if (priorityName == "") then
     inv.cli.unused.usage()
@@ -2080,13 +2065,8 @@ function inv.cli.compare.fn(name, line, wildcards)
   dbot.debug("inv.cli.compare.fn: priority=\"" .. priorityName .. "\", relativeName=\"" ..
              relativeName .. "\"")
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping compare request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return inv.tags.stop(invTagsCompare, endTag, DRL_RET_UNINITIALIZED)
-  elseif (not dbot.gmcp.stateIsActive()) then
-    dbot.info("Skipping compare request: character is not in the active state")
-    return inv.tags.stop(invTagsCompare, endTag, DRL_RET_NOT_ACTIVE)
-  end -- if
+  local guardFail = inv.cli.requireActiveStateFor("compare")
+  if guardFail then return inv.tags.stop(invTagsCompare, endTag, guardFail) end
 
   if (levelSkip < 1) then
     levelSkip = 1
@@ -2178,13 +2158,8 @@ function inv.cli.covet.fn(name, line, wildcards)
   local levelSkip    = tonumber(wildcards[3] or "1") or 1
   local endTag       = inv.tags.new(line, "Covet results", nil, inv.tags.cleanup.timed)
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping covet request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return inv.tags.stop(invTagsCovet, endTag, DRL_RET_UNINITIALIZED)
-  elseif (not dbot.gmcp.stateIsActive()) then
-    dbot.info("Skipping covet request: character is not in the active state")
-    return inv.tags.stop(invTagsCovet, endTag, DRL_RET_NOT_ACTIVE)
-  end -- if
+  local guardFail = inv.cli.requireActiveStateFor("covet")
+  if guardFail then return inv.tags.stop(invTagsCovet, endTag, guardFail) end
 
   if (auctionNum == nil) then
     dbot.warn("inv.cli.covet: auction # is not a number")
@@ -2260,13 +2235,8 @@ function inv.cli.notify.fn(name, line, wildcards)
   local level  = wildcards[1] or ""
   local endTag = inv.tags.new(line)
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping notify request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return inv.tags.stop(invTagsNotify, endTag, DRL_RET_UNINITIALIZED)
-  elseif dbot.gmcp.statePreventsActions() then
-    dbot.info("Skipping notify request: character's state does not allow actions")
-    return inv.tags.stop(invTagsNotify, endTag, DRL_RET_NOT_ACTIVE)
-  end -- if
+  local guardFail = inv.cli.requireReadyStateFor("notify")
+  if guardFail then return inv.tags.stop(invTagsNotify, endTag, guardFail) end
 
   if (level == "none") or (level == "light") or (level == "standard") or (level == "all") then
     dbot.notify.setLevel(level, endTag, true)
@@ -2410,13 +2380,8 @@ function inv.cli.forget.fn(name, line, wildcards)
   local query  = wildcards[1] or ""
   local endTag = inv.tags.new(line)
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping forget request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return inv.tags.stop(invTagsForget, endTag, DRL_RET_UNINITIALIZED)
-  elseif dbot.gmcp.statePreventsActions() then
-    dbot.info("Skipping forget request: character's state does not allow actions")
-    return inv.tags.stop(invTagsForget, endTag, DRL_RET_NOT_ACTIVE)
-  end -- if
+  local guardFail = inv.cli.requireReadyStateFor("forget")
+  if guardFail then return inv.tags.stop(invTagsForget, endTag, guardFail) end
 
   inv.items.forget(query, endTag)
 end -- inv.cli.forget.fn
@@ -2477,13 +2442,8 @@ function inv.cli.ignore.fn(name, line, wildcards)
   local container = wildcards[2] or ""
   local endTag    = inv.tags.new(line)
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping ignore request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return inv.tags.stop(invTagsIgnore, endTag, DRL_RET_UNINITIALIZED)
-  elseif dbot.gmcp.statePreventsActions() then
-    dbot.info("Skipping ignore request: character's state does not allow actions")
-    return inv.tags.stop(invTagsIgnore, endTag, DRL_RET_NOT_ACTIVE)
-  end -- if
+  local guardFail = inv.cli.requireReadyStateFor("ignore")
+  if guardFail then return inv.tags.stop(invTagsIgnore, endTag, guardFail) end
 
   if (string.lower(mode) == "list") then
     return inv.tags.stop(invTagsIgnore, endTag, inv.items.listIgnored())
@@ -2712,13 +2672,8 @@ function inv.cli.cache.fn(name, line, wildcards)
 
   dbot.debug("command=\"" .. cacheCommand .. "\", type=\"" .. cacheType .. "\", size=" .. cacheSize)
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping cache request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return inv.tags.stop(invTagsCache, endTag, DRL_RET_UNINITIALIZED)
-  elseif dbot.gmcp.statePreventsActions() then
-    dbot.info("Skipping cache request: character's state does not allow actions")
-    return inv.tags.stop(invTagsCache, endTag, DRL_RET_NOT_ACTIVE)
-  end -- if
+  local guardFail = inv.cli.requireReadyStateFor("cache")
+  if guardFail then return inv.tags.stop(invTagsCache, endTag, guardFail) end
 
   if (cacheCommand == "reset") then
     if (cacheType == "recent") or (cacheType == "all") then
@@ -2957,13 +2912,8 @@ function inv.cli.portal.fn(name, line, wildcards)
   local command = wildcards[1] or ""
   local portalQuery = wildcards[2] or ""
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping portal request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return DRL_RET_UNINITIALIZED
-  elseif dbot.gmcp.statePreventsActions() then
-    dbot.info("Skipping portal request: character's state does not allow actions")
-    return DRL_RET_NOT_ACTIVE
-  end -- if
+  local guardFail = inv.cli.requireReadyStateFor("portal")
+  if guardFail then return guardFail end
 
   dbot.debug("CLI: " .. pluginNameCmd .. " portal " .. command .. " " .. portalQuery)
   inv.portal.use(portalQuery)
@@ -3037,13 +2987,8 @@ function inv.cli.pass.fn(name, line, wildcards)
   local passNameOrId = wildcards[1] or ""
   local useTimeSec = tonumber(wildcards[2] or "")
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping pass request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return DRL_RET_UNINITIALIZED
-  elseif dbot.gmcp.statePreventsActions() then
-    dbot.info("Skipping pass request: character's state does not allow actions")
-    return DRL_RET_NOT_ACTIVE
-  end -- if
+  local guardFail = inv.cli.requireReadyStateFor("pass")
+  if guardFail then return guardFail end
 
   if (useTimeSec == nil) then
     dbot.warn("inv.cli.pass.fn: # of seconds to use the pass is a required parameter")
@@ -3101,13 +3046,8 @@ function inv.cli.consume.fn(name, line, wildcards)
              (itemType or "") .. "\", itemName/Num=\"" .. (itemName or "") .. "\", container=\"" ..
              container .. "\"")
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping consume request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return DRL_RET_UNINITIALIZED
-  elseif dbot.gmcp.statePreventsActions() then
-    dbot.info("Skipping consume request: character's state does not allow actions")
-    return DRL_RET_NOT_ACTIVE
-  end -- if
+  local guardFail = inv.cli.requireReadyStateFor("consume")
+  if guardFail then return guardFail end
 
   if (command == "add") then
     inv.consume.add(itemType, itemName)
@@ -3343,13 +3283,8 @@ function inv.cli.organize.fn1(name, line, wildcards)
   dbot.debug("CLI: " .. pluginNameCmd .. " organize command=\"" .. (command or "") .. "\", container=\"" ..
              container .. "\", query=\"" .. queryString .. "\"")
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping organize request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return inv.tags.stop(invTagsOrganize, endTag, DRL_RET_UNINITIALIZED)
-  elseif dbot.gmcp.statePreventsActions() then
-    dbot.info("Skipping organize request: character's state does not allow actions")
-    return inv.tags.stop(invTagsOrganize, endTag, DRL_RET_NOT_ACTIVE)
-  end -- if
+  local guardFail = inv.cli.requireReadyStateFor("organize")
+  if guardFail then return inv.tags.stop(invTagsOrganize, endTag, guardFail) end
 
   if (command == "add") then
     inv.items.organize.add(container, queryString, endTag)
@@ -3369,13 +3304,8 @@ function inv.cli.organize.fn2(name, line, wildcards)
 
   dbot.debug("CLI: " .. pluginNameCmd .. " organize command=\"" .. (command or "") .. "\"")
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping organize request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return inv.tags.stop(invTagsOrganize, endTag, DRL_RET_UNINITIALIZED)
-  elseif dbot.gmcp.statePreventsActions() then
-    dbot.info("Skipping organize request: character's state does not allow actions")
-    return inv.tags.stop(invTagsOrganize, endTag, DRL_RET_NOT_ACTIVE)
-  end -- if
+  local guardFail = inv.cli.requireReadyStateFor("organize")
+  if guardFail then return inv.tags.stop(invTagsOrganize, endTag, guardFail) end
 
   if (command ~= "display") then
     inv.cli.organize.usage()
@@ -3392,13 +3322,8 @@ function inv.cli.organize.fn3(name, line, wildcards)
 
   dbot.debug("CLI: " .. pluginNameCmd .. " organize query=\"" .. queryString .. "\"")
 
-  if (not inv.init.initializedActive) then
-    dbot.info("Skipping organize request: plugin is not yet initialized (are you AFK or sleeping?)")
-    return inv.tags.stop(invTagsOrganize, endTag, DRL_RET_UNINITIALIZED)
-  elseif dbot.gmcp.statePreventsActions() then
-    dbot.info("Skipping organize request: character's state does not allow actions")
-    return inv.tags.stop(invTagsOrganize, endTag, DRL_RET_NOT_ACTIVE)
-  end -- if
+  local guardFail = inv.cli.requireReadyStateFor("organize")
+  if guardFail then return inv.tags.stop(invTagsOrganize, endTag, guardFail) end
 
   inv.items.organize.cleanup(queryString, endTag)
 end -- inv.cli.organize.fn3
