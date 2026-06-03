@@ -469,8 +469,8 @@ and you can use the format [number].[name] to target a specific item.  Similarly
 There are a few "one-off" query modes for convenience.  It is so common to search for just a
 name that the default is to assume you are searching within an item's name if no other data
 is supplied.  In other words, "@Gdinv search sunstone@W" will find any item with "sunstone" in
-its name.  Also, queries will accept "key" instead of "keywords", "loc" instead of "location",
-and "rloc" instead of "rlocation".  Yeah, I'm lazy sometimes...
+its name.  Also, 'keyword', 'key' and 'kw' are accepted aliases for 'keywords', 'loc' is an
+alias for 'location' and 'rloc' is an alias for 'rlocation'.  Yeah, I'm lazy sometimes...
 
 Performing a search will display relevant information about the items whose characteristics match
 the query.  There are three modes of searches: "@Cbasic@W", "@Cobjid@W", and "@Cfull@W".  A basic search displays

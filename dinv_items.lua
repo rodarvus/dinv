@@ -3403,19 +3403,12 @@ function inv.items.search(arrayOfQueryArrays, allowIgnored)
               break
             end -- if
 
-          -- If we are searching for an element in a string of elements (e.g., a keyword in a keyword list
-          -- or a flag in a list of flags) check if the queried string is present.  We use a case-insensitive
-          -- search by making everything in the strings lower case.  We also temporarily replace special
-          -- characters in the search strings with their escaped equivalents (e.g., "-" becomes "%-") so
-          -- that we can search for things like "anti-evil" without the hyphen being interpreted as a
-          -- special character.
-          --
-          -- Some string fields (name and leadsTo) support a partial match.  For example, searching for
-          -- "Nation" in the "leadsTo" field would match for both "Imperial Nation" and "The Amazon Nation".
-          -- Other string fields (keywords and flags) require an exact match so searching for the
-          -- "evil" flag won't match on "anti-evil".
-
-          elseif (key == invStatFieldName) or (key == invStatFieldLeadsTo) or (key == invStatFieldFoundAt) then
+          -- Partial string match
+          --  - case insensitive
+          --  - substring match e.g. "gold" matches "imperial golden goose" (also "old" would match)
+          elseif dinv_db.partialStringMatchFields[key] then
+            -- Escape Lua pattern metacharacters in the search value so string.find treats
+            -- them literally (e.g., "-" in "anti-evil" matches as a hyphen, not a range).
             local escapedValue = string.gsub(value, "[%(%)%.%+%-%*%?%[%]%^%$%%]", "%%%1")
             local noMatch = (string.find(string.lower(statsVal), string.lower(escapedValue)) == nil)
             if ((invert == false) and noMatch) or ((invert == true) and not noMatch) then
@@ -3423,13 +3416,15 @@ function inv.items.search(arrayOfQueryArrays, allowIgnored)
               break
             end -- if
 
-          elseif (key == invStatFieldKeywords) or (key == invStatFieldFlags)    or
-                 (key == invStatFieldClan)     or (key == invStatFieldWearable) then
-            local statField = statsVal or ""
-            local element
+          -- Whole-word match
+          --  - case insensitive
+          --  - search value must completely match an element in the whitespace-separated list of the field
+          --         (commas in the field are ignored)
+          --         e.g. "evil" matches "invis, evil, glowing" but not "anti-evil"
+          elseif dinv_db.exactStringMatchFields[key] then
             local isInField = false
 
-            for element in statField:gmatch("%S+") do
+            for element in statsVal:gmatch("%S+") do
               element = string.gsub(element, ",", "")
               if (string.lower(element) == string.lower(value)) then
                 isInField = true
@@ -3593,7 +3588,7 @@ function inv.items.searchCR(rawQueryString, allowIgnored)
         end -- if
 
         -- Add shortcuts to some commonly used query keys
-        if (key == invQueryKeyKey) or (key == invQueryKeyKeyword) then
+        if (key == invQueryKeyKey) or (key == invQueryKeyKeyword) or (key == invQueryKeyKw) then
           key = invStatFieldKeywords
         elseif (key == invQueryKeyFlag) then
           key = invStatFieldFlags

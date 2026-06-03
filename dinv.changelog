@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0113] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Keywords search is now partial, so "dinv search keywords key"
+           will match keywords like "ironkey".  Added "kw" as a
+           shorthand for the "keywords" search key.  "flag", "clan",
+           and "wearable" searches still require an exact word match.]]
+  }
+}
+
 dbot.changelog[3.0112] =
 {
   { change = drlDbotChangeLogTypeMisc,
