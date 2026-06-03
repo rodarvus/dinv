@@ -2,6 +2,20 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0114] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[CLI: add missing return on the invalid-param branches of
+           compare/notify/organize handlers so they propagate the
+           DRL_RET_INVALID_PARAM retval instead of returning nil.
+           Simplify compare.fn and organize.fn2 with early exit
+           guard pattern.]]
+  },
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[CLI: fix wording in covet.fn and typo in the consume help.]]
+  }
+}
+
 dbot.changelog[3.0113] =
 {
   { change = drlDbotChangeLogTypeNew,

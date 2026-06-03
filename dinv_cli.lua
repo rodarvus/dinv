@@ -2096,11 +2096,10 @@ function inv.cli.compare.fn(name, line, wildcards)
 
   if (priorityName == "") or (relativeName == "") then
     inv.cli.compare.usage()
-    inv.tags.stop(invTagsCompare, endTag, DRL_RET_INVALID_PARAM)
-  else
-    inv.set.compare(priorityName, relativeName, levelSkip, endTag)
+    return inv.tags.stop(invTagsCompare, endTag, DRL_RET_INVALID_PARAM)
   end -- if
 
+  inv.set.compare(priorityName, relativeName, levelSkip, endTag)
 end -- inv.cli.compare.fn
 
 
@@ -2194,7 +2193,7 @@ function inv.cli.covet.fn(name, line, wildcards)
   end -- if
 
   if (priorityName == "") then
-    dbot.warn("inv.cli.covet: priorityName is nil")
+    dbot.warn("inv.cli.covet: priorityName is empty")
     inv.cli.covet.usage()
     return inv.tags.stop(invTagsCovet, endTag, DRL_RET_INVALID_PARAM)
   end -- if
@@ -2273,7 +2272,7 @@ function inv.cli.notify.fn(name, line, wildcards)
     dbot.notify.setLevel(level, endTag, true)
   else
     inv.cli.notify.usage()
-    inv.tags.stop(invTagsNotify, endTag, DRL_RET_INVALID_PARAM)
+    return inv.tags.stop(invTagsNotify, endTag, DRL_RET_INVALID_PARAM)
   end -- if
 end -- inv.cli.notify.fn
 
@@ -3144,7 +3143,7 @@ function inv.cli.consume.examples()
   dbot.print(
 [[@W
 Using consumable items such as potions, pills, and scrolls is a very common
-occurance.  The plugin facilitates this by giving users the ability to specify
+occurrence.  The plugin facilitates this by giving users the ability to specify
 types and locations of consumable items.  Users can then ask the plugin to
 restock or use particular types of things.  Confused yet?  Let me explain by
 giving you a walk-through.
@@ -3358,7 +3357,7 @@ function inv.cli.organize.fn1(name, line, wildcards)
     inv.items.organize.clear(container, endTag)
   else
     inv.cli.organize.usage()
-    inv.tags.stop(invTagsOrganize, endTag, DRL_RET_INVALID_PARAM)
+    return inv.tags.stop(invTagsOrganize, endTag, DRL_RET_INVALID_PARAM)
   end -- if
 
 end -- inv.cli.organize.fn1
@@ -3378,13 +3377,12 @@ function inv.cli.organize.fn2(name, line, wildcards)
     return inv.tags.stop(invTagsOrganize, endTag, DRL_RET_NOT_ACTIVE)
   end -- if
 
-  if (command == "display") then
-    inv.items.organize.display(endTag)
-  else
+  if (command ~= "display") then
     inv.cli.organize.usage()
-    inv.tags.stop(invTagsOrganize, endTag, DRL_RET_INVALID_PARAM)
+    return inv.tags.stop(invTagsOrganize, endTag, DRL_RET_INVALID_PARAM)
   end -- if
 
+  inv.items.organize.display(endTag)
 end -- inv.cli.organize.fn2
 
 
