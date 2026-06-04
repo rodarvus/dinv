@@ -2,6 +2,13 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0118] =
+{
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[Refactor: collapse itemIdStats stat blocks via parseStat helpers (net -280 lines).]]
+  }
+}
+
 dbot.changelog[3.0117] =
 {
   { change = drlDbotChangeLogTypeMisc,
