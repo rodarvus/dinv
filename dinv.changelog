@@ -2,6 +2,19 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0117] =
+{
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[Refactor: add inv.items.getStatNum / .getStatStr helpers and
+           apply them across inv.items.displayItem.  Drop a pair of dead
+           highlight variables, simplify the displayObjId guard, and convert
+           the id-color if/elseif chain to a dispatch table.  Apply the
+           same id-color cleanup to inv.usage.displayItem.  Also fix the
+           invalid-idLevel error message, which printed the literal string
+           "idLevel" instead of the actual value.]]
+  }
+}
+
 dbot.changelog[3.0116] =
 {
   { change = drlDbotChangeLogTypeMisc,

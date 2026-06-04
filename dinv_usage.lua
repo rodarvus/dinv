@@ -114,23 +114,19 @@ function inv.usage.displayItem(priorityName, objId, doDisplayUnused)
   local colorName = inv.items.getField(objId, invFieldColorName) or "Unknown"
   local maxNameLen = 44
 
-  -- We color-code the ID field as follows: unidentified = red, partial ID = yellow, full ID = green
-  local formattedId = ""
-  local colorizedId = ""
-  local idPrefix = DRL_ANSI_WHITE
-  local idSuffix = DRL_ANSI_WHITE
+  -- ID field is color-coded by identification level: red=none, yellow=partial, green=full.
+  -- An unrecognized level falls back to white rather than erroring (unlike inv.items.displayItem).
+  local idColors = {
+    [invIdLevelNone]    = DRL_ANSI_RED,
+    [invIdLevelPartial] = DRL_ANSI_YELLOW,
+    [invIdLevelFull]    = DRL_ANSI_GREEN,
+  }
+  local formattedId, colorizedId = "", ""
   local idLevel = inv.items.getField(objId, invFieldIdentifyLevel)
   if (idLevel ~= nil) then
-    if (idLevel == invIdLevelNone) then
-      idPrefix = DRL_ANSI_RED
-    elseif (idLevel == invIdLevelPartial) then
-      idPrefix = DRL_ANSI_YELLOW
-    elseif (idLevel == invIdLevelFull) then
-      idPrefix = DRL_ANSI_GREEN
-    end -- if
-
+    local idColor = idColors[idLevel] or DRL_ANSI_WHITE
     formattedId = "(" .. objId .. ") "
-    colorizedId = idPrefix .. formattedId .. idSuffix
+    colorizedId = idColor .. formattedId .. DRL_ANSI_WHITE
   end -- if
 
   -- Format the name field for the stat display.  This is complicated because we have a fixed

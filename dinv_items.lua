@@ -543,6 +543,20 @@ function inv.items.getStatField(objId, field)
 end -- inv.items.getStatField
 
 
+-- Read a numeric stat field, coercing through dbot.tonumber (which strips
+-- commas).  Missing/nil stats return 0.
+function inv.items.getStatNum(objId, field)
+  return dbot.tonumber(inv.items.getStatField(objId, field) or "0")
+end -- inv.items.getStatNum
+
+
+-- Read a string stat field, defaulting to the given default (or "" if not
+-- provided) when the stat is missing/nil.
+function inv.items.getStatStr(objId, field, default)
+  return inv.items.getStatField(objId, field) or default or ""
+end -- inv.items.getStatStr
+
+
 function inv.items.setStatField(objId, field, value)
 
   assert(objId ~= nil, "inv.items.setStatField: nil objId parameter")
@@ -3938,63 +3952,55 @@ function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
   end -- if
 
   local colorName  = inv.items.getField(objId, invFieldColorName) or "@RName is not yet identified@w"
-  local level      = inv.items.getStatField(objId, invStatFieldLevel) or 0
-  local typeField  = inv.items.getStatField(objId, invStatFieldType) or "Unknown"
-  local weaponType = inv.items.getStatField(objId, invStatFieldWeaponType) or "Unknown"
-  local damtype    = inv.items.getStatField(objId, invStatFieldDamType)  or "none"
-  local specials   = inv.items.getStatField(objId, invStatFieldSpecials) or "none"
-  local wearable   = inv.items.getStatField(objId, invStatFieldWearable) or ""
-  local leadsTo    = inv.items.getStatField(objId, invStatFieldLeadsTo) or "Unknown"
+  local level      = inv.items.getStatNum(objId, invStatFieldLevel)
+  local typeField  = inv.items.getStatStr(objId, invStatFieldType, "Unknown")
+  local weaponType = inv.items.getStatStr(objId, invStatFieldWeaponType, "Unknown")
+  local damtype    = inv.items.getStatStr(objId, invStatFieldDamType, "none")
+  local specials   = inv.items.getStatStr(objId, invStatFieldSpecials, "none")
+  local wearable   = inv.items.getStatStr(objId, invStatFieldWearable)
+  local leadsTo    = inv.items.getStatStr(objId, invStatFieldLeadsTo, "Unknown")
   local spells     = inv.items.getStatField(objId, invStatFieldSpells) or {}
 
-  -- Highlight items that are currently worn (the location isn't a container or inventory)
-  local highlightOn = ""
-  local highlightOff = ""
-  local isCurrentlyWorn = false
-  if inv.items.isWorn(objId) and (inv.items.getField(objId, invFieldColorName) ~= "") then
-    isCurrentlyWorn = true
-    highlightOn = "@W"
-    highlightOff = "@w"
-  end -- if
+  local isCurrentlyWorn = inv.items.isWorn(objId) and (inv.items.getField(objId, invFieldColorName) ~= "")
 
-  local int      = dbot.tonumber(inv.items.getStatField(objId, invStatFieldInt)      or "0")
-  local luck     = dbot.tonumber(inv.items.getStatField(objId, invStatFieldLuck)     or "0")
-  local wis      = dbot.tonumber(inv.items.getStatField(objId, invStatFieldWis)      or "0")
-  local str      = dbot.tonumber(inv.items.getStatField(objId, invStatFieldStr)      or "0")
-  local dex      = dbot.tonumber(inv.items.getStatField(objId, invStatFieldDex)      or "0")
-  local con      = dbot.tonumber(inv.items.getStatField(objId, invStatFieldCon)      or "0")
-  local avedam   = dbot.tonumber(inv.items.getStatField(objId, invStatFieldAveDam)   or "0")
-  local dam      = dbot.tonumber(inv.items.getStatField(objId, invStatFieldDam)      or "0")
-  local hit      = dbot.tonumber(inv.items.getStatField(objId, invStatFieldHit)      or "0")
-  local hp       = dbot.tonumber(inv.items.getStatField(objId, invStatFieldHP)       or "0")
-  local mana     = dbot.tonumber(inv.items.getStatField(objId, invStatFieldMana)     or "0")
-  local moves    = dbot.tonumber(inv.items.getStatField(objId, invStatFieldMoves)    or "0")
-  local weight   = dbot.tonumber(inv.items.getStatField(objId, invStatFieldWeight)   or "0")
+  local int      = inv.items.getStatNum(objId, invStatFieldInt)
+  local luck     = inv.items.getStatNum(objId, invStatFieldLuck)
+  local wis      = inv.items.getStatNum(objId, invStatFieldWis)
+  local str      = inv.items.getStatNum(objId, invStatFieldStr)
+  local dex      = inv.items.getStatNum(objId, invStatFieldDex)
+  local con      = inv.items.getStatNum(objId, invStatFieldCon)
+  local avedam   = inv.items.getStatNum(objId, invStatFieldAveDam)
+  local dam      = inv.items.getStatNum(objId, invStatFieldDam)
+  local hit      = inv.items.getStatNum(objId, invStatFieldHit)
+  local hp       = inv.items.getStatNum(objId, invStatFieldHP)
+  local mana     = inv.items.getStatNum(objId, invStatFieldMana)
+  local moves    = inv.items.getStatNum(objId, invStatFieldMoves)
+  local weight   = inv.items.getStatNum(objId, invStatFieldWeight)
 
-  local allphys  = dbot.tonumber(inv.items.getStatField(objId, invStatFieldAllPhys)  or "0")
-  local allmagic = dbot.tonumber(inv.items.getStatField(objId, invStatFieldAllMagic) or "0")
+  local allphys  = inv.items.getStatNum(objId, invStatFieldAllPhys)
+  local allmagic = inv.items.getStatNum(objId, invStatFieldAllMagic)
 
-  local slash    = dbot.tonumber(inv.items.getStatField(objId, invStatFieldSlash)    or "0")
-  local pierce   = dbot.tonumber(inv.items.getStatField(objId, invStatFieldPierce)   or "0")
-  local bash     = dbot.tonumber(inv.items.getStatField(objId, invStatFieldBash)     or "0")
+  local slash    = inv.items.getStatNum(objId, invStatFieldSlash)
+  local pierce   = inv.items.getStatNum(objId, invStatFieldPierce)
+  local bash     = inv.items.getStatNum(objId, invStatFieldBash)
 
-  local acid     = dbot.tonumber(inv.items.getStatField(objId, invStatFieldAcid)     or "0")
-  local cold     = dbot.tonumber(inv.items.getStatField(objId, invStatFieldCold)     or "0")
-  local energy   = dbot.tonumber(inv.items.getStatField(objId, invStatFieldEnergy)   or "0")
-  local holy     = dbot.tonumber(inv.items.getStatField(objId, invStatFieldHoly)     or "0")
-  local electric = dbot.tonumber(inv.items.getStatField(objId, invStatFieldElectric) or "0")
-  local negative = dbot.tonumber(inv.items.getStatField(objId, invStatFieldNegative) or "0")
-  local shadow   = dbot.tonumber(inv.items.getStatField(objId, invStatFieldShadow)   or "0")
-  local magic    = dbot.tonumber(inv.items.getStatField(objId, invStatFieldMagic)    or "0")
-  local air      = dbot.tonumber(inv.items.getStatField(objId, invStatFieldAir)      or "0")
-  local earth    = dbot.tonumber(inv.items.getStatField(objId, invStatFieldEarth)    or "0")
-  local fire     = dbot.tonumber(inv.items.getStatField(objId, invStatFieldFire)     or "0")
-  local light    = dbot.tonumber(inv.items.getStatField(objId, invStatFieldLight)    or "0")
-  local mental   = dbot.tonumber(inv.items.getStatField(objId, invStatFieldMental)   or "0")
-  local sonic    = dbot.tonumber(inv.items.getStatField(objId, invStatFieldSonic)    or "0")
-  local water    = dbot.tonumber(inv.items.getStatField(objId, invStatFieldWater)    or "0")
-  local poison   = dbot.tonumber(inv.items.getStatField(objId, invStatFieldPoison)   or "0")
-  local disease  = dbot.tonumber(inv.items.getStatField(objId, invStatFieldDisease)  or "0")
+  local acid     = inv.items.getStatNum(objId, invStatFieldAcid)
+  local cold     = inv.items.getStatNum(objId, invStatFieldCold)
+  local energy   = inv.items.getStatNum(objId, invStatFieldEnergy)
+  local holy     = inv.items.getStatNum(objId, invStatFieldHoly)
+  local electric = inv.items.getStatNum(objId, invStatFieldElectric)
+  local negative = inv.items.getStatNum(objId, invStatFieldNegative)
+  local shadow   = inv.items.getStatNum(objId, invStatFieldShadow)
+  local magic    = inv.items.getStatNum(objId, invStatFieldMagic)
+  local air      = inv.items.getStatNum(objId, invStatFieldAir)
+  local earth    = inv.items.getStatNum(objId, invStatFieldEarth)
+  local fire     = inv.items.getStatNum(objId, invStatFieldFire)
+  local light    = inv.items.getStatNum(objId, invStatFieldLight)
+  local mental   = inv.items.getStatNum(objId, invStatFieldMental)
+  local sonic    = inv.items.getStatNum(objId, invStatFieldSonic)
+  local water    = inv.items.getStatNum(objId, invStatFieldWater)
+  local poison   = inv.items.getStatNum(objId, invStatFieldPoison)
+  local disease  = inv.items.getStatNum(objId, invStatFieldDisease)
 
   -- Calculate total physical and magical resists.  We weight a specific physical or magic resist
   -- relative to an "all" resist.  For example, 3 "slash" resists are equivalent to 1 "all" phys resist
@@ -4005,19 +4011,15 @@ function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
                        air + earth + fire + light + mental + sonic + water + poison + disease) / 17
   local totResists = physResists + magicResists
 
-  local capacity        = dbot.tonumber(inv.items.getStatField(objId, invStatFieldCapacity)        or "0")
-  local holding         = dbot.tonumber(inv.items.getStatField(objId, invStatFieldHolding)         or "0")
-  local heaviestItem    = dbot.tonumber(inv.items.getStatField(objId, invStatFieldHeaviestItem)    or "0")
-  local itemsInside     = dbot.tonumber(inv.items.getStatField(objId, invStatFieldItemsInside)     or "0")
-  local totWeight       = dbot.tonumber(inv.items.getStatField(objId, invStatFieldTotWeight)       or "0")
-  local itemBurden      = dbot.tonumber(inv.items.getStatField(objId, invStatFieldItemBurden)      or "0")
-  local weightReduction = dbot.tonumber(inv.items.getStatField(objId, invStatFieldWeightReduction) or "0")
+  local capacity        = inv.items.getStatNum(objId, invStatFieldCapacity)
+  local holding         = inv.items.getStatNum(objId, invStatFieldHolding)
+  local heaviestItem    = inv.items.getStatNum(objId, invStatFieldHeaviestItem)
+  local itemsInside     = inv.items.getStatNum(objId, invStatFieldItemsInside)
+  local totWeight       = inv.items.getStatNum(objId, invStatFieldTotWeight)
+  local itemBurden      = inv.items.getStatNum(objId, invStatFieldItemBurden)
+  local weightReduction = inv.items.getStatNum(objId, invStatFieldWeightReduction)
 
-  -- If we are in basic display mode, don't print the object ID; otherwise print it
-  local displayObjId = false
-  if (verbosity == invDisplayVerbosityId) or (verbosity == invDisplayVerbosityFull) then
-    displayObjId = true
-  end -- if
+  local displayObjId = (verbosity == invDisplayVerbosityId) or (verbosity == invDisplayVerbosityFull)
 
   -- If we are in "diff" mode, we prepend the addition or removal indicator to the name of the item
   if (verbosity == invDisplayVerbosityDiffAdd) then
@@ -4026,26 +4028,22 @@ function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
     colorName = "@R<<@W " .. colorName
   end -- if
 
-  -- We color-code the ID field as follows: unidentified = red, partial ID = yellow, full ID = green
-  local formattedId = ""
-  local colorizedId = ""
-  local idPrefix = DRL_ANSI_WHITE
-  local idSuffix = DRL_ANSI_WHITE
+  -- ID field is color-coded by identification level: red=none, yellow=partial, green=full
+  local idColors = {
+    [invIdLevelNone]    = DRL_ANSI_RED,
+    [invIdLevelPartial] = DRL_ANSI_YELLOW,
+    [invIdLevelFull]    = DRL_ANSI_GREEN,
+  }
+  local formattedId, colorizedId = "", ""
   local idLevel = inv.items.getField(objId, invFieldIdentifyLevel)
-  if (idLevel ~= nil) and (displayObjId == true)  then
-    if (idLevel == invIdLevelNone) then
-      idPrefix = DRL_ANSI_RED
-    elseif (idLevel == invIdLevelPartial) then
-      idPrefix = DRL_ANSI_YELLOW
-    elseif (idLevel == invIdLevelFull) then
-      idPrefix = DRL_ANSI_GREEN
-    else
-      dbot.error("inv.items.displayItem: Invalid identify level state detected: idLevel")
+  if (idLevel ~= nil) and displayObjId then
+    local idColor = idColors[idLevel]
+    if idColor == nil then
+      dbot.error("inv.items.displayItem: Invalid identify level state detected: " .. tostring(idLevel))
       return DRL_RET_INTERNAL_ERROR
     end -- if
-
     formattedId = "(" .. objId .. ") "
-    colorizedId = idPrefix .. formattedId .. idSuffix
+    colorizedId = idColor .. formattedId .. DRL_ANSI_WHITE
   end -- if
 
   -- Format the name field for the stat display.  This is complicated because we have a fixed
@@ -4093,7 +4091,7 @@ function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
   typeExtended = string.format("%-8s", typeExtended)
 
   -- Make the item's type show up in bright green if the item is currently worn
-  if (isCurrentlyWorn == true) then
+  if isCurrentlyWorn then
     typeExtended = DRL_ANSI_GREEN .. typeExtended .. DRL_ANSI_WHITE
   end -- if
 
@@ -4261,17 +4259,17 @@ function inv.items.displayItem(objId, verbosity, wearableLoc, channel)
     return DRL_RET_SUCCESS
   end -- if
 
-  local score = dbot.tonumber(inv.items.getStatField(objId, invStatFieldScore) or "0")
-  local worth = dbot.tonumber(inv.items.getStatField(objId, invStatFieldWorth) or "0")
-  local keywords = inv.items.getStatField(objId, invStatFieldKeywords) or ""
-  local flags = inv.items.getStatField(objId, invStatFieldFlags) or ""
-  local material = inv.items.getStatField(objId, invStatFieldMaterial) or ""
-  local foundAt = inv.items.getStatField(objId, invStatFieldFoundAt) or ""
-  local ownedBy = inv.items.getStatField(objId, invStatFieldOwnedBy) or ""
-  local clan = inv.items.getStatField(objId, invStatFieldClan) or ""
-  local affectMods = inv.items.getStatField(objId, invStatFieldAffectMods) or ""
-  local organize = inv.items.getStatField(objId, invQueryKeyOrganize) or ""
-  local inflicts = inv.items.getStatField(objId, invStatFieldInflicts) or ""
+  local score      = inv.items.getStatNum(objId, invStatFieldScore)
+  local worth      = inv.items.getStatNum(objId, invStatFieldWorth)
+  local keywords   = inv.items.getStatStr(objId, invStatFieldKeywords)
+  local flags      = inv.items.getStatStr(objId, invStatFieldFlags)
+  local material   = inv.items.getStatStr(objId, invStatFieldMaterial)
+  local foundAt    = inv.items.getStatStr(objId, invStatFieldFoundAt)
+  local ownedBy    = inv.items.getStatStr(objId, invStatFieldOwnedBy)
+  local clan       = inv.items.getStatStr(objId, invStatFieldClan)
+  local affectMods = inv.items.getStatStr(objId, invStatFieldAffectMods)
+  local organize   = inv.items.getStatStr(objId, invQueryKeyOrganize)
+  local inflicts   = inv.items.getStatStr(objId, invStatFieldInflicts)
 
   -- Helper: format a stat as "+N" or "-N", returns nil if zero
   local function fmtStat(name, value)
