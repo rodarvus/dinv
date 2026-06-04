@@ -133,210 +133,188 @@ inv.items.burstSize     = 20 -- max # of items that can be moved in one atomic o
 function inv.items.init.atInstall()
   local retval = DRL_RET_SUCCESS
 
+  inv.items.trigger.registered = {}
+  local function addTrigger(name, regex, handler, startEnabled)
+    check (AddTriggerEx(name, regex, handler,
+                        drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput,
+                        custom_colour.Custom11, 0, "", "", sendto.script, 0))
+    table.insert(inv.items.trigger.registered, name)
+    if not startEnabled then check (EnableTrigger(name, false)) end
+  end
+
   -- Trigger on invmon
-  check (AddTriggerEx(inv.items.trigger.invmonName,
-                      "^{invmon}(.*?),(.*?),(.*?),(.*?)$",
-                      "inv.items.trigger.invmon(\"%1\",\"%2\",\"%3\",\"%4\")",
-                      drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput,
-                      custom_colour.Custom11, 0, "", "", sendto.script, 0))
+  addTrigger(inv.items.trigger.invmonName,
+             "^{invmon}(.*?),(.*?),(.*?),(.*?)$",
+             "inv.items.trigger.invmon(\"%1\",\"%2\",\"%3\",\"%4\")",
+             true)
 
   -- Trigger on invitem
-  check (AddTriggerEx(inv.items.trigger.invitemName,
-                      "^{invitem}(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?)$",
-                      "inv.items.trigger.itemDataStats(" ..
-                        "\"%1\",\"%2\",\"%3\",\"%4\", \"%5\",\"%6\",\"%7\",\"%8\",true)",
-                      drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput,
-                      custom_colour.Custom11, 0, "", "", sendto.script, 0))
+  addTrigger(inv.items.trigger.invitemName,
+             "^{invitem}(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?)$",
+             "inv.items.trigger.itemDataStats" ..
+             "(\"%1\",\"%2\",\"%3\",\"%4\",\"%5\",\"%6\",\"%7\",\"%8\",true)",
+             true)
 
   -- Trigger on the start of an identify-ish command (lore, identify, object read, bid, lbid, etc.)
-  check (AddTriggerEx(inv.items.trigger.itemIdStartName,
-                      "^(" ..
-                         ".-----------------------------------------------------------------.*|" ..
-                         "\\| Keywords.*|" ..                              -- blindmode: no border
-                         "Current bid on this item is.*|"              ..
-                         "You do not have that item.*|"                ..
-                         "You dream about being able to identify.*|"   ..
-                         ".*does not have that item for sale.*|"       ..
-                         "There is no auction item with that id.*|"    ..
-                         ".*currently holds no inventory.*|"           ..
-                         ".* is closed.|"                              ..
-                         "There is no marketplace item with that id.*" ..
-                      ")$",
-                      "inv.items.trigger.itemIdStart(\"%1\")",
-                      drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput,
-                      custom_colour.Custom11, 0, "", "", sendto.script, 0))
-  check (EnableTrigger(inv.items.trigger.itemIdStartName, false)) -- default to off
+  addTrigger(inv.items.trigger.itemIdStartName,
+             "^(" ..
+                ".-----------------------------------------------------------------.*|" ..
+                "\\| Keywords.*|" ..                              -- blindmode: no border
+                "Current bid on this item is.*|"              ..
+                "You do not have that item.*|"                ..
+                "You dream about being able to identify.*|"   ..
+                ".*does not have that item for sale.*|"       ..
+                "There is no auction item with that id.*|"    ..
+                ".*currently holds no inventory.*|"           ..
+                ".* is closed.|"                              ..
+                "There is no marketplace item with that id.*" ..
+             ")$",
+             "inv.items.trigger.itemIdStart(\"%1\")",
+             false)
 
   -- Trigger on an identification of "A Fantasy Series Card Collector Case", a Winds of Fate epic item.
   -- This is a unique item that claims to be a container but it actually isn't.  It can even be placed
   -- inside other containers.  It also has varying output when identified based on what cards the user
   -- has assigned to it as part of the Winds' epic.
-  check (AddTriggerEx(inv.items.trigger.suppressWindsName,
-                      "^(" ..
-                         "You have the following cards stored:.*|"     ..
-                         ".*Fantasy Series Collector\'s Card.*|"       ..
-                         "Total: [0-9]+.*"                             ..
-                      ")$",
-                      "",
-                      drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput,
-                      custom_colour.Custom11, 0, "", "", sendto.script, 0))
-  check (EnableTrigger(inv.items.trigger.suppressWindsName, false)) -- default to off
+  addTrigger(inv.items.trigger.suppressWindsName,
+             "^(" ..
+                "You have the following cards stored:.*|"     ..
+                ".*Fantasy Series Collector\'s Card.*|"       ..
+                "Total: [0-9]+.*"                             ..
+             ")$",
+             "",
+             false)
 
   -- Trigger on one of the detail/stat lines of an item's id report (lore, identify, bid, etc.)
-  check (AddTriggerEx(inv.items.trigger.itemIdStatsName,
-                      "^(" ..
-                         "\\| .*\\||" ..
-                         ".*A full appraisal will reveal further information on this item.|" ..
-                      ")$",
-                      "inv.items.trigger.itemIdStats(\"%1\")",
-                      drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput,
-                      custom_colour.Custom11, 0, "", "", sendto.script, 0))
-  check (EnableTrigger(inv.items.trigger.itemIdStatsName, false)) -- default to off
+  addTrigger(inv.items.trigger.itemIdStatsName,
+             "^(" ..
+                "\\| .*\\||" ..
+                ".*A full appraisal will reveal further information on this item.|" ..
+             ")$",
+             "inv.items.trigger.itemIdStats(\"%1\")",
+             false)
 
   -- Suppress output messages from the identification (lore, cast identify, cast object read, etc.)
-  check (AddTriggerEx(inv.items.trigger.suppressIdMsgName,
-                      "^Your natural intuition reveals the item's properties.....*$",
-                      "",
-                      drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput,
-                      custom_colour.Custom11, 0, "", "", sendto.script, 0))
-  check (EnableTrigger(inv.items.trigger.suppressIdMsgName, false)) -- default to off
+  addTrigger(inv.items.trigger.suppressIdMsgName,
+             "^Your natural intuition reveals the item's properties.....*$",
+             "",
+             false)
 
   -- Trigger on an eqdata, invdata, or keyring data tag
-  check (AddTriggerEx(inv.items.trigger.itemDataStartName,
-                      "^{(eqdata|invdata|keyring)[ ]?([0-9]+)?}$|^(Item) ([0-9]+) not found.$",
-                      "inv.items.trigger.itemDataStart(\"%1\",\"%2\")",
-                      drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput,
-                      custom_colour.Custom11, 0, "", "", sendto.script, 0))
-  check (EnableTrigger(inv.items.trigger.itemDataStartName, false)) -- default to off
+  addTrigger(inv.items.trigger.itemDataStartName,
+             "^{(eqdata|invdata|keyring)[ ]?([0-9]+)?}$|^(Item) ([0-9]+) not found.$",
+             "inv.items.trigger.itemDataStart(\"%1\",\"%2\")",
+             false)
 
   -- Trigger on the stats for an eqdata, invdata, or keyring data item
-  check (AddTriggerEx(inv.items.trigger.itemDataStatsName,
-                      "^([0-9]+?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?)$",
-                      "inv.items.trigger.itemDataStats" ..
-                      "(\"%1\",\"%2\",\"%3\",\"%4\", \"%5\",\"%6\",\"%7\",\"%8\",false)",
-                      drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput,
-                      custom_colour.Custom11, 0, "", "", sendto.script, 0))
-  check (EnableTrigger(inv.items.trigger.itemDataStatsName, false)) -- default to off
+  addTrigger(inv.items.trigger.itemDataStatsName,
+             "^([0-9]+?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?)$",
+             "inv.items.trigger.itemDataStats" ..
+             "(\"%1\",\"%2\",\"%3\",\"%4\",\"%5\",\"%6\",\"%7\",\"%8\",false)",
+             false)
 
   -- Trigger on an identify command to capture the item's object ID
-  check (AddTriggerEx(inv.items.trigger.idItemName,
-                      "^(" ..
-                         ".------.*|"                                   ..
-                         "\\|.*|"                                       ..
-                         "You do not have that item.*|"                 ..
-                         "You dream about being able to identify.*|"    ..
-                         ".*does not have that item for sale.*|"        ..
-                         "There is no auction item with that id.*|"     ..
-                         ".*currently holds no inventory.*|"            ..
-                         "There is no marketplace item with that id.*|" ..
-                         inv.items.identifyFence                        ..
-                      "|)$", -- accept an empty capture on the last line if there is one there
-
-                      "inv.items.trigger.idItem(\"%1\")",
-                      drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput,
-                      custom_colour.Custom11, 0, "", "", sendto.script, 0))
-  check (EnableTrigger(inv.items.trigger.idItemName, false)) -- default to off
+  addTrigger(inv.items.trigger.idItemName,
+             "^(" ..
+                ".------.*|"                                   ..
+                "\\|.*|"                                       ..
+                "You do not have that item.*|"                 ..
+                "You dream about being able to identify.*|"    ..
+                ".*does not have that item for sale.*|"        ..
+                "There is no auction item with that id.*|"     ..
+                ".*currently holds no inventory.*|"            ..
+                "There is no marketplace item with that id.*|" ..
+                inv.items.identifyFence                        ..
+             "|)$", -- accept an empty capture on the last line if there is one there
+             "inv.items.trigger.idItem(\"%1\")",
+             false)
 
   -- Trigger on "special" wear messages for unique items
-  check (AddTriggerEx(inv.items.trigger.wearSpecialName,
-                      "^(" ..
-                         "You proudly pin.*to your chest."                ..
-                         "|Your gloves tighten around.*with a loud snap!" ..
-                         "|.* feels like a part of you!"                  ..
-                         "|You are skilled with .*"                       ..
-                         "|You feel quite confident with .*"              ..
-                      ")$",
-                      "",
-                      drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput,
-                      custom_colour.Custom11, 0, "", "", sendto.script, 0))
-  check (EnableTrigger(inv.items.trigger.wearSpecialName, false)) -- default to off
+  addTrigger(inv.items.trigger.wearSpecialName,
+             "^(" ..
+                "You proudly pin.*to your chest."                ..
+                "|Your gloves tighten around.*with a loud snap!" ..
+                "|.* feels like a part of you!"                  ..
+                "|You are skilled with .*"                       ..
+                "|You feel quite confident with .*"              ..
+             ")$",
+             "",
+             false)
 
   -- Trigger on the output of the "wear" command
-  check (AddTriggerEx(inv.items.trigger.wearName,
-                      "^(" ..
-                         "You do not have that item.*"           .. -- wear BADNAME
-                         "|You wear.*"                           .. -- wear the item
-                         "|You wield .*"                         .. -- hold weapon
-                         "|You light .*"                         .. -- wear light
-                         "|You hold .*"                          .. -- held item
-                         "|You equip .*"                         .. -- wear portal or sleeping bag
-                         "|.* begins floating around you.*"      .. -- wear float
-                         "|.* begins floating above you.*"       .. -- wear aura of trivia
-                         "|You dream about being able to wear.*" .. -- you are sleeping
-                         "|You cannot wear .*"                   .. -- item type can't be worn
-                         "|You must be at least level.*to use.*" .. -- your level is too low
-                      ")$",
-                      "inv.items.trigger.wear(\"%1\")",
-                      drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput,
-                      custom_colour.Custom11, 0, "", "", sendto.script, 0))
-  check (EnableTrigger(inv.items.trigger.wearName, false)) -- default to off
+  addTrigger(inv.items.trigger.wearName,
+             "^(" ..
+                "You do not have that item.*"           .. -- wear BADNAME
+                "|You wear.*"                           .. -- wear the item
+                "|You wield .*"                         .. -- hold weapon
+                "|You light .*"                         .. -- wear light
+                "|You hold .*"                          .. -- held item
+                "|You equip .*"                         .. -- wear portal or sleeping bag
+                "|.* begins floating around you.*"      .. -- wear float
+                "|.* begins floating above you.*"       .. -- wear aura of trivia
+                "|You dream about being able to wear.*" .. -- you are sleeping
+                "|You cannot wear .*"                   .. -- item type can't be worn
+                "|You must be at least level.*to use.*" .. -- your level is too low
+             ")$",
+             "inv.items.trigger.wear(\"%1\")",
+             false)
 
   -- Trigger on the output of the "remove" command
-  check (AddTriggerEx(inv.items.trigger.removeName,
-                      "^(" ..
-                         "You are not wearing that item."  .. -- remove BADNAME
-                         "|You remove .*"                  .. -- wear item
-                         "|You stop using .*"              .. -- shield
-                         "|You stop holding.*"             .. -- held item
-                         "|You stop wielding .*"           .. -- weapon
-                         "|.* stops floating around you.*" .. -- float
-                         "|.* stops floating above you.*"  .. -- above
-                         "|You stop using.* as a portal.*" .. -- portal
-                         "|You dream about removing your equipment.*" ..
-                      ")$",
-                      "inv.items.trigger.remove(\"%1\")",
-                      drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput,
-                      custom_colour.Custom11, 0, "", "", sendto.script, 0))
-  check (EnableTrigger(inv.items.trigger.removeName, false)) -- default to off
+  addTrigger(inv.items.trigger.removeName,
+             "^(" ..
+                "You are not wearing that item."  .. -- remove BADNAME
+                "|You remove .*"                  .. -- wear item
+                "|You stop using .*"              .. -- shield
+                "|You stop holding.*"             .. -- held item
+                "|You stop wielding .*"           .. -- weapon
+                "|.* stops floating around you.*" .. -- float
+                "|.* stops floating above you.*"  .. -- above
+                "|You stop using.* as a portal.*" .. -- portal
+                "|You dream about removing your equipment.*" ..
+             ")$",
+             "inv.items.trigger.remove(\"%1\")",
+             false)
 
   -- Trigger on the output of the "get" command
-  check (AddTriggerEx(inv.items.trigger.getName,
-                      "^(" ..
-                         "You get.*"                            ..
-                         "|You do not see.*"                    ..
-                         "|You dream about being able to get.*" ..
-                      ")$",
-                      "inv.items.trigger.get(\"%1\")",
-                      drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput,
-                      custom_colour.Custom11, 0, "", "", sendto.script, 0))
-  check (EnableTrigger(inv.items.trigger.getName, false)) -- default to off
+  addTrigger(inv.items.trigger.getName,
+             "^(" ..
+                "You get.*"                            ..
+                "|You do not see.*"                    ..
+                "|You dream about being able to get.*" ..
+             ")$",
+             "inv.items.trigger.get(\"%1\")",
+             false)
 
   -- Trigger on the output of the "put" command
-  check (AddTriggerEx(inv.items.trigger.putName,
-                      "^(" ..
-                         "You don't have that.*"                 ..
-                         "|You do not see.*"                     ..
-                         "|You dream about putting items away.*" ..
-                         "|You put .* into .*"                   ..
-                      ")$",
-                      "inv.items.trigger.put(\"%1\")",
-                      drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput,
-                      custom_colour.Custom11, 0, "", "", sendto.script, 0))
-  check (EnableTrigger(inv.items.trigger.putName, false)) -- default to off
+  addTrigger(inv.items.trigger.putName,
+             "^(" ..
+                "You don't have that.*"                 ..
+                "|You do not see.*"                     ..
+                "|You dream about putting items away.*" ..
+                "|You put .* into .*"                   ..
+             ")$",
+             "inv.items.trigger.put(\"%1\")",
+             false)
 
   -- Trigger on the output of the "keyring get" command
-  check (AddTriggerEx(inv.items.trigger.getKeyringName,
-                      "^(" ..
-                         "You remove.*from your keyring.*"          ..
-                         "|You did not find that on your keyring.*" ..
-                         "|You dream about being able to keyring.*" ..
-                      ")$",
-                      "inv.items.trigger.getKeyring(\"%1\")",
-                      drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput,
-                      custom_colour.Custom11, 0, "", "", sendto.script, 0))
-  check (EnableTrigger(inv.items.trigger.getKeyringName, false)) -- default to off
+  addTrigger(inv.items.trigger.getKeyringName,
+             "^(" ..
+                "You remove.*from your keyring.*"          ..
+                "|You did not find that on your keyring.*" ..
+                "|You dream about being able to keyring.*" ..
+             ")$",
+             "inv.items.trigger.getKeyring(\"%1\")",
+             false)
 
   -- Trigger on the output of the "keyring put" command
-  check (AddTriggerEx(inv.items.trigger.putKeyringName,
-                      "^(" ..
-                         "You put.*on your keyring.*"               ..
-                         "|You do not have that item.*"             ..
-                         "|You dream about being able to keyring.*" ..
-                      ")$",
-                      "inv.items.trigger.putKeyring(\"%1\")",
-                      drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput,
-                      custom_colour.Custom11, 0, "", "", sendto.script, 0))
-  check (EnableTrigger(inv.items.trigger.putKeyringName, false)) -- default to off
+  addTrigger(inv.items.trigger.putKeyringName,
+             "^(" ..
+                "You put.*on your keyring.*"               ..
+                "|You do not have that item.*"             ..
+                "|You dream about being able to keyring.*" ..
+             ")$",
+             "inv.items.trigger.putKeyring(\"%1\")",
+             false)
 
   return retval
 
@@ -383,22 +361,9 @@ end -- inv.items.init.atActive
 function inv.items.fini(doSaveState)
   local retval = DRL_RET_SUCCESS
 
-  dbot.deleteTrigger(inv.items.trigger.invmonName)
-  dbot.deleteTrigger(inv.items.trigger.invitemName)
-  dbot.deleteTrigger(inv.items.trigger.itemIdStartName)
-  dbot.deleteTrigger(inv.items.trigger.suppressWindsName)
-  dbot.deleteTrigger(inv.items.trigger.itemIdStatsName)
-  dbot.deleteTrigger(inv.items.trigger.suppressIdMsgName)
-  dbot.deleteTrigger(inv.items.trigger.itemDataStartName)
-  dbot.deleteTrigger(inv.items.trigger.itemDataStatsName)
-  dbot.deleteTrigger(inv.items.trigger.idItemName)
-  dbot.deleteTrigger(inv.items.trigger.wearSpecialName)
-  dbot.deleteTrigger(inv.items.trigger.wearName)
-  dbot.deleteTrigger(inv.items.trigger.removeName)
-  dbot.deleteTrigger(inv.items.trigger.getName)
-  dbot.deleteTrigger(inv.items.trigger.putName)
-  dbot.deleteTrigger(inv.items.trigger.getKeyringName)
-  dbot.deleteTrigger(inv.items.trigger.putKeyringName)
+  for _, name in ipairs(inv.items.trigger.registered or {}) do
+    dbot.deleteTrigger(name)
+  end
 
   dbot.deleteTimer(inv.items.timer.refreshName)
   dbot.deleteTimer(inv.items.timer.idTimeoutName)
@@ -5071,8 +5036,7 @@ function inv.items.trigger.itemIdStart(line)
                "^" .. inv.items.identifyFence .. "$",
                "inv.items.trigger.itemIdEnd()",
                drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput + trigger_flag.OneShot,
-               custom_colour.Custom11,
-               0, "", "", sendto.script, 0)
+               custom_colour.Custom11, 0, "", "", sendto.script, 0)
 
   -- If the start trigger matched a content line (blindmode: no border lines),
   -- process it as the first stats line so we don't lose the data
@@ -5833,7 +5797,7 @@ function inv.items.trigger.itemDataStart(dataType, containerId)
   AddTriggerEx(inv.items.trigger.itemDataEndName,
                "^{/(eqdata|invdata|keyring)}$",
                "inv.items.trigger.itemDataEnd()",
-               drlTriggerFlagsBaseline + trigger_flag.OneShot + trigger_flag.OmitFromOutput,
+               drlTriggerFlagsBaseline + trigger_flag.OmitFromOutput + trigger_flag.OneShot,
                custom_colour.Custom11, 0, "", "", sendto.script, 0)
 
   -- Start watching for eqdata or invdata stat lines in the item description

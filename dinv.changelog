@@ -2,6 +2,16 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0116] =
+{
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[Refactor: extract a local addTrigger helper in
+           inv.items.init.atInstall to collapse 16 copy-pasted
+           AddTriggerEx/EnableTrigger registrations.  No behavior
+           change.]]
+  }
+}
+
 dbot.changelog[3.0115] =
 {
   { change = drlDbotChangeLogTypeMisc,
