@@ -5084,9 +5084,6 @@ function inv.items.trigger.itemIdStats(line)
   local _, _, affectMods   = string.find(line, "Affect Mods:%s+(.-)%s*|")
   local _, _, continuation = string.find(line, "|%s+:%s+(.-)%s*|")
   local _, _, material     = string.find(line, "Material%s+:%s+(.*)%s+")
-  local _, _, foundAt      = string.find(line, "Found at%s+:%s+(.-)%s*|")
-  local _, _, ownedBy      = string.find(line, "Owned By%s+:%s+(.-)%s*|")
-  local _, _, clan         = string.find(line, "Clan Item%s+:%s+(.-)%s*|")
   local _, _, spellUses, spellLevel, spellName =
                              string.find(line, "([0-9]+) uses? of level ([0-9]+) '(.*)'")
   local _, _, leadsTo      = string.find(line, "Leads to%s+:%s+(.*)%s+")
@@ -5196,21 +5193,6 @@ function inv.items.trigger.itemIdStats(line)
     dbot.debug("Material = \"" .. material .. "\"")
   end -- if
 
-  if (foundAt ~= nil) then
-    inv.items.setStatField(objId, invStatFieldFoundAt, foundAt)
-    dbot.debug("Found at = \"" .. foundAt .. "\"")
-  end -- if
-
-  if (ownedBy ~= nil) then
-    inv.items.setStatField(objId, invStatFieldOwnedBy, ownedBy)
-    dbot.debug("Owned by = \"" .. ownedBy .. "\"")
-  end -- if
-
-  if (clan ~= nil) then
-    inv.items.setStatField(objId, invStatFieldClan, clan)
-    dbot.debug("From clan \"" .. clan .. "\"")
-  end -- if
-
   if (spellUses ~= nil) and (spellLevel ~= nil) and (spellName ~= nil) then
     local spellArray = inv.items.getStatField(objId, invStatFieldSpells) or {}
     spellUses = tonumber(spellUses) or 0
@@ -5307,6 +5289,11 @@ function inv.items.trigger.itemIdStats(line)
   parseStatAsStr("Damage Type%s+:%s+(%a+)%s+",                        invStatFieldDamType)
   parseStatAsStr("Weapon Type:%s+(%a+)%s+",                           invStatFieldWeaponType)
   parseStatAsStr("Specials%s+:%s+(%a+)%s+",                           invStatFieldSpecials)
+
+  -- Provenance
+  parseStatAsStr("Found at%s+:%s+(.-)%s*|",                           invStatFieldFoundAt)
+  parseStatAsStr("Owned By%s+:%s+(.-)%s*|",                           invStatFieldOwnedBy)
+  parseStatAsStr("Clan Item%s+:%s+(.-)%s*|",                          invStatFieldClan)
 
   -- Affect-line modifiers (sign drop is intentional, matching prior behavior).
   parseStatModAsNum(":%s+adds [+-](%d+) average damage%s+",           invStatFieldAveDam)

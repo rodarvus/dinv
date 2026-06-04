@@ -2,6 +2,13 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0122] =
+{
+  { change = drlDbotChangeLogTypeMisc,
+    desc   = [[Refactor: lift foundAt/ownedBy/clan into the parseStatAsStr block in itemIdStats.]]
+  }
+}
+
 dbot.changelog[3.0121] =
 {
   { change = drlDbotChangeLogTypeFix,
