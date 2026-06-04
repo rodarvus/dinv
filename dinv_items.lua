@@ -1002,7 +1002,7 @@ function inv.items.discoverCR(maxNumItems, refreshLocations)
   maxNumItems = tonumber(maxNumItems or 0) or 0
 
   -- If refreshLocations is not given, default to scanning everything
-  refreshLocation = refreshLocations or invItemsRefreshLocAll
+  local refreshLocation = refreshLocations or invItemsRefreshLocAll
 
   -- Discover equipment that is currently worn.  We only do this if the user asked to scan "all"
   -- locations, if the user specifically asked to scan "worn" locations, or if the user asked to
@@ -1815,21 +1815,16 @@ function inv.items.refreshCR()
   -- which is now persisted at its mutation site instead.
   inv.items.save()
 
-  if (retval == DRL_RET_SUCCESS) then
-    resultString = "SUCCESS! (Entire inventory is identified)"
-  elseif (retval == DRL_RET_HALTED) then
-    resultString = "HALTED! (Some items may still need identification)"
-  elseif (retval == DRL_RET_IN_COMBAT) then
-    resultString = "IN COMBAT! (Skipped identification because you were fighting!)"
-  elseif (retval == DRL_RET_TIMEOUT) then
-    resultString = "TIMEOUT! (Skipped identification because you were busy)"
-  elseif (retval == DRL_RET_NOT_ACTIVE) then
-    resultString = "NOT ACTIVE! (You were not ready for item identification)"
-  elseif (retval == DRL_RET_UNINITIALIZED) then
-    resultString = "UNINITIALIZED! (The plugin is not initialized)"
-  else
-    resultString = "ERROR! (" .. dbot.retval.getString(retval) .. ")"
-  end -- if
+  local refreshResultMessages = {
+    [DRL_RET_SUCCESS]        = "SUCCESS! (Entire inventory is identified)",
+    [DRL_RET_HALTED]         = "HALTED! (Some items may still need identification)",
+    [DRL_RET_IN_COMBAT]      = "IN COMBAT! (Skipped identification because you were fighting!)",
+    [DRL_RET_TIMEOUT]        = "TIMEOUT! (Skipped identification because you were busy)",
+    [DRL_RET_NOT_ACTIVE]     = "NOT ACTIVE! (You were not ready for item identification)",
+    [DRL_RET_UNINITIALIZED]  = "UNINITIALIZED! (The plugin is not initialized)",
+  }
+  local resultString = refreshResultMessages[retval]
+                       or ("ERROR! (" .. dbot.retval.getString(retval) .. ")")
 
   dbot.note("Refreshing inventory: " .. resultString)
 

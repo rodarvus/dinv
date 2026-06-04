@@ -2,6 +2,13 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0121] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fix resultString and refreshLocation global leaks; table-ify refreshCR retval messages.]]
+  }
+}
+
 dbot.changelog[3.0120] =
 {
   { change = drlDbotChangeLogTypeFix,
