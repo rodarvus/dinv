@@ -5157,65 +5157,42 @@ function inv.items.trigger.itemIdStats(line)
     inv.items.setStatField(objId, invStatFieldFlags, flags)
     dbot.debug("Flags = \"" .. flags .. "\"")
 
-    -- If the flags are continued (they end in a ",") watch for the continuation
-    if (string.find(flags, ",$")) then
-      inv.items.trigger.flagsContinuation = true
-    else
-      inv.items.trigger.flagsContinuation = false
-    end -- if
+    -- A trailing comma means the flags wrap onto a continuation line
+    inv.items.trigger.flagsContinuation = string.find(flags, ",$") ~= nil
   end -- if
 
   if (affectMods ~= nil) then
     inv.items.setStatField(objId, invStatFieldAffectMods, affectMods)
     dbot.debug("AffectMods = \"" .. affectMods .. "\"")
 
-    -- If the affectMods are continued (they end in a ",") watch for the continuation
-    if (string.find(affectMods, ",$")) then
-      inv.items.trigger.affectModsContinuation = true
-    else
-      inv.items.trigger.affectModsContinuation = false
-    end -- if
+    -- A trailing comma means the affectMods wrap onto a continuation line
+    inv.items.trigger.affectModsContinuation = string.find(affectMods, ",$") ~= nil
   end -- if
 
   if (continuation ~= nil) then
     dbot.debug("Continuation = \"" .. continuation .. "\"")
-    if (inv.items.trigger.flagsContinuation) then
-      -- Add the continuation to the existing flags
-      inv.items.setStatField(objId, invStatFieldFlags,
-                             (inv.items.getStatField(objId, invStatFieldFlags) or "") ..
-                             " " .. continuation)
 
-      -- If the continued flags end in a comma, keep the continuation going; otherwise stop it
-      if not (string.find(continuation, ",$")) then
-        inv.items.trigger.flagsContinuation = false
+    -- First flag in this list whose tracker is set claims the line.
+    -- stopOnNoComma fields turn their tracker off once the wrap ends.
+    -- (Trailing else of the original chain was an unused placeholder.)
+    local continuationTargets = {
+      { flag = "flagsContinuation",      field = invStatFieldFlags,      stopOnNoComma = true  },
+      { flag = "affectModsContinuation", field = invStatFieldAffectMods, stopOnNoComma = true  },
+      { flag = "keywordsContinuation",   field = invStatFieldKeywords,   stopOnNoComma = false },
+      { flag = "nameContinuation",       field = invStatFieldName,       stopOnNoComma = false },
+    }
+
+    for _, target in ipairs(continuationTargets) do
+      if inv.items.trigger[target.flag] then
+        inv.items.setStatField(objId, target.field,
+                               (inv.items.getStatField(objId, target.field) or "") ..
+                               " " .. continuation)
+        if target.stopOnNoComma and not string.find(continuation, ",$") then
+          inv.items.trigger[target.flag] = false
+        end -- if
+        break
       end -- if
-
-    elseif (inv.items.trigger.affectModsContinuation) then
-      -- Add the continuation to the existing affectMods
-      inv.items.setStatField(objId, invStatFieldAffectMods,
-                            (inv.items.getStatField(objId, invStatFieldAffectMods)
-                             or "") .. " " .. continuation)
-
-      -- If the continued affectMods end in a comma, keep the continuation going; otherwise stop it
-      if not (string.find(continuation, ",$")) then
-        inv.items.trigger.affectModsContinuation = false
-      end -- if
-
-    elseif (inv.items.trigger.keywordsContinuation) then
-      -- Add the continuation to the existing keywords
-      inv.items.setStatField(objId, invStatFieldKeywords,
-                            (inv.items.getStatField(objId, invStatFieldKeywords)
-                             or "") .. " " .. continuation)
-
-    elseif (inv.items.trigger.nameContinuation) then
-      -- Add the continuation to the existing name
-      inv.items.setStatField(objId, invStatFieldName,
-                            (inv.items.getStatField(objId, invStatFieldName)
-                             or "") .. " " .. continuation)
-
-    else
-      -- Placeholder to add continuation support for other things (notes? others?)
-    end -- if
+    end -- for
   end -- if
 
   if (material ~= nil) then
