@@ -5208,7 +5208,7 @@ function inv.items.trigger.itemIdStats(line)
 
   if (ownedBy ~= nil) then
     inv.items.setStatField(objId, invStatFieldOwnedBy, ownedBy)
-    dbot.debug("Found at = \"" .. ownedBy .. "\"")
+    dbot.debug("Owned by = \"" .. ownedBy .. "\"")
   end -- if
 
   if (clan ~= nil) then

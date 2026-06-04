@@ -2,6 +2,13 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0120] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Fix ownedBy debug log (was incorrectly "Found at = ...").]]
+  }
+}
+
 dbot.changelog[3.0119] =
 {
   { change = drlDbotChangeLogTypeMisc,
