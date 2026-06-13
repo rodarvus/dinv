@@ -2,6 +2,13 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0123] =
+{
+  { change = drlDbotChangeLogTypeNew,
+    desc   = [[Add SearchAndReturn() external API: returns full item records (serialized) for CallPlugin callers such as Aardwolf-Switch-Weapons.]]
+  }
+}
+
 dbot.changelog[3.0122] =
 {
   { change = drlDbotChangeLogTypeMisc,
