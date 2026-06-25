@@ -3304,20 +3304,24 @@ function inv.items.search(arrayOfQueryArrays, allowIgnored)
             return nil, DRL_RET_MISSING_ENTRY
           end -- if
 
+          local skipRemainingQuery = false
+
           -- There are a few "one-off" search queries that make life simplier.  We support the
           -- "all", "equipped" (or "worn"), and "unequipped" search queries.
           if (key == invQueryKeyCustom) then
 
-            if (value == invQueryKeyAll) then
-              itemMatches = true
-            elseif (value == invQueryKeyEquipped) and (not inv.items.isWorn(itemId)) then
+            if (value == invQueryKeyEquipped) and (not inv.items.isWorn(itemId)) then
               itemMatches = false
+              break
             elseif (value == invQueryKeyUnequipped) and inv.items.isWorn(itemId) then
               itemMatches = false
+              break
             end -- if
 
-            break
+            skipRemainingQuery = true
           end -- if
+
+          if (skipRemainingQuery == false) then
 
           -- Check if the query has a prefix.  We currently support the prefixes "~", "min", and "max".
           local prefix = ""
@@ -3455,6 +3459,8 @@ function inv.items.search(arrayOfQueryArrays, allowIgnored)
             break
           end -- if
 
+          end -- if
+
         end -- for
       end -- if
 
@@ -3532,11 +3538,19 @@ function inv.items.searchCR(rawQueryString, allowIgnored)
       if (element == "||") then
         table.insert(arrayOfKvArrays, kvArray)
         kvArray = {}
+        idx = 1
 
       -- If we are in a query and we are at the key location (it goes key then value), then save the key
       elseif ((idx % 2) ~= 0) then
-        key = element
-        idx = idx + 1
+        local loweredElement = string.lower(element)
+        if (loweredElement == invQueryKeyAll) then
+          table.insert(kvArray, { invQueryKeyCustom, invQueryKeyAll })
+        elseif (loweredElement == invQueryKeyEquipped) or (loweredElement == invQueryKeyWorn) then
+          table.insert(kvArray, { invQueryKeyCustom, invQueryKeyEquipped })
+        else
+          key = element
+          idx = idx + 1
+        end -- if
 
       -- If we are in a query and we are at the value location (it goes key then value), then save the value
       else
@@ -5988,5 +6002,4 @@ function inv.items.timer.idTimeout()
   -- Clean up the identification request
   inv.items.trigger.itemIdEnd()
 end -- inv.items.timer.idTimeout
-
 

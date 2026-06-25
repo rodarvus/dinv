@@ -2,6 +2,13 @@
 dbot.changelog = {}
 
 
+dbot.changelog[3.0125] =
+{
+  { change = drlDbotChangeLogTypeFix,
+    desc   = [[Search: allow "worn", "equipped", and "all" to compose with other query terms, so order-independent searches such as "dinv search worn loc head" and "dinv search loc head worn" both filter worn equipment correctly.]]
+  }
+}
+
 dbot.changelog[3.0124] =
 {
   { change = drlDbotChangeLogTypeFix,
@@ -2379,5 +2386,4 @@ dbot.changelog[0.1] =
     desc   = "Initial code base"
   }
 }
-
 

@@ -596,6 +596,9 @@ Examples:
 
  11) Find all items in your main inventory (not worn, not in a container)
      "@Gdinv search loc inventory@W"
+
+ 12) Find the item currently worn on your head
+     "@Gdinv search worn loc head@W"
 ]])
 
 end -- inv.cli.search.examples
@@ -668,10 +671,13 @@ Examples:
   8) Match everything you currently have equipped
      "@Gdinv search worn@W"
 
-  9) Match everything in your inventory that is not equipped
+  9) Match the item currently worn on your head
+     "@Gdinv search worn loc head@W"
+
+ 10) Match everything in your inventory that is not equipped
      "@Gdinv search@W"
 
- 10) Match everything you have equipped or are carrying
+ 11) Match everything you have equipped or are carrying
      "@Gdinv search all@W"
 
 Queries support lots of keys that are found when you identify an item.  Here is the
@@ -3741,5 +3747,4 @@ function inv.cli.catchall.fn(name, line, wildcards)
   dbot.info("Invalid dinv command: \"" .. (line or "nil") .. "\"")
   inv.cli.fullUsage()
 end -- inv.cli.debug.fn
-
 
