@@ -3369,6 +3369,22 @@ function inv.items.search(arrayOfQueryArrays, allowIgnored)
               break
             end -- if
 
+          -- The unique object ID is also meta-information: it is the inventory table key, not a
+          -- stats entry (stats.id only exists transiently after a full in-session identify), so
+          -- match "id" queries against the table key like the location one-off above.
+          elseif (key == invStatFieldId) then
+            local idMatches
+            if (valueNum ~= nil) then
+              idMatches = (tonumber(itemId) == valueNum)
+            else
+              idMatches = (tostring(itemId) == value)
+            end -- if
+            if ((invert == false) and (not idMatches)) or
+               ((invert == true)  and idMatches) then
+              itemMatches = false
+              break
+            end -- if
+
           -- "unused <priorityName | all>": match items NOT in the analyzed sets table for the
           -- named priority.  "~unused" inverts (match items that ARE in the analyzed sets).
           -- The pre-scan above built usedIdsByPriority; here we just do an O(1) lookup.
@@ -3526,8 +3542,14 @@ function inv.items.searchCR(rawQueryString, allowIgnored)
     table.insert(kvArray, { invQueryKeyCustom, invQueryKeyEquipped })
 
   -- If there is just a single word in the queryString, assume it is a name search.
-  -- We don't really need to support this, but it is a convenient kludge.
+  -- We don't really need to support this, but it is a convenient kludge.  An all-digits
+  -- word is almost certainly a unique object ID rather than a name, so search those as
+  -- "id <word> || name <word>" and match either way.
   elseif (numWordsInQuery == 1) then
+    local trimmedQuery = Trim(queryString)
+    if (string.find(trimmedQuery, "^%d+$") ~= nil) then
+      table.insert(arrayOfKvArrays, { { invStatFieldId, trimmedQuery } })
+    end -- if
     table.insert(kvArray, { invStatFieldName, queryString })
 
   else

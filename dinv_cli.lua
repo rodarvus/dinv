@@ -494,8 +494,11 @@ and you can use the format [number].[name] to target a specific item.  Similarly
 There are a few "one-off" query modes for convenience.  It is so common to search for just a
 name that the default is to assume you are searching within an item's name if no other data
 is supplied.  In other words, "@Gdinv search sunstone@W" will find any item with "sunstone" in
-its name.  Also, 'keyword', 'key' and 'kw' are accepted aliases for 'keywords', 'loc' is an
-alias for 'location' and 'rloc' is an alias for 'rlocation'.  Yeah, I'm lazy sometimes...
+its name.  If that single word is all digits, it is also matched against unique object IDs,
+so "@Gdinv search 43977421@W" finds the item with that ID (you can be explicit with the "@Gid@W"
+key: "@Gdinv search id 43977421@W").  Also, 'keyword', 'key' and 'kw' are accepted aliases for
+'keywords', 'loc' is an alias for 'location' and 'rloc' is an alias for 'rlocation'.  Yeah,
+I'm lazy sometimes...
 
 Performing a search will display relevant information about the items whose characteristics match
 the query.  There are three modes of searches: "@Cbasic@W", "@Cobjid@W", and "@Cfull@W".  A basic search displays
@@ -599,6 +602,10 @@ Examples:
 
  12) Find the item currently worn on your head
      "@Gdinv search worn loc head@W"
+
+ 13) Find an item by its unique object ID (e.g., from "identify" or an objid search)
+     "@Gdinv search id 43977421@W"
+     "@Gdinv search 43977421@W"
 ]])
 
 end -- inv.cli.search.examples
