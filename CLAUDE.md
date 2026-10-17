@@ -48,7 +48,7 @@
 
 ### Key Patterns
 
-- **Async operations:** `wait.make(coroutineFunction)` for non-blocking MUD interaction
+- **Operations:** `inv.commands.enqueue()` owns game I/O, deadlines and cleanup; `inv.runtime.start()` supervises existing domain continuations
 - **Command execution:** `dbot.execute.fast.command()` (no echo), `dbot.execute.safe.blocking()` (with timeout)
 - **Transactions:** `dinv_db.transaction(function() ... end)` for atomic DB writes
 - **Config access:** `inv.config.table.fieldName` at runtime; `inv.config.save()` to persist

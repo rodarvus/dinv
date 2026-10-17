@@ -1651,7 +1651,7 @@ function inv.cli.analyze.fn(name, line, wildcards)
       inv.cli.analyzePkg.intensity    = inv.set.analyzeIntensity --TODO: let user specify this?
       inv.cli.analyzePkg.endTag       = endTag
 
-      wait.make(inv.cli.analyzeCR)
+      inv.runtime.start(inv.cli.analyzeCR, inv.cli, "analyzePkg")
     end -- if
 
   elseif (command == "delete") then
@@ -2925,8 +2925,12 @@ function inv.cli.portal.fn(name, line, wildcards)
   local command = wildcards[1] or ""
   local portalQuery = wildcards[2] or ""
 
-  local guardFail = inv.cli.requireReadyStateFor("portal")
-  if guardFail then return guardFail end
+  -- Admit transient Running state to the owned portal workflow, which waits
+  -- for actions to be allowed within its existing deadline.
+  if not inv.init.initializedActive or dbot.gmcp.getState() ~= dbot.stateRunning then
+    local guardFail = inv.cli.requireReadyStateFor("portal")
+    if guardFail then return guardFail end
+  end -- if
 
   dbot.debug("CLI: " .. pluginNameCmd .. " portal " .. command .. " " .. portalQuery)
   inv.portal.use(portalQuery)
@@ -3754,4 +3758,3 @@ function inv.cli.catchall.fn(name, line, wildcards)
   dbot.info("Invalid dinv command: \"" .. (line or "nil") .. "\"")
   inv.cli.fullUsage()
 end -- inv.cli.debug.fn
-
